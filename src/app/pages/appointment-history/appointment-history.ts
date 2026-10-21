@@ -7,7 +7,7 @@ import { finalize, Subscription } from 'rxjs';
 
 import { AppointmentService } from '../../services/appointment/appointment.service';
 import { AppointmentHistoryPage, AppointmentStatus, HistorySort } from '../../models/appointment.model';
-import { decodeAppointmentText, appointmentResponseSucceeded } from '../../utils/appointment-ui.utils';
+import { decodeAppointmentText, appointmentResponseSucceeded } from '../../utils/appointment/appointment-ui.utils';
 import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
 import { FormsModule } from '@angular/forms';
 import { NzIconDirective } from 'ng-zorro-antd/icon';

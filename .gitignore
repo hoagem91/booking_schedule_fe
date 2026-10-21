@@ -54,3 +54,6 @@ Thumbs.db
 # Ignore log directories
 logs/
 **/logs/
+
+*.cjs
+cjs/

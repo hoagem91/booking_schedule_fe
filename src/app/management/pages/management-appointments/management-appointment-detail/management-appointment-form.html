@@ -1,1 +1,150 @@
-<p>management-appointment-detail works!</p>
+<div class="form-shell">
+  <div class="form-toolbar">
+    <div class="toolbar-title">
+      <button nz-button nzType="default" type="button" (click)="handleCancel()">
+        <nz-icon nzType="arrow-left" nzTheme="outline" /> Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>{{ isEditMode ? (isViewMode ? 'Chi tiết lịch hẹn' : 'Chỉnh sửa lịch hẹn') : 'Thêm mới lịch hẹn' }}{{ appointmentData ? ' - ' + appointmentData.appointmentCode : '' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      <button nz-button type="button" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
+      @if (!isViewMode) {
+        <button nz-button nzType="primary" type="button" disabled title="Chức năng lưu đang được hoàn thiện">
+          <nz-icon nzType="save" nzTheme="outline" />{{ isEditMode ? 'Cập nhật' : 'Thêm mới lịch hẹn' }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <ng-template [appShowLoading]="isLoadingDataForForm()">
+    <ng-template [appShowOnErrorCode]="errorCode()" [errorMessage]="errorMessage()">
+      <form nz-form nzLayout="vertical" [formGroup]="saveForm" [class.view-mode]="isViewMode"
+        class="form-body flex-1 overflow-y-auto pr-1 flex flex-col gap-4" (submit)="$event.preventDefault()">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 flex flex-col gap-4">
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <nz-icon nzType="user" nzTheme="outline" class="text-blue-500" />
+                Thông tin bệnh nhân
+              </h4>
+              <nz-form-item class="mb-0">
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-patient" nzRequired>Bệnh nhân</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng chọn bệnh nhân">
+                  <nz-select nzId="appointment-patient" formControlName="patientId" nzShowSearch nzAllowClear
+                    nzPlaceHolder="Tìm theo tên, mã bệnh nhân hoặc số điện thoại" nzNotFoundContent="Chưa có dữ liệu bệnh nhân">
+                    @if (appointmentData; as item) {
+                      <nz-option [nzValue]="item.patientId" [nzLabel]="item.patientName || item.patientCode || 'Bệnh nhân'" />
+                    }
+                  </nz-select>
+                  <div class="field-hint mt-1 text-xs text-gray-400">Chọn bệnh nhân đã có hồ sơ trên hệ thống.</div>
+                </nz-form-control>
+              </nz-form-item>
+              @if (appointmentData; as item) {
+                <div class="patient-details">
+                  <strong>{{ item.patientName }}</strong>
+                  <span>{{ item.patientCode }} · {{ item.patientPhone || 'Chưa có số điện thoại' }}</span>
+                </div>
+              }
+            </nz-card>
+
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <nz-icon nzType="file-text" nzTheme="outline" class="text-blue-500" />
+                Thông tin khám
+              </h4>
+              <nz-form-item>
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-doctor" nzRequired>Bác sĩ</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng chọn bác sĩ">
+                  <nz-select nzId="appointment-doctor" formControlName="doctorId" nzShowSearch nzAllowClear
+                    nzPlaceHolder="Chọn bác sĩ khám" nzNotFoundContent="Chưa có dữ liệu bác sĩ">
+                    @if (appointmentData; as item) { <nz-option [nzValue]="item.doctorId" [nzLabel]="item.doctorName" /> }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-service" nzRequired>Dịch vụ khám</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng chọn dịch vụ khám">
+                  <nz-select nzId="appointment-service" formControlName="serviceId" nzShowSearch nzAllowClear
+                    nzPlaceHolder="Chọn dịch vụ khám" nzNotFoundContent="Chưa có dữ liệu dịch vụ">
+                    @if (appointmentData; as item) { <nz-option [nzValue]="item.serviceId" [nzLabel]="item.serviceName" /> }
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item>
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-reason">Lý do khám</nz-form-label>
+                <nz-form-control nzErrorTip="Lý do khám không vượt quá 2.000 ký tự">
+                  <textarea nz-input id="appointment-reason" formControlName="reason" maxlength="2000"
+                    [nzAutosize]="{ minRows: 3, maxRows: 6 }" aria-describedby="reason-count"
+                    placeholder="Nhập triệu chứng hoặc nhu cầu khám của bệnh nhân"></textarea>
+                  <div id="reason-count" class="character-count mt-1 text-xs text-gray-400">{{ saveFormValueRaw.reason?.length || 0 }}/2.000 ký tự</div>
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item class="mb-0">
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-note">Ghi chú</nz-form-label>
+                <nz-form-control nzErrorTip="Ghi chú không vượt quá 2.000 ký tự">
+                  <textarea nz-input id="appointment-note" formControlName="note" maxlength="2000"
+                    [nzAutosize]="{ minRows: 1, maxRows: 3 }" aria-describedby="note-count"
+                    placeholder="Nhập thông tin cần lưu ý khi tiếp nhận bệnh nhân"></textarea>
+                  <div id="note-count" class="character-count mt-1 text-xs text-gray-400">{{ saveFormValueRaw.note?.length || 0 }}/2.000 ký tự</div>
+                </nz-form-control>
+              </nz-form-item>
+            </nz-card>
+          </div>
+
+          <div class="lg:col-span-1 flex flex-col gap-4">
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <nz-icon nzType="calendar" nzTheme="outline" class="text-blue-500" />
+                Thời gian khám
+              </h4>
+              <nz-form-item>
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-date" nzRequired>Ngày khám</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng chọn ngày khám từ hôm nay trở đi">
+                  <nz-date-picker nzId="appointment-date" formControlName="appointmentDate" nzFormat="dd/MM/yyyy"
+                    nzPlaceHolder="Chọn ngày khám" [nzDisabledDate]="disabledAppointmentDate" />
+                </nz-form-control>
+              </nz-form-item>
+              <nz-form-item class="mb-0">
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-slot" nzRequired>Khung giờ khám</nz-form-label>
+                <nz-form-control nzErrorTip="Vui lòng chọn khung giờ khám">
+                  <nz-select nzId="appointment-slot" formControlName="timeSlotId" nzAllowClear
+                    nzPlaceHolder="Chọn khung giờ còn trống" nzNotFoundContent="Chưa có dữ liệu khung giờ">
+                    @if (appointmentData; as item) { <nz-option [nzValue]="item.timeSlotId" [nzLabel]="item.startTime.slice(0, 5) + ' – ' + item.endTime.slice(0, 5)" /> }
+                  </nz-select>
+                  <div class="field-hint mt-1 text-xs text-gray-400">
+                    <nz-icon nzType="info-circle" nzTheme="outline" />
+                    Khung giờ tương ứng với bác sĩ và ngày khám đã chọn.
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </nz-card>
+
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <nz-icon nzType="gift" nzTheme="outline" class="text-blue-500" />
+                Khuyến mãi
+              </h4>
+              <nz-form-item class="mb-0">
+                <nz-form-label class="!font-medium mt-2" nzFor="appointment-promotion">Chương trình khuyến mãi</nz-form-label>
+                <nz-form-control>
+                  <nz-select nzId="appointment-promotion" formControlName="promotionId" nzShowSearch nzAllowClear
+                    nzPlaceHolder="Chọn khuyến mãi (nếu có)" nzNotFoundContent="Chưa có dữ liệu khuyến mãi">
+                    @if (appointmentData?.promotionId) {
+                      <nz-option [nzValue]="appointmentData!.promotionId" [nzLabel]="appointmentData?.promotionName || appointmentData?.promotionCode || 'Khuyến mãi'" />
+                    }
+                  </nz-select>
+                  <div class="field-hint mt-1 text-xs text-gray-400">
+                    <nz-icon nzType="info-circle" nzTheme="outline" />
+                    Có thể bỏ trống nếu bệnh nhân không sử dụng khuyến mãi.
+                  </div>
+                </nz-form-control>
+              </nz-form-item>
+            </nz-card>
+          </div>
+        </div>
+      </form>
+    </ng-template>
+  </ng-template>
+  @if (!isViewMode) { <p class="preview-note">Chức năng lưu chưa được bật trong bản xem trước.</p> }
+</div>

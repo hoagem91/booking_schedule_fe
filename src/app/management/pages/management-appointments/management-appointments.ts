@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { finalize, Subscription, takeUntil } from 'rxjs';
 import { AppointmentHistoryItem, AppointmentStatus } from '../../../models/appointment.model';
-import { appointmentStatusLabels } from '../../../utils/appointment-ui.utils';
+import { appointmentStatusLabels } from '../../../utils/appointment/appointment-ui.utils';
 import {
   ManagementAppointmentsService,
   clinicToday,
@@ -20,11 +20,17 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { ManagementAppointmentForm } from './management-appointment-detail/management-appointment-form';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
+import { NzTagComponent } from 'ng-zorro-antd/tag';
+import { AppointmentUtils } from '../../../utils/appointment/appointment.utils';
+import { ShareButton } from '../../../components/share-button/share-button';
+import { SettingTableComponent } from '../../../components/setting-table/setting-table.component';
+import { NzInputModule } from 'ng-zorro-antd/input';
 
 @Component({
   standalone: true,
   providers: [NzDrawerService],
-  imports: [DatePipe, ReactiveFormsModule, ShareTableComponent, ShowErrorDirective,NzButtonModule, NzIconModule, NzTableModule, NzPaginationModule],
+  imports: [DatePipe, ReactiveFormsModule, ShareTableComponent, ShowErrorDirective, NzButtonModule, NzIconModule, NzTableModule, NzPaginationModule, NzTooltipDirective, NzTagComponent, ShareButton, SettingTableComponent, NzInputModule],
   templateUrl: './management-appointments.html',
   styleUrls: ['../management-ui.css', './management-appointments.css']
 })
@@ -49,11 +55,11 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
 
   protected override tableColumns: TableColumn[] = [
     {
-      title: 'Lịch hẹn',
+      title: 'Mã lịch hẹn',
       key: 'appointmentCode',
       align: 'left',
-      width: 180,
-      minWidth: 150,
+      width: 220,
+      minWidth: 180,
       fixed: 'left',
       visible: true,
       render: 'text',
@@ -63,31 +69,155 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Bệnh nhân',
       key: 'patientName',
       align: 'left',
-      width: 250,
-      minWidth: 200,
-      visible: true,
-      render: 'custom',
-      ellipsis: false
-    },
-    {
-      title: 'Bác sĩ / Dịch vụ',
-      key: 'doctorName',
-      align: 'left',
-      width: 250,
-      minWidth: 200,
-      visible: true,
-      render: 'custom',
-      ellipsis: false
-    },
-    {
-      title: 'Ngày, giờ khám',
-      key: 'appointmentDate',
-      align: 'center',
       width: 180,
       minWidth: 160,
       visible: true,
       render: 'custom',
       ellipsis: false
+    },
+    {
+      title: 'Mã bệnh nhân',
+      key: 'patientCode',
+      align: 'left',
+      width: 190,
+      minWidth: 160,
+      visible: false,
+      render: 'text',
+      allowCopy: true
+    },
+    {
+      title: 'Số điện thoại',
+      key: 'patientPhone',
+      align: 'left',
+      width: 160,
+      minWidth: 140,
+      visible: true,
+      render: 'text',
+      allowCopy: true
+    },
+    {
+      title: 'Bác sĩ / Dịch vụ',
+      key: 'doctorName',
+      align: 'left',
+      width: 180,
+      minWidth: 160,
+      visible: true,
+      render: 'custom',
+      ellipsis: false
+    },
+    {
+      title: 'Mã bác sĩ',
+      key: 'doctorCode',
+      align: 'left',
+      width: 190,
+      minWidth: 160,
+      visible: false,
+      render: 'text',
+      allowCopy: true
+    },
+    {
+      title: 'Dịch vụ khám',
+      key: 'serviceName',
+      align: 'left',
+      width: 220,
+      minWidth: 180,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Ngày, giờ khám',
+      key: 'appointmentDate',
+      align: 'center',
+      width: 160,
+      minWidth: 140,
+      visible: true,
+      render: 'custom',
+      ellipsis: false
+    },
+    {
+      title: 'Giờ bắt đầu',
+      key: 'startTime',
+      align: 'center',
+      width: 140,
+      minWidth: 120,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Giờ kết thúc',
+      key: 'endTime',
+      align: 'center',
+      width: 140,
+      minWidth: 120,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Giá dịch vụ',
+      key: 'servicePrice',
+      align: 'right',
+      width: 140,
+      minWidth: 120,
+      visible: true,
+      render: 'text',
+      pipeName: 'displayCurrency'
+    },
+    {
+      title: 'Thành tiền',
+      key: 'finalAmount',
+      align: 'right',
+      width: 140,
+      minWidth: 120,
+      visible: true,
+      render: 'text',
+      pipeName: 'displayCurrency'
+    },
+    {
+      title: 'Mã khuyến mãi',
+      key: 'promotionCode',
+      align: 'left',
+      width: 180,
+      minWidth: 150,
+      visible: false,
+      render: 'text',
+      allowCopy: true
+    },
+    {
+      title: 'Tên khuyến mãi',
+      key: 'promotionName',
+      align: 'left',
+      width: 220,
+      minWidth: 180,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Loại giảm giá',
+      key: 'discountType',
+      align: 'center',
+      width: 160,
+      minWidth: 140,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Giá trị giảm',
+      key: 'discountValue',
+      align: 'right',
+      width: 160,
+      minWidth: 140,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Giảm tối đa',
+      key: 'maxDiscount',
+      align: 'right',
+      width: 160,
+      minWidth: 140,
+      visible: false,
+      render: 'text',
+      pipeName: 'displayCurrency'
     },
     {
       title: 'Trạng thái',
@@ -96,14 +226,72 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       width: 150,
       minWidth: 130,
       visible: true,
-      render: 'text',
+      render: 'custom',
       ellipsis: false
+    },
+    {
+      title: 'Đủ điều kiện đánh giá',
+      key: 'reviewEligible',
+      align: 'center',
+      width: 190,
+      minWidth: 160,
+      visible: false,
+      render: 'custom'
+    },
+    {
+      title: 'Lý do',
+      key: 'reason',
+      align: 'left',
+      width: 250,
+      minWidth: 180,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Ghi chú',
+      key: 'note',
+      align: 'left',
+      width: 250,
+      minWidth: 180,
+      visible: false,
+      render: 'text'
+    },
+    {
+      title: 'Ngày đặt lịch',
+      key: 'createdAt',
+      align: 'center',
+      width: 140,
+      minWidth: 120,
+      visible: true,
+      render: 'text',
+      pipeName: 'dateDisplay'
+    },
+    {
+      title: 'Ngày cập nhật',
+      key: 'updatedAt',
+      align: 'center',
+      width: 190,
+      minWidth: 160,
+      visible: false,
+      render: 'text',
+      pipeName: 'dateDisplay'
+    },
+    {
+      title: 'Chức năng',
+      key: 'actions',
+      align: 'center',
+      width: 130,
+      minWidth: 110,
+      fixed: 'right',
+      visible: true,
+      render: 'actions'
     }
   ];
 
   protected override loadData(): void {
     const body : any ={
-      ...this.searchFormValue
+      ...this.searchForm.value,
+      keyword: this.searchForm.controls['keyword'].value?.trim() || null,
     }
     this.request?.unsubscribe();
     this.isLoadingDataSource.set(true);
@@ -140,4 +328,6 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       if (result?.success) this.loadData();
     });
   }
+
+  protected readonly AppointmentUtils = AppointmentUtils;
 }

@@ -331,3 +331,86 @@ Kết quả bộ kiểm thử chung: **58/62 PASS, 4 FAIL**. Cả 4 lỗi nằm 
 Lưu ý tích hợp tiếp theo: BaseListComponent vẫn có logic window/đo kích thước bảng riêng và ShareTable vẫn dùng ngxPermissionsOnly. Refactor này chỉ bảo vệ SSR cho các tiện ích của BaseComponent và cung cấp nguồn quyền mới; chưa chuyển toàn bộ bảng dùng chung sang policy quản lý. Nếu dùng column.permissions, cần đồng bộ cơ chế đó tại ShareTable/service hoặc cấu hình provider thư viện phù hợp; không khôi phục giải mã permission AES trong base.
 
 Các file chỉnh trong đợt này: base.component.ts, base.component.spec.ts, angular.json, tsconfig.spec.json và mục 8 của PROCESS_BUILDING.md. Không chỉnh BaseListComponent, BaseFormComponent, ShareTable hoặc ManagementAppointments.
+
+## 9. Refactor cài đặt bảng theo dự án hiện tại — 21/10/2026
+
+### 9.1. Khảo sát và phạm vi
+
+Yêu cầu: refactor SettingTableComponent. Component đang được trang quản lý lịch hẹn dùng để cập nhật tableColumns qua tableColumnDataOutput. Mã cũ tham chiếu user-profile.store và services/indexeddb/table-setting.service không tồn tại. Drawer nâng cao cũng phụ thuộc cùng các file cũ, nên cần chỉnh đồng bộ để hoàn tất luồng lưu/khôi phục.
+
+Giữ selector app-setting-table, tableKey, model tableColumnData và output tableColumnDataOutput để tương thích màn hình hiện tại. Không thay đổi API khám, dữ liệu bệnh nhân, hoặc logic tìm kiếm/lịch hẹn đang được người dùng phát triển.
+
+### 9.2. Thay đổi thực hiện
+
+- Nguồn tài khoản: ManagementAccessService.user từ /users/me, thay subscription userProfile$ cũ. Chỉ lưu khi có tài khoản ACTIVE và tableKey hợp lệ.
+- Thêm TableSettingService tại services/table-settings/. Vì service IndexedDB cũ không có và dữ liệu tùy chọn rất nhỏ, dùng localStorage trình duyệt, không thêm thư viện/database/backend mới. Khóa lưu gồm booking-schedule, version, userId và tableKey. Tùy chọn của các tài khoản/bảng không dùng chung; chỉ tồn tại trên trình duyệt đó, chưa đồng bộ thiết bị.
+- Chỉ lưu key, visible, width, fixed và align; không lưu dữ liệu khám, tên bệnh nhân, renderer hoặc quyền. Khi đọc lại luôn merge với schema hiện tại: bỏ cột đã xóa/khóa lạ/trùng, thêm cột mới, giữ title/render/permissions/minWidth từ code.
+- Sửa lỗi align không được khôi phục ở mã cũ; kiểm tra chiều rộng theo minWidth, giới hạn tối đa thông thường 2.000px. JSON/giá trị sai không khiến giao diện hỏng; lỗi đọc/ghi storage có thông báo và vẫn dùng được trong bộ nhớ.
+- Effect theo dõi tài khoản, tableKey và schema input. Có nhận diện array đã emit để tránh vòng lặp khi parent nhận output và truyền ngược vào input. Snapshot mặc định tách riêng, không bị thay bằng cấu hình đã lưu.
+- Bật/tắt cột tạo bản sao, không sửa trực tiếp object input; mỗi thay đổi emit một lần. Không cho ẩn cột cuối cùng; cấu hình cũ ẩn hết cột sẽ được phục hồi ít nhất một cột.
+- Drawer nâng cao chỉ chỉnh bản nháp cloneDeep và trả kết quả. Parent là nơi duy nhất lưu/xóa cấu hình. Đóng drawer không lưu; khôi phục mặc định xóa cấu hình của đúng người dùng/bảng và áp dụng schema gốc.
+- Drawer có revision/scope kiểm tra trước khi nhận kết quả; kết quả từ tài khoản/bảng/schema cũ bị bỏ qua. Đóng drawer khi thay scope hoặc component bị hủy; afterClose dùng take(1) và takeUntilDestroyed để không xử lý/lưu trùng.
+- Drawer rộng tối đa 720px và không vượt viewport; hàng tùy chỉnh xuống dòng trên mobile. Thêm nút lên/xuống để sắp xếp bằng bàn phím, giữ kéo thả hiện có.
+- Service không đọc window/localStorage khi SSR. Không tự tải profile ở component cài đặt, không dùng cấu hình cột để thay thế kiểm soát quyền backend.
+
+### 9.3. Kết quả kiểm tra
+
+- Build development: PASS, browser/server bundle và prerender 6 trang public. Có cảnh báo optional chaining dư ở template ManagementAppointments hiện có, không sửa ngoài phạm vi.
+- Kiểm thử riêng: 10/10 PASS trên ChromeHeadless. Bao phủ merge schema/quyền, cột mới/cột đã xóa, chiều rộng, chống ẩn hết, lưu theo tài khoản/bảng, trường được lưu, SSR, output không lặp, input bất biến, đổi người dùng và bỏ drawer cũ, nâng cao/reset, storage lỗi, destroy cleanup, và bản nháp không sửa input.
+- Browser QA docs/qa/table-settings.cjs: PASS với 6 API fixture, không lỗi JavaScript. Kiểm tra trên trang quản lý lịch hẹn thực: ẩn số điện thoại, tải lại vẫn giữ cấu hình, đổi chiều rộng/hiển thị và lưu nâng cao, đóng không lưu, reset xóa storage, drawer mobile 390px không tràn ngang. Chỉ dùng dữ liệu giả, không gọi backend thật.
+- Đã mở ảnh desktop và mobile để kiểm tra trực quan. Ảnh tại docs/screenshots/table-settings/: popover-desktop.png, advanced-desktop.png, advanced-mobile.png.
+- Không chạy lại bộ test nghiệp vụ toàn dự án trong đợt này; kết quả ở trên là build và kiểm tra chức năng cài đặt bảng, không khẳng định các test lịch hẹn cũ đã được đồng bộ với các thay đổi API hiện tại.
+
+### 9.4. Tệp và cách chạy lại
+
+- src/app/components/setting-table/setting-table.component.ts/.html/.css.
+- src/app/components/setting-table/advanced-setting-table/advanced-setting-table.component.ts/.html/.css.
+- src/app/services/table-settings/table-setting.service.ts: lưu cấu hình và merge schema an toàn.
+- src/app/components/setting-table/setting-table.component.spec.ts; thêm pattern test tương ứng vào angular.json và tsconfig.spec.json.
+- docs/qa/table-settings.cjs; docs/screenshots/table-settings/.
+
+Unit test: node node_modules/@angular/cli/bin/ng.js test --watch=false --include "src/app/components/setting-table/**/*.spec.ts".
+Browser QA: chạy ng serve --host 127.0.0.1 --port 4310, rồi node docs/qa/table-settings.cjs. Cấu hình TABLE_QA_NODE_MODULES nếu playwright không được cài trong project, TABLE_QA_CHROME nếu Chrome ở vị trí khác, TABLE_QA_URL nếu đổi địa chỉ frontend.
+
+## 10. Sửa header và ô tìm kiếm lịch hẹn — 22/10/2026
+
+- Yêu cầu: header đã bỏ class page-header nhưng giao diện vẫn mang kiểu cũ; ô search không hiển thị.
+- Kiểm tra source: header hiện tại không có page-header. Rule .page-header còn trong styles.css và management-ui.css nhưng không thể khớp phần tử đã bỏ class; không xóa style chung vì các trang khác vẫn dùng.
+- Kiểm tra trình duyệt: dev server cũ tại 4310 trả DOM/template cũ không có ô input, khác source trên đĩa. Khi chạy dev server mới tại 4311, DOM hiển thị template mới. Nếu trình duyệt người dùng vẫn thấy header cũ, cần khởi động lại đúng dev server đang dùng rồi tải lại trang; không tự dừng tiến trình của người dùng.
+- Import NzInputModule thay vì chỉ NzInputGroupComponent để có cả directive nz-input và các thành phần group cần thiết.
+- Toolbar dùng class riêng appointments-toolbar, giữ id header để BaseList đo chiều cao. Không dùng page-header, không thêm nền gradient/viền trái/padding kiểu card.
+- Gắn input vào formControlName keyword. Trước đó input dùng searchTextControl, nhưng backend AppointmentSearchRequest/API search nhận keyword; payload hiện dùng các trường searchForm cùng keyword đã trim, từ khóa trống thành null và không gửi searchText thừa.
+- Dùng form ngSubmit cho Enter và nút kính lúp type submit, có aria-label; các nút tạo/tải lại/cài đặt vẫn không submit form. Giữ thứ tự ô search và nhóm nút người dùng đang xây, bố cục xuống dòng trên mobile.
+- Build development: PASS. Còn cảnh báo optional chaining dư ở ô trạng thái lịch hẹn hiện có, không đổi phần đó.
+- Browser QA docs/qa/appointments-toolbar.cjs: PASS trên server mới, không lỗi JavaScript, 4 request gồm tải lần đầu + 3 lần tìm. Xác minh keyword được trim, tìm theo tên, xóa từ khóa thành null; Enter và click mỗi lần 1 request; header backgroundImage none, borderLeft 0px, padding 0px và không có class page-header; input nhìn thấy trên desktop/390px/320px. Tất cả API dùng fixture, không gọi backend thật.
+- Ảnh tại docs/screenshots/appointments-toolbar/: desktop.png, mobile-390.png, mobile-320.png. Đã mở kiểm tra trực quan ảnh mobile.
+- Chạy lại QA: dev server tại 4311; TABLE_QA_URL=http://127.0.0.1:4311/management/appointments, TABLE_QA_NODE_MODULES trỏ node_modules chứa playwright nếu không cài trong project; node docs/qa/appointments-toolbar.cjs.
+
+## 11. Sửa căn lề dữ liệu trong ShareTable — 22/10/2026
+
+- Cột trạng thái có align center nhưng td của dòng dữ liệu thiếu nzAlign; trước đó chỉ gắn class text-${column.align} tạo động, phụ thuộc Tailwind có sinh class tương ứng. Header đã có nzAlign nên tiêu đề và dữ liệu có thể không đồng nhất.
+- Thêm nzAlign và style.text-align theo column.align cho td dữ liệu chung (mặc định left), áp dụng cả text/custom/actions. Không ép tất cả cột căn giữa: bệnh nhân/mã vẫn left, tiền vẫn right, trạng thái center; tiếp tục tôn trọng cài đặt người dùng.
+- Nhãn trạng thái của trang lịch hẹn có class appointment-status-tag với margin-inline-end 0, loại bỏ margin cuối mặc định của nz-tag khiến nhãn lệch khỏi tâm ô.
+- Browser QA docs/qa/table-alignment.cjs: PASS trên dữ liệu fixture có một lịch CONFIRMED. Đo computed textAlign center, marginEnd 0px và độ lệch tâm nhãn so với tâm td chỉ 0,0078125px; xác nhận mã lịch vẫn left và có cột tiền right. Không lỗi JavaScript; không gọi backend thật.
+- Ảnh kiểm tra: docs/screenshots/table-alignment/status-centered.png. Đã mở ảnh để kiểm tra trực quan.
+
+## 12. Sửa width trong tableColumns bị cấu hình lưu ghi đè — 22/10/2026
+
+- Yêu cầu: thay width trong tableColumns nhưng giao diện không thay đổi.
+- Đã đo DOM/colgroup với fixture và trình duyệt mới: khi không có preference, width code được render đúng (bệnh nhân 180px, trạng thái 150px). Không thay CSS hoặc ép min/max-width toàn bảng khi chưa có bằng chứng lỗi layout.
+- Nguyên nhân xác định ở persistence: format v1 lưu mọi width, bao gồm các mặc định chưa được người dùng sửa. Khi đổi width trong source, restore vẫn áp snapshot cũ lên schema mới.
+- Format payload v2 chỉ lưu width khi nó khác defaultColumns; kèm defaultWidth gốc. Khi defaultWidth trong source thay đổi, width cũ không còn ghi đè mặc định mới. Tùy chỉnh width theo schema hiện tại vẫn được lưu và khôi phục sau reload.
+- Giữ nguyên tên khóa storage để tương thích; version nằm trong payload. Khi đọc payload v1, bỏ snapshot width cũ không phân biệt được mặc định/tùy chỉnh, nhưng giữ thứ tự, ẩn/hiện, fixed và align. Người dùng từng chỉnh width bằng format cũ có thể đặt lại một lần trong Cài đặt bảng; các thay đổi mới dùng v2. Không xóa toàn bộ cài đặt hoặc dữ liệu người dùng.
+- SettingTableComponent truyền defaultColumns cho service khi lưu. Schema, renderer, quyền và minWidth vẫn lấy từ source; không lưu dữ liệu lịch khám.
+- Unit test riêng cài đặt bảng: 12/12 PASS. Thêm trường hợp đổi width mặc định, giữ width tùy chỉnh theo baseline và đọc snapshot v1.
+- Browser QA docs/qa/table-widths.cjs: PASS, đo trạng thái lần lượt 150px (source, dù fixture v1 lưu 390px), 300px sau chỉnh trong drawer, 300px sau reload. Xác minh payload version 2 có defaultWidth 150px; không lỗi JavaScript, API dùng fixture hoàn toàn.
+- Build development: PASS. Còn cảnh báo optional chaining dư trong template lịch hẹn hiện có; không chỉnh ngoài phạm vi.
+- File thay đổi đợt này: services/table-settings/table-setting.service.ts; components/setting-table/setting-table.component.ts và setting-table.component.spec.ts; docs/qa/table-widths.cjs; PROCESS_BUILDING.md.
+
+## 13. Sửa URL lịch hẹn bị lặp appointments — 22/10/2026
+
+- Nguyên nhân: APPOINTMENT_ADMIN(path) đã thêm appointments/ nhưng API_APPOINTMENT_ADMIN_DETAIL lại truyền appointments thêm lần nữa, tạo /api/admin/appointments/appointments; service chỉ nối /{id}, không phải nơi gây lặp.
+- Sửa helper nhận path tùy chọn, trả đường dẫn gốc không có dấu / thừa khi path trống. DETAIL dùng APPOINTMENT_ADMIN(), SEARCH vẫn dùng APPOINTMENT_ADMIN('search').
+- Đã đối chiếu AdminAppointmentController backend: GET /api/admin/appointments/{id}, POST /api/admin/appointments và POST /api/admin/appointments/search.
+- Kiểm tra thực thi constants sau transpile TypeScript: PASS cho URL chi tiết id=4, tạo mới và tìm kiếm. Không gọi API ghi dữ liệu thật.
+- Kết quả GET frontend: /booking-schedule/api/admin/appointments/4. Hàm create vốn dùng chung constant DETAIL cũng được sửa URL về /api/admin/appointments.

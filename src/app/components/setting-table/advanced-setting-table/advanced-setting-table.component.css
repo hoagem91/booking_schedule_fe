@@ -1,4 +1,11 @@
 /* Advanced Setting Table Styles */
+.settings-help { margin: 0 0 16px; color: #6c8079; font-size: 12px; line-height: 1.7; }
+.settings-validation { color: #a43a32; font-size: 12px; }
+.reorder-buttons { display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 600px) {
+  div[cdkDrag] { flex-wrap: wrap; gap: 10px; }
+  div[cdkDrag] > .flex-1 { flex-basis: calc(100% - 100px); min-width: 120px; }
+}
 div[cdkDrag] {
   transition: box-shadow 0.2s;
 }

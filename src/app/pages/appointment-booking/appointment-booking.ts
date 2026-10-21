@@ -13,7 +13,7 @@ import { PatientService } from '../../services/patient.service';
 import { AppointmentHistoryItem } from '../../models/appointment.model';
 import { BookingSchedule, BookingService, BookingSpecialty, BookingTimeSlot } from '../../models/booking.model';
 import { appointmentErrorMessage, appointmentResponseSucceeded, decodeAppointmentText,
-  isUnavailableSlotResponse } from '../../utils/appointment-ui.utils';
+  isUnavailableSlotResponse } from '../../utils/appointment/appointment-ui.utils';
 
 @Component({
   selector: 'app-appointment-booking', standalone: true,
