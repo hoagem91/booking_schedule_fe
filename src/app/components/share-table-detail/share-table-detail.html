@@ -1,0 +1,42 @@
+<section class="shared-detail-panel">
+  @if (title()) {
+  <h3 class="shared-detail-title">{{ title() }}</h3>
+  }
+
+  @if (errorMessage()) {
+  <div class="shared-detail-state shared-detail-error">{{ errorMessage() }}</div>
+  } @else if (!loading() && dataSource().length === 0) {
+  <div class="shared-detail-state">{{ emptyText() }}</div>
+  } @else {
+  <nz-table class="shared-detail-table" [class.w-full]="!fitContent()"
+    [style.width.px]="fitContent() ? tableWidth() : null"
+    [nzData]="dataSource()" [nzLoading]="loading()"
+    [nzShowPagination]="false" [nzFrontPagination]="false" [nzTableLayout]="'fixed'" nzSize="default">
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+        <th [nzWidth]="column.width + 'px'" [nzAlign]="column.headerAlign ?? column.align"
+          [class]="getColumnClass(column)">
+          {{ column.title }}
+        </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (detailRow of dataSource(); track $index) {
+      <tr>
+        @for (column of columns(); track column.key) {
+        <td [nzAlign]="column.align" [class]="getColumnClass(column)">
+          @if (customCellTemplate()) {
+          <ng-container *ngTemplateOutlet="customCellTemplate(); context: { $implicit: detailRow, column: column }" />
+          } @else {
+          {{ $any(detailRow)[column.key] ?? '—' }}
+          }
+        </td>
+        }
+      </tr>
+      }
+    </tbody>
+  </nz-table>
+  }
+</section>

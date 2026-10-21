@@ -1,0 +1,17 @@
+<button
+  type="button"
+  nz-button
+  nz-tooltip
+  class="share-button"
+  [nzType]="type"
+  [nzSize]="size"
+  [nzLoading]="loading"
+  [disabled]="disabled"
+  [nzTooltipTitle]="tooltip || null"
+  (click)="buttonClick.emit()"
+>
+  @if (icon) {
+    <nz-icon [nzType]="icon" />
+  }
+  <ng-content />
+</button>

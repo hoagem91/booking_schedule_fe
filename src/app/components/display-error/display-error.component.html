@@ -1,0 +1,9 @@
+<div class="flex justify-center h-full items-center">
+  <nz-result nzStatus="500" [nzTitle]="errorCode() ?? 'Không xác định'" [nzSubTitle]="errorMessage()">
+    <div nz-result-extra>
+      @if(allowReloadPage) {
+      <button (click)="reloadPage()" nz-button nzType="primary">Tải lại trang</button>
+      }
+    </div>
+  </nz-result>
+</div>

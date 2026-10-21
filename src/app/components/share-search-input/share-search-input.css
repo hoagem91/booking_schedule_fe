@@ -1,0 +1,53 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: 455px;
+}
+
+.search-icon {
+  color: #8291ad;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.search-icon:hover {
+  color: #287b5e;
+}
+
+:host ::ng-deep .ant-input-affix-wrapper {
+  width: 100%;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-color: #dfe4ea;
+  border-radius: 7px !important;
+  line-height: 28px;
+}
+
+:host ::ng-deep .ant-input-affix-wrapper:hover {
+  border-color: #287b5e;
+}
+
+:host ::ng-deep .ant-input-affix-wrapper-focused {
+  border-color: #287b5e;
+  box-shadow: 0 0 0 2px rgb(40 123 94 / 10%);
+}
+
+:host ::ng-deep .ant-input-affix-wrapper .ant-input {
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 26px;
+}
+
+:host ::ng-deep .ant-input-suffix {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+:host ::ng-deep .ant-input-affix-wrapper-disabled {
+  cursor: not-allowed;
+  background: #f5f6f8;
+}

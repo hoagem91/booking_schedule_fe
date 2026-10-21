@@ -1,0 +1,103 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.date-range-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+:host ::ng-deep nz-range-picker.ant-picker .ant-picker-input > input {
+  font-size: 13px;
+}
+.date-range-controls .ant-picker-range {
+  max-width: 300px;
+}
+:host ::ng-deep nz-range-picker.ant-picker .ant-picker-input > input {
+  font-size: 13px;
+}
+.date-range-periods {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+.date-range-periods button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  height: 26px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease-out;
+}
+.date-range-periods button + button {
+  border-left: 0;
+}
+.date-range-periods button:hover:not(:disabled):not(.is-active) {
+  background: #e2e8f0;
+  color: #334155;
+}
+.date-range-periods button.is-active {
+  background: linear-gradient(135deg, #175657 0%, #2a7b7d 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgb(23 86 87 / 30%);
+}
+.date-range-periods button:disabled {
+  background: transparent;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+.date-range-periods button.is-active:disabled {
+  background: #94aaa7;
+  color: #fff;
+  box-shadow: none;
+}
+.date-range-controls nz-range-picker {
+  flex: 1 1 230px;
+}
+:host ::ng-deep nz-range-picker.ant-picker {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  min-height: 28px;
+  border: 1px solid #dfe4ea;
+  border-radius: 7px;
+  background: #fff;
+}
+:host ::ng-deep .ant-picker-input {
+  min-width: 0;
+}
+:host ::ng-deep .ant-picker-input > input {
+  font-size: 13px;
+  color: #334155;
+}
+:host ::ng-deep .ant-picker:hover {
+  border-color: #9abdaf;
+}
+:host ::ng-deep .ant-picker-focused {
+  border-color: #287b5e;
+  box-shadow: 0 0 0 2px rgb(40 123 94 / 10%);
+}
+::ng-deep .shared-date-range-calendar .ant-picker-panel-container {
+  border: 1px solid #e2e9ef;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgb(15 23 42 / 14%);
+}

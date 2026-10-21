@@ -1,0 +1,21 @@
+:host {
+  display: inline-flex;
+}
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dce6e8;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: none;
+  color: #334155;
+}
+
+.share-button:not(:disabled):hover,
+.share-button:not(:disabled):focus {
+  border-color: #287b5e;
+  background: #f6faf9;
+  color: #287b5e;
+}

@@ -1,0 +1,22 @@
+<nz-select
+  [nzMode]="single ? 'default' : 'multiple'"
+  nzAllowClear
+  nzShowSearch
+  class="multi-select-filter"
+  [class.multi-select-filter--single]="single"
+  [ngModel]="value"
+  [nzDisabled]="disabled"
+  [nzPlaceHolder]="placeholder"
+  [nzDropdownStyle]="dropdownStyle"
+  [nzMaxTagCount]="single ? 0 : maxTagCount"
+  [nzMaxTagPlaceholder]="single ? null : selectedPlaceholder"
+  (ngModelChange)="handleValueChange($event)"
+>
+  @for (option of options; track option.value) {
+    <nz-option [nzValue]="option.value" [nzLabel]="option.text" />
+  }
+</nz-select>
+
+<ng-template #selectedPlaceholder let-selectedList>
+  <span class="selected-count">+ Đã chọn {{ selectedList.length }} mục</span>
+</ng-template>

@@ -1,0 +1,16 @@
+<nz-input-group [nzSuffix]="suffixIconSearch">
+  <input
+    type="text"
+    nz-input
+    [disabled]="disabled"
+    [placeholder]="placeholder"
+    [ngModel]="value"
+    (ngModelChange)="handleValueChange($event)"
+    (keydown.enter)="submitSearch()"
+    (blur)="handleBlur()"
+  />
+</nz-input-group>
+
+<ng-template #suffixIconSearch>
+  <nz-icon class="search-icon" nzType="search" (click)="submitSearch()" />
+</ng-template>

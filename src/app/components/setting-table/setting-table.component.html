@@ -1,0 +1,26 @@
+<button type="button" class="table-settings-trigger" aria-label="Cài đặt bảng" nz-button nzType="default" nz-tooltip nzTooltipTitle="Cài đặt bảng" nz-popover
+  nzPopoverTrigger="click" nzPopoverPlacement="bottomRight" [nzPopoverTitle]="popoverTitleTpl"
+  [nzPopoverContent]="popoverContentTpl" nzPopoverOverlayClassName="table-settings-popover" [(nzPopoverVisible)]="popoverVisible">
+  <nz-icon nzType="setting" />
+</button>
+
+<ng-template #popoverTitleTpl>
+  <div class="table-settings-heading">
+    <span><nz-icon nzType="setting" /> Cài đặt bảng</span>
+    <button type="button" class="table-settings-advanced" nz-button nzType="link" nzSize="small" (click)="openAdvancedDrawer()">
+      <nz-icon nzType="control" />
+      Nâng cao
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #popoverContentTpl>
+  <p class="table-settings-hint">Chọn các cột bạn muốn hiển thị</p>
+  <div class="table-settings-columns">
+    @for (column of tableColumnData(); track column.key) {
+      <label class="table-settings-column" nz-checkbox [nzChecked]="column.visible !== false" (nzCheckedChange)="onToggleColumn(column, $event)">
+        <span [title]="column.title">{{ column.title }}</span>
+      </label>
+    }
+  </div>
+</ng-template>

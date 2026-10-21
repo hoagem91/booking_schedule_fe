@@ -1,0 +1,65 @@
+<div class="flex flex-col h-full">
+  <!-- Column list -->
+  <div class="flex-1 overflow-auto" cdkDropList (cdkDropListDropped)="onDrop($event)">
+    @for (column of columns; track column.key; let i = $index) {
+      <div cdkDrag
+        class="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors">
+        <!-- Drag handle -->
+        <div cdkDragHandle class="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+          <nz-icon nzType="holder" nz-tooltip nzTooltipTitle="Kéo để sắp xếp" />
+        </div>
+
+        <!-- Column name -->
+        <div class="flex-1 text-sm font-medium text-gray-700 truncate">
+          {{ column.title }}
+        </div>
+
+        <!-- Visible checkbox -->
+        <label nz-checkbox [(ngModel)]="column.visible" class="!mr-3">
+          Hiện
+        </label>
+
+        <!-- Width input -->
+        <div class="flex items-center gap-1 w-[120px]">
+          <span class="text-xs text-gray-500 whitespace-nowrap">Rộng</span>
+          <nz-input-number
+            class="flex-1"
+            nzSize="small"
+            [(ngModel)]="column.width"
+            [nzMin]="column.minWidth"
+          />
+        </div>
+
+        <!-- Align select -->
+        <div class="flex items-center gap-1 w-[100px]">
+          <nz-select
+            nzSize="small"
+            class="flex-1"
+            [(ngModel)]="column.align"
+          >
+            <nz-option nzValue="left" nzLabel="Trái" />
+            <nz-option nzValue="center" nzLabel="Giữa" />
+            <nz-option nzValue="right" nzLabel="Phải" />
+          </nz-select>
+        </div>
+
+        <!-- Drag placeholder -->
+        <div *cdkDragPlaceholder class="border-2 border-dashed border-blue-300 rounded bg-blue-50 h-[48px]"></div>
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-gray-50">
+    <button nz-button nzType="default" nzDanger
+      nz-popconfirm nzPopconfirmTitle="Bạn có chắc muốn cài lại mặc định?"
+      (nzOnConfirm)="onResetDefault()">
+      <nz-icon nzType="undo" />
+      Cài lại mặc định
+    </button>
+    <button nz-button nzType="primary" (click)="onSave()">
+      <nz-icon nzType="save" />
+      Lưu
+    </button>
+  </div>
+</div>

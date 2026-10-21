@@ -1,0 +1,362 @@
+<nz-table #table [nzData]="dataSource() || []" [nzLoading]="loading()" [nzFrontPagination]="frontPagination()"
+  [nzTotal]="total()" [nzPageIndex]="currentPage()" [nzPageSize]="pageSize()"
+  [nzScroll]="{ y: scrollY(), x: scrollX() }" [nzShowPagination]="showPagination()"
+  [nzShowSizeChanger]="showSizeChanger()" [nzPageSizeOptions]="pageSizeOptions()"
+  [nzShowTotal]="showTotal() ? paginationTotal : null" (nzQueryParams)="onQueryParamsChange($event)" [nzSize]="size()"
+  nzTableLayout="fixed" class="w-full" [class.share-table-detail]="detailMode()"
+  [class.share-table-with-detail]="expandConfig()?.expandRow">
+
+  <ng-template #paginationTotal let-total let-range="range">
+    <span class="share-table-pagination-total">
+      Hiển thị <strong>{{ range[0] }}–{{ range[1] }}</strong> /
+      <strong>{{ total }}</strong> {{ paginationItemLabel() }}
+    </span>
+  </ng-template>
+
+  <thead class="bg-gray-50">
+    <tr>
+      @if (expandConfig()?.expandRow) {
+      <th [nzWidth]="expandConfig()?.width || '20px'" [nzLeft]="expandConfig()?.fixed === true"></th>
+      }
+      @if (showCheckbox()) {
+      <th nzWidth="30px" [nzLeft]="true" [(nzChecked)]="checked" [nzIndeterminate]="indeterminate"
+        (nzCheckedChange)="onAllChecked($event)"></th>
+      }
+      <th nzWidth="34px" nzAlign="center" [nzLeft]="!detailMode()">#</th>
+      @for(column of columns(); track column.key) {
+      @if (column?.filterOption?.filterType === 'dateRange') {
+      <!-- Date range filter column -->
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false" nzCustomFilter
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+        <nz-filter-trigger [(nzVisible)]="dateRangeVisibleMap[column.filterKey || column.key]"
+          [nzActive]="isDateRangeActive(column.filterKey || column.key)" [nzDropdownMenu]="dateRangeMenu">
+          <nz-icon nzType="calendar" />
+        </nz-filter-trigger>
+        <nz-dropdown-menu #dateRangeMenu="nzDropdownMenu">
+          <div class="table-filter-panel table-filter-panel--range">
+            <nz-range-picker class="w-full mb-3" [ngModel]="dateRangeValueMap[column.filterKey || column.key]"
+              (ngModelChange)="onDateRangeChange(column.filterKey || column.key, $event)"
+              [nzShowTime]="column.filterOption?.dateOnly ? false : true"
+              [nzFormat]="column.filterOption?.dateOnly ? 'dd/MM/yyyy' : 'dd/MM/yyyy HH:mm'" [nzInputReadOnly]="false"
+              [nzPlaceHolder]="column.filterOption?.dateOnly ? ['Từ ngày', 'Đến ngày'] : ['Từ ngày giờ', 'Đến ngày giờ']" />
+            <div class="table-filter-actions">
+              <button nz-button nzSize="small" (click)="resetDateRangeFilter(column)"><nz-icon nzType="reload" /> Đặt
+                lại</button>
+              <button nz-button nzSize="small" nzType="primary" (click)="applyDateRangeFilter(column)"><nz-icon
+                  nzType="check" /> Áp dụng</button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+      </th>
+      } @else if (column?.filterOption?.filterType === 'date') {
+      <!-- Single date filter column -->
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false" nzCustomFilter
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+        <nz-filter-trigger [(nzVisible)]="dateVisibleMap[column.filterKey || column.key]"
+          [nzActive]="isDateActive(column.filterKey || column.key)" [nzDropdownMenu]="dateMenu">
+          <nz-icon nzType="calendar" />
+        </nz-filter-trigger>
+        <nz-dropdown-menu #dateMenu="nzDropdownMenu">
+          <div class="table-filter-panel">
+            <nz-date-picker class="w-full mb-3" [ngModel]="dateValueMap[column.filterKey || column.key]"
+              (ngModelChange)="onSingleDateChange(column.filterKey || column.key, $event)" [nzFormat]="'dd/MM/yyyy'"
+              [nzInputReadOnly]="false" nzPlaceHolder="Chọn ngày" />
+            <div class="table-filter-actions">
+              <button nz-button nzSize="small" (click)="resetDateFilter(column)"><nz-icon nzType="reload" /> Đặt
+                lại</button>
+              <button nz-button nzSize="small" nzType="primary" (click)="applyDateFilter(column)"><nz-icon
+                  nzType="check" /> Áp dụng</button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+      </th>
+      } @else if (column?.filterOption?.filterType === 'timeRange') {
+      <!-- Time range filter column -->
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false" nzCustomFilter
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+        <nz-filter-trigger [(nzVisible)]="timeRangeVisibleMap[column.filterKey || column.key]"
+          [nzActive]="isTimeRangeActive(column.filterKey || column.key)" [nzDropdownMenu]="timeRangeMenu">
+          <nz-icon nzType="clock-circle" />
+        </nz-filter-trigger>
+        <nz-dropdown-menu #timeRangeMenu="nzDropdownMenu">
+          <div class="table-filter-panel">
+            <div class="flex gap-2 w-full mb-3">
+              <nz-time-picker class="w-1/2" [ngModel]="timeRangeValueMap[column.filterKey || column.key]?.[0]"
+                (ngModelChange)="onTimeRangeChange(column.filterKey || column.key, 0, $event)"
+                [nzDisabledHours]="getDisabledStartTimeHours(column.filterKey || column.key)"
+                [nzDisabledMinutes]="getDisabledStartTimeMinutes(column.filterKey || column.key)" nzFormat="HH:mm"
+                nzPlaceHolder="Từ giờ" />
+              <nz-time-picker class="w-1/2" [ngModel]="timeRangeValueMap[column.filterKey || column.key]?.[1]"
+                (ngModelChange)="onTimeRangeChange(column.filterKey || column.key, 1, $event)"
+                [nzDisabledHours]="getDisabledEndTimeHours(column.filterKey || column.key)"
+                [nzDisabledMinutes]="getDisabledEndTimeMinutes(column.filterKey || column.key)" nzFormat="HH:mm"
+                nzPlaceHolder="Đến giờ" />
+            </div>
+            <div class="table-filter-actions">
+              <button nz-button nzSize="small" (click)="resetTimeRangeFilter(column)"><nz-icon nzType="reload" /> Đặt
+                lại</button>
+              <button nz-button nzSize="small" nzType="primary" (click)="applyTimeRangeFilter(column)"><nz-icon
+                  nzType="check" /> Áp dụng</button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+      </th>
+      } @else if (column?.filterOption?.filterType === 'numberRange') {
+      <!-- Number range filter column -->
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false" nzCustomFilter
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+        <nz-filter-trigger [(nzVisible)]="numberRangeVisibleMap[column.filterKey || column.key]"
+          [nzActive]="isNumberRangeActive(column.filterKey || column.key)" [nzDropdownMenu]="numberRangeMenu">
+          <nz-icon nzType="dollar" />
+        </nz-filter-trigger>
+        <nz-dropdown-menu #numberRangeMenu="nzDropdownMenu">
+          <div class="table-filter-panel">
+            <div class="flex gap-2 w-full mb-3">
+              <nz-input-number class="w-1/2"
+                [ngModel]="numberRangeValueMap[column.filterKey || column.key]?.[0] ?? null"
+                (ngModelChange)="onNumberRangeChange(column.filterKey || column.key, 0, $event)"
+                [nzMin]="column.filterOption?.numberRangeMin ?? 0"
+                [nzStep]="column.filterOption?.numberRangeStep ?? 1000" nzPlaceHolder="Từ" />
+              <nz-input-number class="w-1/2"
+                [ngModel]="numberRangeValueMap[column.filterKey || column.key]?.[1] ?? null"
+                (ngModelChange)="onNumberRangeChange(column.filterKey || column.key, 1, $event)"
+                [nzMin]="column.filterOption?.numberRangeMin ?? 0"
+                [nzStep]="column.filterOption?.numberRangeStep ?? 1000" nzPlaceHolder="Đến" />
+            </div>
+            <div class="table-filter-actions">
+              <button nz-button nzSize="small" (click)="resetNumberRangeFilter(column)"><nz-icon nzType="reload" /> Đặt
+                lại</button>
+              <button nz-button nzSize="small" nzType="primary" (click)="applyNumberRangeFilter(column)"><nz-icon
+                  nzType="check" /> Áp dụng</button>
+            </div>
+          </div>
+        </nz-dropdown-menu>
+      </th>
+      } @else if (column?.filterOption?.allowFilter && column?.filterOption?.useSelectFilter) {
+      <!-- Custom Select Filter -->
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false" nzCustomFilter
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+        <nz-filter-trigger [(nzVisible)]="selectVisibleMap[column.filterKey || column.key]"
+          [nzActive]="isSelectActive(column.filterKey || column.key)" [nzDropdownMenu]="selectMenu">
+          <nz-icon nzType="filter" nzTheme="fill" />
+        </nz-filter-trigger>
+        <nz-dropdown-menu #selectMenu="nzDropdownMenu">
+          <div class="table-filter-select">
+
+            <nz-select #filterSelect class="w-full" [nzOpen]="selectVisibleMap[column.filterKey || column.key]"
+              (nzOpenChange)="onSelectFilterOpenChanged(column.filterKey || column.key, $event, filterSelect)"
+              [nzMode]="column.filterOption?.filterMultiple ? 'multiple' : 'default'" [nzMaxTagCount]="0"
+              [nzMaxTagPlaceholder]="tagPlaceholder" [nzShowSearch]="true"
+              nzDropdownClassName="custom-filter-dropdown-spacing" nzAllowClear nzPlaceHolder="Tìm kiếm & Chọn"
+              [ngModel]="selectValueMap[column.filterKey || column.key]"
+              (ngModelChange)="onSelectValueChange(column, $event)"
+              [nzDropdownRender]="actionTemplate"> @for(opt of selectFilterOptionsMap[column.filterKey || column.key] || [];
+              track opt.value) {
+              <nz-option [nzValue]="opt.value" [nzLabel]="opt.text" nzCustomContent>
+                <div class="flex items-center">
+                  @if (column.filterOption?.filterMultiple) {
+                  <label nz-checkbox [nzChecked]="isSelectOptionSelected(column.filterKey || column.key, opt.value)"
+                    class="mr-2 pointer-events-none"></label>
+                  }
+                  <span>{{ opt.text }}</span>
+                </div>
+              </nz-option>
+              }
+            </nz-select>
+
+            <ng-template #tagPlaceholder let-selectedList>
+              <span class="text-blue-600 font-medium">+ Đã chọn {{ selectedList.length }} mục</span>
+            </ng-template>
+
+            <ng-template #actionTemplate>
+              <nz-divider class="m-0"></nz-divider>
+              <div class="table-filter-actions table-filter-actions--select">
+                <button nz-button nzType="default" nzSize="small" (click)="resetSelectFilter(column)"><nz-icon
+                    nzType="reload" /> Đặt lại</button>
+                <button nz-button nzType="primary" nzSize="small" (click)="applySelectFilter(column)"><nz-icon
+                    nzType="check" /> Áp dụng</button>
+              </div>
+            </ng-template>
+
+          </div>
+        </nz-dropdown-menu>
+      </th>
+      } @else {
+      <th [nzAlign]="column.headerAlign ?? column.align" [nzEllipsis]="column.ellipsis" [nzWidth]="column.width + 'px'"
+        [style.width.px]="column.width"
+        [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [nzColumnKey]="column.filterKey || column.key" [nzShowSort]="column.sortable ? true : false"
+        [nzSortFn]="column.sortable ? true : null" [nzSortOrder]="column.sortOrder || null"
+        [nzSortDirections]="column.sortDirections || ['ascend', 'descend', null]"
+        [nzSortPriority]="column.sortPriority !== undefined ? column.sortPriority : false"
+        [nzShowFilter]="column?.filterOption?.allowFilter ? true : false"
+        [nzFilterFn]="column?.filterOption?.allowFilter ? true : false"
+        [nzFilters]="column?.filterOption?.filterData || []"
+        [nzFilterMultiple]="column?.filterOption?.filterMultiple || false" [class]="getColumnClass(column)"
+        *ngxPermissionsOnly="column.permissions || []">
+        {{ column.title }}
+      </th>
+      }
+      }
+    </tr>
+  </thead>
+
+  <ng-template #summaryRow>
+    <tr class="font-bold summary-row total-row">
+      @if (expandConfig()?.expandRow) {
+      <td [nzLeft]="expandConfig()?.fixed === true"></td>
+      }
+      @if (showCheckbox()) {
+      <td [nzLeft]="true"></td>
+      }
+      <td [nzLeft]="!detailMode()"></td>
+      @for (column of columns(); track column.key; let i = $index) {
+      @if (shouldRenderSummaryCell(i)) {
+      <td [nzAlign]="column.align" [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [style.width.px]="column.width"
+        [attr.colspan]="column.key === summaryColumnKey() ? summaryLabelSpan() : null" [ngClass]="{
+              'text-blue-600': column.key === 'totalRevenue' || column.key === 'total'
+            }">
+        @if (column.key === summaryColumnKey()) {
+        @if (summaryLabelTwoLines()) {
+        <span class="block text-right">{{ summaryLabel() }}</span>
+        @if (getSummaryLabelValue(summaryData()) !== null && getSummaryLabelValue(summaryData()) !== undefined) {
+        <span class="block text-right text-xs font-normal">
+          {{ summaryLabelValuePrefix() }}{{ getSummaryLabelValue(summaryData()) }}
+        </span>
+        }
+        } @else {
+        <span class="block text-right">{{ summaryLabel() }}@if
+          (getSummaryLabelValue(summaryData())) { : {{
+          getSummaryLabelValue(summaryData()) }} }</span>
+        }
+        } @else {
+        @if (summaryCurrencyTwoLines() && column.pipeName === 'displayCurrency') {
+        @if (getSummaryCurrencyParts(summaryData(), column); as currency) {
+        <span class="block leading-tight">{{ currency.amount }}</span>
+        <span class="block leading-tight">{{ currency.unit }}</span>
+        } @else {
+        -
+        }
+        } @else {
+        {{ getTransformedCellValue(summaryData(), column) ?? '-' }}
+        }
+        }
+      </td>
+      }
+      }
+    </tr>
+  </ng-template>
+
+  @if (summaryData() && stickySummary()) {
+  <tfoot nzSummary nzFixed="top">
+    <ng-container *ngTemplateOutlet="summaryRow"></ng-container>
+  </tfoot>
+  }
+
+  <tbody class="bg-white">
+    @if (summaryData() && !stickySummary()) {
+    <ng-container *ngTemplateOutlet="summaryRow"></ng-container>
+    }
+    @for (data of table.data; track data.id || $index; let i = $index) {
+    <tr class="data-row" [ngClass]="{'highlight-row': highlightId() !== null && data.id === highlightId()}">
+      @if (expandConfig()?.expandRow) {
+      <td [nzExpand]="isExpanded(data.id || i)" [nzLeft]="expandConfig()?.fixed === true"
+        (nzExpandChange)="onExpandChange(data, data.id || i, $event)"></td>
+      }
+      @if (showCheckbox()) {
+      <td [nzLeft]="true" [nzChecked]="setOfCheckedId.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)">
+      </td>
+      }
+      <td nzAlign="center" [nzLeft]="!detailMode()">{{ showPagination() ? (currentPage() - 1) * pageSize() + i + 1 : i +
+        1 }}
+      </td>
+      @for (column of columns(); track column.key) {
+      <td [nzEllipsis]="column.ellipsis" [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+        [style.width.px]="column.width"
+        [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
+
+        <!-- Kiểu text -->
+        @if (column.render === 'text' || !column.render) {
+        @if (column.ellipsis) {
+        <p [nzEllipsis]="column.ellipsis" nz-typography nz-tooltip
+          [nzCopyable]="(column.allowCopy ?? false) && !!getTransformedCellValue(data, column)"
+          [nzCopyTooltips]="['Sao chép', 'Đã sao chép']"
+          [nzTooltipTitle]="column.tooltip ? getTransformedCellValue(data, column) : null"
+          [nzContent]="getTransformedCellValue(data, column) || '-'" *ngxPermissionsOnly="column.permissions || []">
+        </p>
+        } @else {
+        <p nz-typography [nzCopyable]="(column.allowCopy ?? false) && !!getTransformedCellValue(data, column)"
+          [nzCopyTooltips]="['Sao chép', 'Đã sao chép']" [nzContent]="getTransformedCellValue(data, column) || '-'"
+          *ngxPermissionsOnly="column.permissions || []">
+        </p>
+        }
+        }
+
+        <!-- Kiểu link -->
+        @if (column.render === 'link') {
+        <a nz-typography class="text-blue-600 hover:underline cursor-pointer"
+          [title]="getTransformedCellValue(data, column)" (click)="openLink(getTransformedCellValue(data, column))"
+          *ngxPermissionsOnly="column.permissions || []">
+          {{ getTransformedCellValue(data, column) || '-' }}
+        </a>
+        }
+
+        <!-- Custom Template -->
+        @if (column.render === 'custom' && customCellTemplate()) {
+        <ng-container *ngTemplateOutlet="customCellTemplate(); context: { $implicit: data, column: column, index: i }">
+        </ng-container>
+        }
+
+        <!-- Actions Template -->
+        @if (column.render === 'actions' && actionsCellTemplate()) {
+        <ng-container *ngTemplateOutlet="actionsCellTemplate(); context: { $implicit: data, column: column, index: i }">
+        </ng-container>
+        }
+      </td>
+      }
+    </tr>
+    @if (expandTemplate() && isExpanded(data.id || i)) {
+    <tr [nzExpand]="true">
+      <ng-container *ngTemplateOutlet="expandTemplate(); context: { $implicit: data, index: i }"></ng-container>
+    </tr>
+    }
+    }
+  </tbody>
+
+</nz-table>

@@ -1,0 +1,605 @@
+:host ::ng-deep .inner-content {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+:host ::ng-deep .ant-btn-icon-only {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+.directory-heading {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+:host:has(.warehouse-movement-report) {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  container-type: inline-size;
+}
+.warehouse-movement-report {
+  min-width: 0;
+  max-width: 100%;
+}
+.warehouse-movement-report .movement-export-button.ant-btn {
+  height: 28px;
+  min-height: 28px;
+  padding-inline: 10px;
+}
+.warehouse-movement-report .directory-heading {
+  flex-wrap: wrap;
+}
+.warehouse-movement-report .directory-heading > .movement-heading-actions {
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  flex: 1 1 auto;
+  margin-left: auto;
+}
+.movement-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-direction: row;
+}
+.movement-heading-actions .filter-field-select {
+  width: min(100%, 220px);
+  min-width: min(100%, 220px);
+  flex: 0 1 220px;
+}
+.movement-heading-actions .filter-field-select app-share-select-input {
+  display: contents;
+}
+.movement-heading-actions .filter-field-date {
+  flex: 0 1 450px;
+  min-width: min(100%, 280px);
+}
+.warehouse-movement-report .directory-heading .filter-field {
+  width: 100%;
+  height: auto;
+}
+.warehouse-movement-report app-share-date-range {
+  display: block;
+  width: 100%;
+}
+.warehouse-movement-report .stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.warehouse-movement-report .stat-card,
+.warehouse-movement-report .stat-card > div {
+  min-width: 0;
+}
+.warehouse-movement-report .movement-unit-breakdown {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: 34px;
+  overflow-y: auto;
+  white-space: nowrap;
+}
+.warehouse-movement-report .movement-unit-breakdown span {
+  display: block;
+}
+.warehouse-movement-report .filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.warehouse-movement-report .filter-panel .filter-field {
+  width: min(100%, 460px);
+}
+.warehouse-movement-report app-share-search-input {
+  width: 100%;
+}
+.warehouse-movement-report .movement-zero-filter {
+  align-self: flex-end;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+.warehouse-movement-report .filter-field-actions {
+  margin-left: auto;
+}
+.movement-search-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.movement-search-field {
+  width: min(100%, 460px);
+  min-width: 220px;
+  flex: 1 1 320px;
+}
+.movement-search-row .movement-zero-filter {
+  align-self: center;
+  margin: 0;
+}
+.movement-search-row .filter-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.warehouse-movement-report .table-card {
+  min-width: 0;
+  max-width: 100%;
+}
+.movement-material {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.movement-quick-filter-cell {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.movement-quick-filter-cell:hover {
+  color: #0f766e;
+  text-decoration: underline;
+}
+.movement-cell-lines {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+.movement-cell-lines strong {
+  overflow: hidden;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.movement-cell-lines small {
+  overflow: hidden;
+  color: #78849a;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.movement-number {
+  align-items: flex-end;
+}
+.directory-heading h1 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.directory-heading--price-history {
+  flex-wrap: wrap;
+}
+.directory-heading--price-history .price-history-date {
+  width: min(100%, 600px);
+  margin-left: auto;
+  height: auto;
+}
+.price-history-date app-share-date-range {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+.filter-panel.filter-panel--price-history-search {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+.filter-panel--price-history-search .filter-field {
+  width: min(100%, 460px);
+}
+.filter-panel--price-history-search app-share-search-input {
+  width: 100%;
+}
+.filter-panel--price-history-search .filter-field-actions {
+  margin-left: auto;
+}
+.stat-card .price-history-leader {
+  min-width: 0;
+}
+.price-history-leader small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.directory-heading p {
+  margin: 3px 0 0;
+  color: #778195;
+  font-size: 13px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 8px;
+}
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 18px;
+  border: 1px solid #e9edf3;
+  border-radius: 12px;
+  background: #fff;
+  min-height: 68px;
+  box-shadow: 0 3px 12px rgb(15 23 42 / 4%);
+}
+.stat-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+}
+.stat-label,
+.stat-card strong,
+.stat-card small {
+  display: block;
+}
+.stat-label {
+  color: #555d6d;
+  font-size: 16px;
+  font-weight: 600;
+}
+.stat-card strong {
+  color: #172033;
+  font-size: 22px;
+  line-height: 1.15;
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+.stat-card small {
+  width: max-content;
+  margin-top: 0px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.stat-card-green .stat-icon {
+  background: #168a70;
+}
+.stat-card-blue .stat-icon {
+  background: #2563eb;
+}
+.stat-card-blue small {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+.stat-card-gray .stat-icon {
+  background: #64748b;
+}
+.stat-card-gray small {
+  color: #475569;
+  background: #f1f5f9;
+}
+.stat-card-green small {
+  color: #168a70;
+  background: #e7f7f1;
+}
+.stat-card-mint .stat-icon {
+  background: #0dbb8a;
+}
+.stat-card-mint small {
+  color: #07966f;
+  background: #e3faf2;
+}
+.stat-card-purple .stat-icon {
+  background: #8d1598;
+}
+.stat-card-purple small {
+  color: #8d1598;
+  background: #f8e8fa;
+}
+.stat-card-red .stat-icon {
+  background: #f04444;
+}
+.stat-card-red small {
+  color: #df3535;
+  background: #ffebeb;
+}
+.stat-card-yellow .stat-icon {
+  background: #d69b12;
+}
+.stat-card-yellow small {
+  color: #9a7011;
+  background: #fff7cf;
+}
+.filter-panel.no-padding {
+  padding: 0px;
+  box-shadow: none;
+  border: none;
+  margin-bottom: 6px;
+}
+.filter-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 8px 15px;
+  margin-bottom: 8px;
+  border: 1px solid #e7ebf0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px #0f172a09;
+}
+.directory-heading--stacked-filters {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+.directory-heading--stacked-filters > .heading-filter-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.heading-filter-control {
+  width: min(100%, 280px);
+  min-width: 0;
+  flex: 0 1 280px;
+}
+.heading-filter-controls-group {
+  display: flex;
+  width: min(100%, 568px);
+  min-width: 0;
+  flex: 0 1 568px;
+  gap: 8px;
+}
+.heading-filter-controls-group > .heading-filter-control {
+  width: auto;
+  flex: 1 1 0;
+}
+.filter-panel-warehouse .filter-field {
+  height: 34px;
+}
+
+.filter-field {
+  min-width: 0;
+  /* height: 44px; */
+  display: flex;
+  grid-column: span 1;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.filter-field-date {
+}
+.filter-field label {
+  margin-bottom: 2px;
+  line-height: 1.2;
+  display: block;
+  margin-bottom: 2px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.filter-field-actions {
+  min-width: 0;
+  grid-column: span 1;
+}
+.filter-field-actions label {
+  margin-bottom: 2px;
+  line-height: 1.2;
+  text-align: right;
+  display: block;
+  margin-bottom: 2px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 8px;
+  height: 100%;
+  /* margin-bottom: 2px; */
+}
+.table-card {
+  overflow: hidden;
+  border: 1px solid #e6eaf0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgb(15 23 42 / 4%);
+}
+
+.table-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 23px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.table-badge-active,
+.table-badge-weekly {
+  color: #16845f;
+  background: #dcf8ed;
+}
+.table-badge-not-started,
+.table-badge-fixed-date {
+  color: #315fc4;
+  background: #e8efff;
+}
+.table-badge-expired {
+  color: #d94b55;
+  background: #ffe8e8;
+}
+.table-badge-date-range {
+  color: #9a7011;
+  background: #fff7cf;
+}
+.table-badge-type,
+.table-badge-upcoming {
+  color: #315fc4;
+  background: #e8efff;
+}
+.table-badge-waiting {
+  color: #9a7011;
+  background: #fff7cf;
+}
+.table-badge-approved {
+  color: #16845f;
+  background: #dcf8ed;
+}
+.table-badge-rejected {
+  color: #d94b55;
+  background: #ffe8e8;
+}
+
+::ng-deep .ant-picker-range {
+  width: 100%;
+  height: 28px;
+  border-radius: 7px;
+}
+::ng-deep .ant-picker-input > input {
+  font-size: 13px;
+}
+.heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.heading-date-range {
+  display: block;
+  width: min(100%, 270px);
+  min-width: min(100%, 270px);
+}
+.heading-date-range app-share-date-range {
+  display: block;
+  width: 100%;
+}
+.filter-panel.filter-panel--search-only {
+  grid-template-columns: minmax(250px, 1fr) auto;
+}
+.filter-panel--search-only .filter-field-actions {
+  justify-self: end;
+}
+
+.payment-gateway-btn {
+  height: 32px;
+  border-radius: 9px;
+  color: #287b5e;
+}
+
+::ng-deep .ant-picker-range {
+  max-width: 455px;
+}
+
+@media (max-width: 641px) {
+  .directory-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .directory-heading p {
+    display: none;
+  }
+  .stat-grid,
+  .filter-panel {
+    grid-template-columns: 1fr !important;
+  }
+  .directory-heading--stacked-filters > .heading-filter-row {
+    flex-wrap: wrap;
+  }
+  .heading-filter-controls-group {
+    width: 100%;
+    flex-basis: 100%;
+  }
+  .movement-search-row {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .movement-search-field {
+    width: 100%;
+    min-width: 0;
+    flex-basis: 100%;
+  }
+  .filter-actions {
+    grid-column: auto;
+    justify-content: flex-end;
+  }
+  .stat-card {
+    min-height: 92px;
+    padding: 14px;
+  }
+}
+@media (max-width: 1101px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .filter-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .filter-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* Summary nhập/xuất ưu tiên 4 thẻ một hàng, dựa theo chiều rộng thực của vùng báo cáo. */
+.warehouse-movement-report {
+  container-name: warehouse-movement-report;
+  container-type: inline-size;
+}
+.warehouse-movement-report .movement-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+.warehouse-movement-report .movement-summary-grid .stat-label,
+.warehouse-movement-report .movement-summary-grid strong,
+.warehouse-movement-report .movement-summary-grid small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+::ng-deep .ant-table-summary,
+::ng-deep .ant-table-summary .ant-table-cell.ant-table-cell-fix-left,
+::ng-deep .ant-table-summary > tr > th,
+::ng-deep .ant-table-summary > tr > td {
+  position: relative;
+  background: #fff3e0;
+}
+.stat-card strong {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+.stat-card small {
+  padding: 2px 4px;
+}
+@container warehouse-movement-report (max-width: 760px) {
+  .warehouse-movement-report .movement-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@container warehouse-movement-report (max-width: 440px) {
+  .warehouse-movement-report .movement-summary-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

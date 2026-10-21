@@ -1,0 +1,18 @@
+:host { display: inline-flex; }
+:host .table-settings-trigger.ant-btn { width: 28px; height: 28px; padding: 0; border: 1px solid #dce6e8; border-radius: 9px; background: #f6faf9; box-shadow: none; color: #175657; }
+:host .table-settings-trigger.ant-btn:hover,
+:host .table-settings-trigger.ant-btn:focus { border-color: #97c5bc; background: #e8f4f0; color: #175657; }
+::ng-deep .table-settings-popover .ant-popover-inner { overflow: hidden; border: 1px solid #e2e9ef; border-radius: 13px; box-shadow: 0 12px 36px rgb(15 23 42 / 12%); }
+::ng-deep .table-settings-popover .ant-popover-title { padding: 13px 15px; border-bottom-color: #edf1f5; }
+::ng-deep .table-settings-popover .ant-popover-inner-content { padding: 10px; }
+::ng-deep .table-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 270px; }
+::ng-deep .table-settings-heading > span { display: flex; align-items: center; gap: 8px; color: #26364a; font-size: 13px; font-weight: 600; }
+::ng-deep .table-settings-heading .anticon { color: #438c82; }
+::ng-deep .table-settings-advanced.ant-btn { padding: 0 8px; border-radius: 7px; background: #eef6f3; color: #175657; font-size: 12px; }
+::ng-deep .table-settings-hint { margin: 2px 8px 9px; color: #8995a7; font-size: 11px; }
+::ng-deep .table-settings-columns { display: flex; flex-direction: column; gap: 2px; width: 290px; max-width: calc(100vw - 48px); max-height: 360px; overflow-y: auto; scrollbar-width: thin; }
+::ng-deep .table-settings-column.ant-checkbox-wrapper { display: flex; align-items: center; gap: 10px; margin: 0; padding: 9px 10px; border-radius: 8px; color: #526174; font-size: 12px; transition: background .18s; }
+::ng-deep .table-settings-column.ant-checkbox-wrapper:hover { background: #f1f7f5; }
+::ng-deep .table-settings-column.ant-checkbox-wrapper-checked { background: #f6faf8; color: #175657; }
+::ng-deep .table-settings-column .ant-checkbox + span { overflow: hidden; padding: 0; text-overflow: ellipsis; white-space: nowrap; }
+::ng-deep .table-settings-column .ant-checkbox-inner { border-radius: 5px; }

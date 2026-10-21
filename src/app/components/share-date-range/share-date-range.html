@@ -1,0 +1,22 @@
+<div class="date-range-controls">
+  @if (showPeriodOptions) {
+  <div class="date-range-periods">
+    <button type="button" [disabled]="disabled" [class.is-active]="period === 'date'"
+      (click)="onPeriodChanged('date')">Ngày</button>
+    <button type="button" [disabled]="disabled" [class.is-active]="period === 'month'"
+      (click)="onPeriodChanged('month')">Tháng</button>
+    @if (showQuarterOption) {
+      <button type="button" [disabled]="disabled" [class.is-active]="period === 'quarter'"
+        (click)="onPeriodChanged('quarter')">Quý</button>
+    }
+    <button type="button" [disabled]="disabled" [class.is-active]="period === 'year'"
+      (click)="onPeriodChanged('year')">Năm</button>
+  </div>
+  }
+  <nz-range-picker [nzMode]="period" [ngModel]="value" (ngModelChange)="onRangeChanged($event)" [nzDisabled]="disabled"
+    [nzAllowClear]="allowClear"
+    [nzShowTime]="showTime"
+    [nzFormat]="period === 'year' ? 'yyyy' : period === 'quarter' ? 'QQQ/yyyy' : period === 'month' ? 'MM/yyyy' : showTime ? 'dd/MM/yyyy HH:mm' : 'dd/MM/yyyy'"
+    [nzPlaceHolder]="['Ngày bắt đầu', 'Ngày kết thúc']" nzSeparator="→"
+    nzDropdownClassName="shared-date-range-calendar" />
+</div>

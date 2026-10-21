@@ -1,0 +1,50 @@
+<nz-spin [nzSpinning]="loading">
+  @if (employees.length) {
+    <div class="employee-card-grid">
+      @for (employee of employees; track employee.id) {
+        <article class="employee-card">
+          <div class="employee-card__main">
+            <nz-avatar nzIcon="user" [nzSrc]="employee.avatarImage || undefined" [nzSize]="58" />
+            <strong>{{ employee.name || '-' }}</strong>
+            <span class="employee-card__position">{{ employee.jobTitleName || '-' }}</span>
+            <span class="employee-card__branch">{{ employee.branchName || '-' }}</span>
+            <span
+              class="employee-card__status"
+              [class.is-active]="employee.employeeState === EmployeeState.ACTIVE"
+              [class.is-leave]="employee.employeeState === EmployeeState.MATERNITY_LEAVE"
+              [class.is-off]="employee.employeeState === EmployeeState.RESIGNED"
+            >
+              {{ getStateText(employee.employeeState) }}
+            </span>
+          </div>
+          <div class="employee-card__contact">
+            <div>
+              <nz-icon nzType="mail" /><span>{{ employee.email || '-' }}</span>
+            </div>
+            <div>
+              <nz-icon nzType="phone" /><span>{{ employee.phone || '-' }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!loading) {
+    <nz-empty nzNotFoundContent="Không có nhân viên" />
+  }
+
+  <div class="employee-grid-pagination">
+    <span
+      >Hiển thị <strong>{{ employees.length }}</strong> / <strong>{{ total }}</strong> nhân
+      viên</span
+    >
+    <nz-pagination
+      [nzPageIndex]="currentPage"
+      [nzPageSize]="pageSize"
+      [nzTotal]="total"
+      [nzShowSizeChanger]="true"
+      [nzPageSizeOptions]="[10, 20, 50, 100]"
+      (nzPageIndexChange)="currentPageChange.emit($event)"
+      (nzPageSizeChange)="pageSizeChange.emit($event)"
+    />
+  </div>
+</nz-spin>

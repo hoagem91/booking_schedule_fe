@@ -1,0 +1,8 @@
+:host { display: block; width: 100%; overflow: hidden; }
+:host ::ng-deep .ant-radio-group { display: flex; flex-wrap: nowrap; width: 100%; max-width: 100%; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+:host ::ng-deep .ant-radio-button-wrapper { height: 36px; flex: 0 0 auto; padding: 0 14px; font-size: 10px; font-weight: 600; line-height: 34px; text-transform: uppercase; }
+:host ::ng-deep .ant-radio-button-wrapper:first-child { border-radius: 6px 0 0 6px; }
+:host ::ng-deep .ant-radio-button-wrapper:last-child { border-radius: 0 6px 6px 0; }
+:host ::ng-deep .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) { z-index: 1; border-color: #287b5e; color: #fff; background: #287b5e; box-shadow: -1px 0 0 0 #287b5e; }
+:host ::ng-deep .ant-radio-button-wrapper:hover { color: #287b5e; }
+:host ::ng-deep .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover { color: #fff; background: #329773; }

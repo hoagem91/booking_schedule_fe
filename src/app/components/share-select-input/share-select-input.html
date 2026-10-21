@@ -1,0 +1,22 @@
+<nz-select
+  [nzMode]="multiple ? 'multiple' : 'default'"
+  [nzAllowClear]="allowClear"
+  [nzShowSearch]="showSearch"
+  [class]="'share-select-input ' + customClass"
+  [class.share-select-input--single]="!multiple"
+  [nzPlaceHolder]="placeholder"
+  [nzDropdownStyle]="dropdownStyle"
+  [nzMaxTagCount]="maxTagCount"
+  [nzMaxTagPlaceholder]="multiple ? customTagTemplate : null"
+  [nzDisabled]="disabled"
+  [ngModel]="value"
+  (ngModelChange)="onModelChange($event)"
+>
+  @for (item of options; track item[valueKey]) {
+    <nz-option [nzValue]="item[valueKey]" [nzLabel]="item[labelKey]"></nz-option>
+  }
+</nz-select>
+
+<ng-template #customTagTemplate let-selectedList>
+  <span class="selected-count">+ Đã chọn {{ selectedList.length }} mục</span>
+</ng-template>

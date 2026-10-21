@@ -1,0 +1,19 @@
+<div class="summary-card" [ngClass]="cardClass()" [title]="tooltip() || label()">
+  <div class="summary-card-icon"><nz-icon [nzType]="icon()" /></div>
+  <div class="summary-card-value">
+    @switch (format()) {
+      @case ('currency') { {{ value() || 0 | number:'1.0-0' }} }
+      @case ('number') { {{ value() || 0 | number }} }
+      @default { {{ value() ?? '-' }} }
+    }
+    @if (unit()) { <small>{{ unit() }}</small> }
+  </div>
+  <div class="summary-card-label">{{ label() }}</div>
+  @if (badge()) {
+    <div class="summary-card-badge">
+      <span></span>
+      {{ badge() }}
+    </div>
+  }
+  <nz-icon class="summary-card-watermark" [nzType]="icon()" />
+</div>
