@@ -42,3 +42,15 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Ignore Markdown files
+*.md
+**/*.md
+
+# Ignore log files
+*.log
+**/*.log
+
+# Ignore log directories
+logs/
+**/logs/
