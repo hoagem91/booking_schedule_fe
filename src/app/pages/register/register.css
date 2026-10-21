@@ -1,0 +1,81 @@
+.login-content { padding: 32px 0; }
+.date-picker { width: 100%; min-height: 46px; border-radius: 8px }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.gender-select { width: 100%; min-height: 46px; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 8px; background: #fff; color: #173b42; }
+.register-form .gender-select:focus { outline: none; border-color: #0f766e; }
+.login-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.login-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding-block: 16px;
+}
+
+.brand { flex: 0 0 auto; }
+footer { flex: 0 0 auto; }
+
+.login-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+
+  h1 { margin: 8px 0 4px; font-size: 36px; }
+  .intro { margin-bottom: 12px; }
+}
+
+.form-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 0;
+}
+
+.register-form {
+  ::ng-deep {
+    .ant-form-item { margin-bottom: 12px; }
+    .ant-form-vertical .ant-form-item-label { padding-bottom: 2px; }
+    .ant-form-item-label > label { height: 24px; font-size: 13px; }
+    .ant-form-item-explain-error { font-size: 12px; line-height: 1.3; }
+  }
+
+  .date-picker { width: 100%; }
+
+  .gender-select {
+    width: 100%;
+    height: 32px;
+    padding: 0 11px;
+    font-size: 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+    background: #fff;
+  }
+}
+
+.submit-button { width: 100%; margin-top: 4px; }
+.remember-note { margin: 8px 0 0; text-align: center; }
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .login-content { max-width: 100%; }
+}
+
+@media (max-height: 760px) {
+  .login-content .intro { display: none; }
+  .brand svg { width: 40px; height: 40px; }
+}

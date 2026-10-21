@@ -42,7 +42,7 @@
 }
 :host ::ng-deep .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
   border-color: #287b5e !important;
-  box-shadow: 0 0 0 2px rgb(40 123 94 / 10%) !important;
+  box-shadow: none !important;
 }
 
 :host ::ng-deep .ant-select-selection-overflow {

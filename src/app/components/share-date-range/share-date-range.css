@@ -94,7 +94,7 @@
 }
 :host ::ng-deep .ant-picker-focused {
   border-color: #287b5e;
-  box-shadow: 0 0 0 2px rgb(40 123 94 / 10%);
+  box-shadow: none;
 }
 ::ng-deep .shared-date-range-calendar .ant-picker-panel-container {
   border: 1px solid #e2e9ef;

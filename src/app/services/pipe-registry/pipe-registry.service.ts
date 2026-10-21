@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { PipeTransform } from '@angular/core';
-import { DateDisplayPipe, DateTimeDisplayPipe, TimeDisplayPipe } from '../../../pipes/date.pipe';
-import { CurrencyVndPipe } from '../../../pipes/currency.pipe';
+import { DateDisplayPipe, DateTimeDisplayPipe, TimeDisplayPipe } from '../../pipes/date.pipe';
+import { CurrencyVndPipe } from '../../pipes/currency.pipe';
 
 @Injectable({
   providedIn: 'root'

@@ -1,9 +1,15 @@
+export const API_SUCCESS_CODE = 1000;
+
 export interface ApiResponse<T> {
-  datetime: string;
-  errorCode: string;
-  message: string;
-  data: T;
-  success: boolean;
+  code: number;
+  message?: string;
+  result?: T | null;
+  datetime?: string;
+  success?: boolean;
+}
+
+export function apiResponseSucceeded(response: { code?: number; success?: boolean } | null | undefined): boolean {
+  return response?.code === API_SUCCESS_CODE && response.success !== false;
 }
 
 interface ApiResponseListContent<T, S = unknown> {
@@ -38,18 +44,6 @@ interface ApiResponseListContent<T, S = unknown> {
   summaryData?: S;
 }
 
-export interface ApiResponseList<T, S = unknown> {
-  datetime: string;
-  errorCode: string;
-  message: string;
-  data: ApiResponseListContent<T, S>;
-  success: boolean;
-}
+export interface ApiResponseList<T, S = unknown> extends ApiResponse<ApiResponseListContent<T, S>> {}
 
-export interface ApiResponseListAll<T> {
-  datetime: string;
-  errorCode: string;
-  message: string;
-  data: T[];
-  success: boolean;
-}
+export interface ApiResponseListAll<T> extends ApiResponse<T[]> {}

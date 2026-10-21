@@ -1,0 +1,263 @@
+<!--<main class="login-page">-->
+<!--  <section class="login-panel" aria-labelledby="login-title">-->
+<!--    <a class="brand" routerLink="/login" aria-label="Booking Schedule">-->
+<!--      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 512 512" role="img"-->
+<!--           aria-label="Logo trái tim hình người màu xanh gradient">-->
+<!--        <defs>-->
+<!--          <linearGradient id="heartGradient" x1="0" y1="0.5" x2="1" y2="0.5" objectBoundingBox="true">-->
+<!--            <stop offset="0%" stop-color="#5BC8F5" />-->
+<!--            <stop offset="48%" stop-color="#57D9A1" />-->
+<!--            <stop offset="72%" stop-color="#65E879" />-->
+<!--            <stop offset="100%" stop-color="#B3ED7B" />-->
+<!--          </linearGradient>-->
+<!--          <clipPath id="heartClip">-->
+<!--            <path-->
+<!--              d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z" />-->
+<!--          </clipPath>-->
+<!--        </defs>-->
+<!--        <path fill="url(#heartGradient)"-->
+<!--              d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z" />-->
+<!--        <g clip-path="url(#heartClip)" fill="#007F80">-->
+<!--          <path-->
+<!--            d="M256 89 C234 106 196 135 190 175 C183 224 216 258 256 258 C296 258 329 224 322 175 C316 135 278 106 256 89 Z" />-->
+<!--          <path-->
+<!--            d="M109 344 C143 293 192 285 214 284 C228 282 242 281 256 281 C270 281 284 282 298 284 C320 285 369 293 403 344 L358 399 C305 462 207 462 154 399 Z" />-->
+<!--        </g>-->
+<!--      </svg>-->
+
+<!--      <span>Booking Schedule<small>Hệ thống đặt lịch khám</small></span>-->
+<!--    </a>-->
+
+<!--    <div class="login-content">-->
+<!--      <h1 id="login-title">Đăng ký tài khoản</h1>-->
+<!--      <p class="intro">Tạo tài khoản bệnh nhân để bắt đầu đặt lịch khám.</p>-->
+<!--      <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="submitForm()" [attr.aria-busy]="isLoading()">-->
+<!--        @if (errorMessage()) {-->
+<!--          <div class="alert" role="alert">-->
+<!--            <nz-alert nzType="error" [nzMessage]="errorMessage()" nzShowIcon />-->
+<!--          </div>-->
+<!--        }-->
+<!--        <fieldset [disabled]="isLoading()">-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="username" nzRequired>Tên đăng nhập</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Tên đăng nhập từ 4–100 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới.">-->
+<!--            <input nz-input id="username" formControlName="username" placeholder="Nhập tên đăng nhập"-->
+<!--                   autocomplete="username" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="password" nzRequired>Mật khẩu</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Mật khẩu từ 6–100 ký tự, không được chỉ có khoảng trắng.">-->
+<!--            <input nz-input id="password" formControlName="password" placeholder="Nhập mật khẩu"-->
+<!--                   type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="fullName" nzRequired>Tên đầy đủ</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Vui lòng nhập tên đầy đủ.">-->
+<!--            <input nz-input id="fullName" formControlName="fullName" placeholder="Nhập họ và tên"-->
+<!--                   autocomplete="name" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="email" nzRequired>Email</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Vui lòng nhập email hợp lệ.">-->
+<!--            <input nz-input id="email" formControlName="email" placeholder="Nhập email"-->
+<!--                   type="email" autocomplete="email" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="phone">Số điện thoại</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Số điện thoại gồm 0 hoặc +84 và 9 chữ số tiếp theo.">-->
+<!--            <input nz-input id="phone" formControlName="phone" placeholder="Nhập số điện thoại"-->
+<!--                   type="tel" autocomplete="tel" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="confirmPassword" nzRequired>Xác nhận mật khẩu</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Mật khẩu xác nhận phải trùng với mật khẩu."-->
+<!--            [nzValidateStatus]="saveForm.hasError('passwordMismatch') && saveForm.controls.confirmPassword.dirty ? 'error' : saveForm.controls.confirmPassword">-->
+<!--            <input nz-input id="confirmPassword" formControlName="confirmPassword" type="password"-->
+<!--              autocomplete="new-password" placeholder="Nhập lại mật khẩu" [readOnly]="isLoading()" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="dateOfBirth" nzRequired>Ngày sinh</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Ngày sinh phải hợp lệ và không ở tương lai.">-->
+<!--            <nz-date-picker formControlName="dateOfBirth" nzId="dateOfBirth" nzFormat="dd/MM/yyyy"-->
+<!--                            nzPlaceHolder="dd/MM/yyyy" class="date-picker" nzSize="large"-->
+<!--                            [nzDisabled]="isLoading()" [nzDisabledDate]="disableFutureDate" />-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <nz-form-item>-->
+<!--          <nz-form-label nzFor="gender" nzRequired>Giới tính</nz-form-label>-->
+<!--          <nz-form-control nzErrorTip="Vui lòng chọn giới tính.">-->
+<!--            <select id="gender" formControlName="gender" class="gender-select">-->
+<!--              <option value="">Chọn giới tính</option>-->
+<!--              <option value="MALE">Nam</option><option value="FEMALE">Nữ</option><option value="OTHER">Khác</option>-->
+<!--            </select>-->
+<!--          </nz-form-control>-->
+<!--        </nz-form-item>-->
+<!--        <button nz-button nzType="primary" nzSize="large" type="submit" class="submit-button"-->
+<!--          [nzLoading]="isLoading()" [disabled]="isLoading()">{{ isLoading() ? 'Đang đăng ký' : 'Đăng ký' }}</button>-->
+<!--        <p class="remember-note">Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>-->
+<!--        </fieldset>-->
+<!--      </form>-->
+<!--    </div>-->
+<!--    <footer>Booking Schedule · Chăm sóc sức khỏe từ những điều nhỏ nhất</footer>-->
+<!--  </section>-->
+<!--  <aside class="welcome-panel" aria-label="Giới thiệu hệ thống">-->
+<!--    <span class="welcome-tag">ĐỒNG HÀNH CÙNG SỨC KHỎE CỦA BẠN</span>-->
+<!--    <h2>Lịch khám chủ động.<br>An tâm mỗi ngày.</h2>-->
+<!--    <p>Một nơi để kết nối, sắp xếp lịch hẹn và bắt đầu hành trình chăm sóc sức khỏe.</p>-->
+<!--    <div class="appointment-card" aria-hidden="true">-->
+<!--      <div class="card-heading"><span class="calendar-mark">+</span>-->
+<!--        <div>Lịch hẹn khám<small>Chủ động sắp xếp thời gian của bạn</small></div>-->
+<!--      </div>-->
+<!--      <div class="calendar-days">-->
+<!--        <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>-->
+<!--      <div class="calendar-dates"><span>12</span><span>13</span><span-->
+<!--        class="selected">14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>-->
+<!--      <div class="card-bottom"><span class="status-dot"></span>Sẵn sàng cho lịch hẹn tiếp theo</div>-->
+<!--    </div>-->
+<!--    <div class="welcome-bottom">Thuận tiện hơn. Gần gũi hơn.</div>-->
+<!--  </aside>-->
+<!--</main>-->
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-title">
+    <a class="brand" routerLink="/login" aria-label="Booking Schedule">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 512 512" role="img"
+           aria-label="Logo trái tim hình người màu xanh gradient">
+        <defs>
+          <linearGradient id="heartGradient" x1="0" y1="0.5" x2="1" y2="0.5" objectBoundingBox="true">
+            <stop offset="0%" stop-color="#5BC8F5" />
+            <stop offset="48%" stop-color="#57D9A1" />
+            <stop offset="72%" stop-color="#65E879" />
+            <stop offset="100%" stop-color="#B3ED7B" />
+          </linearGradient>
+          <clipPath id="heartClip">
+            <path
+              d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z" />
+          </clipPath>
+        </defs>
+        <path fill="url(#heartGradient)"
+              d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z" />
+        <g clip-path="url(#heartClip)" fill="#007F80">
+          <path
+            d="M256 89 C234 106 196 135 190 175 C183 224 216 258 256 258 C296 258 329 224 322 175 C316 135 278 106 256 89 Z" />
+          <path
+            d="M109 344 C143 293 192 285 214 284 C228 282 242 281 256 281 C270 281 284 282 298 284 C320 285 369 293 403 344 L358 399 C305 462 207 462 154 399 Z" />
+        </g>
+      </svg>
+
+      <span>Booking Schedule<small>Hệ thống đặt lịch khám</small></span>
+    </a>
+
+    <div class="login-content">
+      <h1 id="login-title">Đăng ký tài khoản</h1>
+      <p class="intro">Tạo tài khoản bệnh nhân để bắt đầu đặt lịch khám.</p>
+      <form nz-form nzLayout="vertical" class="register-form" [formGroup]="saveForm" (ngSubmit)="submitForm()"
+            [attr.aria-busy]="isLoading()">
+        @if (errorMessage()) {
+          <div class="alert" role="alert">
+            <nz-alert nzType="error" [nzMessage]="errorMessage()" nzShowIcon />
+          </div>
+        }
+        <fieldset class="form-fieldset" [disabled]="isLoading()">
+          <div class="form-grid">
+            <nz-form-item>
+              <nz-form-label nzFor="username" nzRequired>Tên đăng nhập</nz-form-label>
+              <nz-form-control nzErrorTip="Tên đăng nhập từ 4–100 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới.">
+                <input nz-input id="username" formControlName="username" placeholder="Nhập tên đăng nhập"
+                       autocomplete="username" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="email" nzRequired>Email</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng nhập email hợp lệ.">
+                <input nz-input id="email" formControlName="email" placeholder="Nhập email"
+                       type="email" autocomplete="email" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="fullName" nzRequired>Tên đầy đủ</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng nhập tên đầy đủ.">
+                <input nz-input id="fullName" formControlName="fullName" placeholder="Nhập họ và tên"
+                       autocomplete="name" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="phone">Số điện thoại</nz-form-label>
+              <nz-form-control nzErrorTip="Số điện thoại gồm 0 hoặc +84 và 9 chữ số tiếp theo.">
+                <input nz-input id="phone" formControlName="phone" placeholder="Nhập số điện thoại"
+                       type="tel" autocomplete="tel" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="password" nzRequired>Mật khẩu</nz-form-label>
+              <nz-form-control nzErrorTip="Mật khẩu từ 6–100 ký tự, không được chỉ có khoảng trắng.">
+                <input nz-input id="password" formControlName="password" placeholder="Nhập mật khẩu"
+                       type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="confirmPassword" nzRequired>Xác nhận mật khẩu</nz-form-label>
+              <nz-form-control nzErrorTip="Mật khẩu xác nhận phải trùng với mật khẩu."
+                               [nzValidateStatus]="saveForm.hasError('passwordMismatch') && saveForm.controls.confirmPassword.dirty ? 'error' : saveForm.controls.confirmPassword">
+                <input nz-input id="confirmPassword" formControlName="confirmPassword" type="password"
+                       autocomplete="new-password" placeholder="Nhập lại mật khẩu" [readOnly]="isLoading()" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="dateOfBirth" nzRequired>Ngày sinh</nz-form-label>
+              <nz-form-control nzErrorTip="Ngày sinh phải hợp lệ và không ở tương lai.">
+                <nz-date-picker formControlName="dateOfBirth" nzId="dateOfBirth" nzFormat="dd/MM/yyyy"
+                                nzPlaceHolder="dd/MM/yyyy" class="date-picker"
+                                [nzDisabled]="isLoading()" [nzDisabledDate]="disableFutureDate" />
+              </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+              <nz-form-label nzFor="gender" nzRequired>Giới tính</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn giới tính.">
+                <select id="gender" formControlName="gender" class="gender-select">
+                  <option value="">Chọn giới tính</option>
+                  <option value="MALE">Nam</option>
+                  <option value="FEMALE">Nữ</option>
+                  <option value="OTHER">Khác</option>
+                </select>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
+
+          <button nz-button nzType="primary" nzSize="large" type="submit" class="submit-button"
+                  [nzLoading]="isLoading()" [disabled]="isLoading()">{{ isLoading() ? 'Đang đăng ký' : 'Đăng ký' }}</button>
+          <p class="remember-note">Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>
+        </fieldset>
+      </form>
+    </div>
+    <footer>Booking Schedule · Chăm sóc sức khỏe từ những điều nhỏ nhất</footer>
+  </section>
+  <aside class="welcome-panel" aria-label="Giới thiệu hệ thống">
+    <span class="welcome-tag">ĐỒNG HÀNH CÙNG SỨC KHỎE CỦA BẠN</span>
+    <h2>Lịch khám chủ động.<br>An tâm mỗi ngày.</h2>
+    <p>Một nơi để kết nối, sắp xếp lịch hẹn và bắt đầu hành trình chăm sóc sức khỏe.</p>
+    <div class="appointment-card" aria-hidden="true">
+      <div class="card-heading"><span class="calendar-mark">+</span>
+        <div>Lịch hẹn khám<small>Chủ động sắp xếp thời gian của bạn</small></div>
+      </div>
+      <div class="calendar-days">
+        <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+      <div class="calendar-dates"><span>12</span><span>13</span><span
+        class="selected">14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>
+      <div class="card-bottom"><span class="status-dot"></span>Sẵn sàng cho lịch hẹn tiếp theo</div>
+    </div>
+    <div class="welcome-bottom">Thuận tiện hơn. Gần gũi hơn.</div>
+  </aside>
+</main>

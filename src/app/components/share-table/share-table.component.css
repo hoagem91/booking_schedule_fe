@@ -357,6 +357,16 @@ tbody tr.data-row.highlight-row td {
   margin: 4px 14px !important;
 }
 
+:host ::ng-deep .ant-table-pagination.ant-pagination > ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
 :host ::ng-deep .ant-pagination-total-text {
   margin-right: 12px !important;
   color: #90a1b9;
@@ -454,6 +464,10 @@ tbody tr.data-row.highlight-row td {
     justify-content: flex-end;
     width: calc(100% - 16px);
     margin: 10px 8px !important;
+  }
+
+  :host ::ng-deep .ant-table-pagination.ant-pagination > ul {
+    justify-content: flex-end;
   }
 
   :host ::ng-deep .ant-pagination-total-text {

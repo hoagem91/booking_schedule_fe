@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { catchError, map, MonoTypeOperatorFunction, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { ApiResponse, ApiResponseList, ApiResponseListAll } from '../../models/api-response.model';
+import { ApiResponse, ApiResponseList, ApiResponseListAll, apiResponseSucceeded } from '../../models/api-response.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -11,7 +11,7 @@ export class BaseService {
   protected readonly http = inject(HttpClient);
   protected readonly notification = inject(NzNotificationService);
 
-  protected readonly apiUrl = environment.api.hostRcm;
+  protected readonly apiUrl = environment.api.baseUrl;
 
   constructor(...args: unknown[]);
 
@@ -23,13 +23,13 @@ export class BaseService {
       .join('/');
   }
 
-  protected handleResponse<R extends { errorCode?: string; message?: string }>(
+  protected handleResponse<R extends { code?: number; message?: string; success?: boolean }>(
     notify: boolean
   ): MonoTypeOperatorFunction<R> {
     return (source) =>
       source.pipe(
-        tap((res: any) => {
-          if (!res || res.errorCode !== '200') {
+        tap((res: R) => {
+          if (!apiResponseSucceeded(res)) {
             if (notify) {
               this.notification.error('<b>Lỗi</b>', res?.message ?? 'Unknown error');
             }
@@ -37,19 +37,19 @@ export class BaseService {
           }
 
           if (notify) {
-            this.notification.success('<b>Thành công</b>', res.message);
+            this.notification.success('<b>Thành công</b>', res.message ?? 'Thao tác thành công');
           }
         }),
 
         catchError((err) => {
           const apiError = {
             datetime: new Date().toISOString(),
-            errorCode: err?.error?.errorCode ?? '500',
+            code: err?.error?.code ?? err.status ?? 500,
             message:
               err?.error?.message ??
               err?.message ??
               'Đã có lỗi xảy ra',
-            data: null,
+            result: null,
             success: false
           };
 
@@ -291,7 +291,7 @@ export class BaseService {
           observer.next({
             message: 'Xuất file thất bại',
             success: false,
-            errorCode: err.status?.toString() ?? '500'
+            code: err.status ?? 500
           });
           observer.complete();
         }
@@ -301,7 +301,7 @@ export class BaseService {
         observer.next({
           message: 'Không thể đọc thông tin lỗi',
           success: false,
-          errorCode: err.status?.toString() ?? '500'
+          code: err.status ?? 500
         });
         observer.complete();
       };

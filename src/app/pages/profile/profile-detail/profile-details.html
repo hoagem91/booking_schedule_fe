@@ -1,0 +1,125 @@
+<section class="profile-content" aria-labelledby="profile-heading">
+  <div class="page-intro">
+    <div><span class="eyebrow">HỒ SƠ SỨC KHỎE</span>
+      <h1 id="profile-heading">{{ insuranceOnly ? 'Bảo hiểm y tế' : 'Hồ sơ cá nhân' }}</h1>
+      <p>{{ insuranceOnly ? 'Quản lý mã thẻ bảo hiểm y tế của bạn để thuận tiện khi đăng ký khám.' : 'Quản lý thông tin cá nhân để việc đặt lịch và chăm sóc sức khỏe thuận tiện hơn.' }}</p>
+    </div>
+    <div class="profile-art" aria-hidden="true">
+      <div class="art-card"><span>+</span><i></i><i></i><b>✓</b></div>
+      <span class="art-dot"></span></div>
+  </div>
+  @let patient = profile();
+  @if (loading()) {
+    <div class="state-card" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Đang tải hồ
+      sơ của bạn…
+    </div>
+  } @else if (loadError()) {
+    <div class="state-card"><h2>Chưa thể tải hồ sơ</h2>
+      <p role="alert">{{ loadError() }}</p>
+      <button type="button" class="primary" (click)="load()">Thử lại</button>
+    </div>
+  } @else if (patient) {
+    <form class="profile-card" [formGroup]="form" (ngSubmit)="save()" [attr.aria-busy]="saving()"
+          (input)="success.set('')" (change)="success.set('')">
+      <div class="card-heading">
+        <div><h2>{{ insuranceOnly ? 'Thông tin bảo hiểm y tế' : 'Thông tin người bệnh' }}</h2>
+          <p>Kiểm tra và bổ sung thông tin hồ sơ của bạn.</p></div>
+        <span class="patient-code">{{ patient.patientCode }}</span></div>
+      <fieldset [disabled]="saving()">
+        <legend class="sr-only">Thông tin hồ sơ cá nhân</legend>
+        @if (!insuranceOnly) {
+          <div class="form-grid">
+            <div class="field"><label for="full-name">Họ và tên <span class="readonly-tag">Chỉ đọc</span></label><input
+              id="full-name" [value]="patient.fullName" readonly autocomplete="name" /></div>
+            <div class="field"><label for="username">Tên đăng nhập <span
+              class="readonly-tag">Chỉ đọc</span></label><input id="username" [value]="patient.username" readonly
+                                                                autocomplete="username" /></div>
+            <div class="field"><label for="email">Email <span class="readonly-tag">Chỉ đọc</span></label><input
+              id="email" type="email" [value]="patient.email" readonly autocomplete="email" /></div>
+            <div class="field"><label for="phone">Số điện thoại <span class="readonly-tag">Chỉ đọc</span></label><input
+              id="phone" [value]="patient.phone || ''" placeholder="Chưa cập nhật" readonly autocomplete="tel" /></div>
+            <div class="field"><label for="birth-date">Ngày sinh <span class="required">*</span></label><input
+              id="birth-date" type="date" formControlName="dateOfBirth" [max]="today" required autocomplete="bday"
+              [attr.aria-invalid]="invalid('dateOfBirth')" aria-describedby="birth-error" />
+              <p id="birth-error" class="field-error">@if (invalid('dateOfBirth')) {
+                Vui lòng chọn ngày sinh hợp lệ, không ở tương lai.
+              }</p></div>
+            <div class="field">
+              <label for="gender">Giới tính <span class="required">*</span></label>
+              <select id="gender"
+                      formControlName="gender"
+                      required
+                      [attr.aria-invalid]="invalid('gender')"
+                      aria-describedby="gender-error">
+              <option value="" disabled>Chọn giới tính</option>
+              <option value="MALE">Nam</option>
+              <option value="FEMALE">Nữ</option>
+              <option value="OTHER">Khác</option>
+            </select>
+              <p id="gender-error" class="field-error">@if (invalid('gender')) {
+                Vui lòng chọn giới tính.
+              }</p></div>
+            <div class="field full-width"><label for="address">Địa chỉ liên hệ <span class="optional">Không bắt buộc</span></label>
+              <textarea id="address" formControlName="address" rows="2"
+                        maxlength="500" autocomplete="street-address"
+                        placeholder="Số nhà, đường, xã/phường, tỉnh/thành phố"
+                        [attr.aria-invalid]="invalid('address')"
+                        aria-describedby="address-error"></textarea>
+              <p id="address-error" class="field-error">@if (invalid('address')) {
+                @if (form.controls.address.hasError('cannotClear')) {
+                  Chưa thể xóa địa chỉ đã lưu. Vui lòng nhập địa chỉ thay thế.
+                } @else {
+                  Địa chỉ cần có nội dung và không quá 500 ký tự.
+                }
+              }</p></div>
+          </div>
+        }
+        @if (insuranceOnly) {
+          <div class="insurance-heading" id="insurance"><span class="section-icon" aria-hidden="true">+</span>
+            <div><h3>Thông tin bảo hiểm y tế</h3>
+              <p>Bổ sung mã thẻ để thuận tiện khi đăng ký khám.</p></div>
+          </div>
+          <div class="field insurance-field"><label for="insurance-code">Mã bảo hiểm y tế <span class="optional">Không bắt buộc</span></label><input
+            id="insurance-code" formControlName="healthInsuranceCode" maxlength="100"
+            placeholder="Nhập mã thẻ BHYT của bạn" [attr.aria-invalid]="invalid('healthInsuranceCode')"
+            aria-describedby="insurance-error" />
+            <p id="insurance-error" class="field-error">@if (invalid('healthInsuranceCode')) {
+              @if (form.controls.healthInsuranceCode.hasError('cannotClear')) {
+                Chưa thể xóa mã BHYT đã lưu. Vui lòng nhập mã thay thế.
+              } @else {
+                Mã BHYT cần có nội dung và không quá 100 ký tự.
+              }
+            }</p></div>
+        }
+      </fieldset>
+      @if (!insuranceOnly) {
+        <p class="account-note">Để thay đổi họ tên hoặc thông tin liên hệ, vui lòng liên hệ tổng đài hỗ trợ.</p>
+      }
+      @if (saveError()) {
+        <p class="feedback error" role="alert">{{ saveError() }}</p>
+      }
+      @if (success()) {
+        <p class="feedback success" role="status">{{ success() }}</p>
+      }
+      <div class="form-footer"><span>@if (!insuranceOnly) {
+        <span class="required">*</span> Thông tin bắt buộc
+      }</span>
+        <div class="actions">
+          <button type="button" class="secondary" [disabled]="saving() || !form.dirty" (click)="cancel()">Hủy</button>
+          <button type="submit" class="primary"
+                  [disabled]="saving() || !form.dirty">{{ saving() ? 'Đang lưu…' : 'Lưu thay đổi' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  } @else {
+    <div class="state-card">
+      <h2>Không tìm thấy hồ sơ</h2>
+      <p>Vui lòng thử tải lại thông tin hồ sơ.</p>
+
+      <button type="button" class="primary" (click)="load()">
+        Tải lại
+      </button>
+    </div>
+  }
+</section>

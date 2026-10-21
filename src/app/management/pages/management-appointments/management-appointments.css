@@ -1,0 +1,67 @@
+@import '../../../styles/shared-list.css';
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  padding: 22px 24px;
+}
+
+.filter.keyword { grid-column: span 2; }
+.filter label {
+  display: block;
+  margin-bottom: 8px;
+  color: #66816a;
+  font-size: 11px;
+  font-weight: 600;
+}
+.filter input, .filter select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding: 0 11px;
+  border: 1px solid #dce5d9;
+  border-radius: 6px;
+  background: #fff;
+  color: #3e5b42;
+  font: inherit;
+  font-size: 12px;
+}
+.filter input:focus, .filter select:focus {
+  outline: 2px solid #b7d1b1;
+  border-color: #739b68;
+}
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  grid-column: span 2;
+}
+.validation {
+  grid-column: 1 / -1;
+  color: #a73e34;
+  font-size: 12px;
+}
+.validation:empty { display: none; }
+.appointment-cell {
+  display: grid;
+  gap: 5px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.appointment-cell strong { color: #354e32; font-size: 14px; font-weight: 600; }
+.appointment-cell small { color: #7a8b73; font-size: 12px; }
+
+@media (max-width: 1100px) {
+  .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .filter-actions { grid-column: span 3; }
+}
+@media (max-width: 760px) {
+  .filters { padding: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+  .filter-actions { grid-column: span 2; flex-wrap: wrap; }
+}
+@media (max-width: 380px) {
+  .filters { grid-template-columns: minmax(0, 1fr); }
+  .filter.keyword, .filter-actions { grid-column: span 1; }
+}

@@ -1,120 +1,130 @@
-import { BehaviorSubject, Subject, Subscription } from "rxjs";
-import { UserProfileResponse } from "../models/user-profile.model";
-import { AfterContentChecked, AfterContentInit, AfterViewChecked, AfterViewInit, ChangeDetectorRef, Component, DoCheck, inject, OnChanges, OnDestroy, OnInit, signal, TemplateRef, viewChild } from "@angular/core";
-import { userProfile$ } from "../store/user-profile.store";
-import { NgxPermissionsService } from 'ngx-permissions';
-import { FormBuilder } from "@angular/forms";
-import { UserTypeEnum } from "../enum/user/user.enum";
-import { DateFormatConstants } from "../constants/date-format.constants";
-import { DataUtils } from "../utils/data.utils";
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { AfterViewInit, DestroyRef, Directive, inject, OnDestroy, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { InternalRole, ManagementPermission } from '../management/management.models';
+import { ManagementAccessService } from '../management/services/management-access.service';
 
-@Component({
-  template: ''
-})
-export class BaseComponent implements OnInit, OnDestroy, AfterViewInit, AfterContentInit, AfterViewChecked, AfterContentChecked, DoCheck, OnChanges {
-  protected unsubscribe: Subject<any> = new Subject();
-  protected userProfile$: BehaviorSubject<UserProfileResponse | null> = new BehaviorSubject<UserProfileResponse | null>(null);
-  protected userProfileSubscription: Subscription | undefined;
-  protected listPermissions$: BehaviorSubject<{ id: number; name: string }[]> = new BehaviorSubject<{ id: number; name: string }[]>([]);
-  private permissionsService: NgxPermissionsService = inject(NgxPermissionsService);
-  public errorCode = signal<string>('');
-  public errorMessage = signal<string>('');
+/** Shared UI helpers; authentication and loading profiles belong to services/route guards. */
+@Directive()
+export abstract class BaseComponent implements OnInit, OnDestroy, AfterViewInit {
+  protected readonly fb = inject(FormBuilder);
+  protected readonly document = inject(DOCUMENT);
+  protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  protected readonly managementAccess = inject(ManagementAccessService);
+  protected readonly currentUser = this.managementAccess.user;
 
-  protected readonly fb: FormBuilder = inject(FormBuilder);
+  // Retained for BaseFormComponent/BaseListComponent and their takeUntil pipelines.
+  protected unsubscribe = new Subject<void>();
+  readonly errorCode = signal('');
+  readonly errorMessage = signal('');
 
-  protected readonly DateFormatConstants = DateFormatConstants;
+  private disposed = false;
+  private readonly pendingDownloads = new Map<string, number>();
+  private readonly amountFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 20 });
 
-  ngOnInit() {
-    this.userProfileSubscription = userProfile$.subscribe(profile => {
-      if (profile) {
-        this.userProfile$.next(profile);
-        const rawPermissions = DataUtils.decryptUsingAES256(profile.permission);
-        const listPermissions = rawPermissions.split(',').map((value, key) => { return { id: key + 1, name: value } });
-        this.listPermissions$.next(listPermissions);
-        this.permissionsService.loadPermissions(listPermissions.map(permission => permission.name));
-      }
-    });
+  constructor() {
+    // Also clean up when a subclass overrides ngOnDestroy without calling super.
+    inject(DestroyRef).onDestroy(() => this.dispose());
   }
 
-  ngOnDestroy() {
-    // Ngừng các subscription của màn đã đóng, tránh nhận đổi kho và ghi lại URL cũ.
-    this.unsubscribe.next(undefined);
-    this.unsubscribe.complete();
-    if (this.userProfileSubscription) {
-      this.userProfileSubscription.unsubscribe();
-    }
+  // Extension hooks used by the existing form/list base classes.
+  ngOnInit(): void {}
+  ngAfterViewInit(): void {}
+  ngOnDestroy(): void { this.dispose(); }
+
+  /** UI visibility only. The backend must still authorize every request. */
+  protected hasRole(role: InternalRole): boolean {
+    const user = this.currentUser();
+    return user?.status === 'ACTIVE' && user.roles.some(item => item.name === role);
   }
 
-  ngAfterViewInit() { }
-  ngAfterContentInit() { }
-  ngAfterViewChecked() { }
-  ngAfterContentChecked() { }
-  ngDoCheck() { }
-  ngOnChanges() { }
-
-  protected openNewTab(route: string) {
-    if (window.electronAPI?.openWindow) {
-      window.electronAPI.openWindow(route); // Electron
-    } else {
-      window.open(route, '_blank'); // Web
-    }
+  protected hasPermission(permission: ManagementPermission): boolean {
+    return this.managementAccess.can(permission);
   }
 
+  protected setError(message: string, code: string | number = ''): void {
+    this.errorMessage.set(message);
+    this.errorCode.set(String(code));
+  }
 
-  protected checkUserType(userType: UserTypeEnum): boolean {
-    const profile = this.userProfile$.getValue();
-    if (profile) {
-      return profile.type === userType;
+  protected clearError(): void {
+    this.errorMessage.set('');
+    this.errorCode.set('');
+  }
+
+  /** Open an application route without coupling web components to Electron. */
+  protected openNewTab(route: string): void {
+    const browserWindow = this.isBrowser ? this.document.defaultView : null;
+    if (!browserWindow || !route.trim()) return;
+    try {
+      const target = new URL(route, this.document.baseURI);
+      if (!['http:', 'https:'].includes(target.protocol) || target.origin !== browserWindow.location.origin) return;
+      browserWindow.open(target.href, '_blank', 'noopener,noreferrer');
+    } catch {
+      // Invalid routes cannot be opened.
     }
-    return false;
   }
 
   get widthForModal(): string {
-    // dựa theo size của tailwind để đặt width cho modal
-    if (window.innerWidth < 640) {
-      return '100%'; // sm
-    }
-    if (window.innerWidth < 768) {
-      return '90%'; // md
-    }
-    if (window.innerWidth < 1024) {
-      return '80%'; // lg
-    }
-    if (window.innerWidth < 1280) {
-      return '60%'; // xl
-    }
-    if (window.innerWidth < 1536) {
-      return '50%'; // 2xl
-    }
-    return '40%'; // default for larger screens
+    const width = this.isBrowser ? this.document.defaultView?.innerWidth : undefined;
+    if (width === undefined) return '60%';
+    if (width < 640) return '100%';
+    if (width < 768) return '90%';
+    if (width < 1024) return '80%';
+    if (width < 1280) return '60%';
+    if (width < 1536) return '50%';
+    return '40%';
   }
 
-  // use for nz-input-number VND formatting/parsing
-  formatterVND = (value: number): string => {
-    if (value === null || value === undefined) return '';
-    return value
-      .toString()
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  // Keep the existing nz-input-number contract: 10000 <-> "10,000".
+  readonly formatterVND = (value: number | null | undefined): string => {
+    return typeof value === 'number' && Number.isFinite(value) ? this.amountFormatter.format(value) : '';
   };
 
-  // Parse: 10,000 -> 10000
-  parserVND = (value: string): number => {
-    return Number(value?.replace(/,/g, '')) || 0;
+  readonly parserVND = (value: string | null | undefined): number => {
+    const amount = Number(value?.replace(/,/g, '').trim() ?? '');
+    return Number.isFinite(amount) ? amount : 0;
   };
 
   protected isImageFile(fileName: string): boolean {
-    if (!fileName) return false;
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    return extension ? imageExtensions.includes(extension) : false;
+    const path = fileName.split(/[?#]/, 1)[0];
+    return /\.(?:jpe?g|png|gif|bmp|webp|svg|avif)$/i.test(path);
   }
 
-  downloadFileFromBlob(blob: Blob, filename: string) {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  downloadFileFromBlob(blob: Blob, filename: string): void {
+    const browserWindow = this.isBrowser ? this.document.defaultView : null;
+    if (!browserWindow || this.disposed) return;
+    const url = browserWindow.URL.createObjectURL(blob);
+    const anchor = this.document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.hidden = true;
+
+    // Allow the browser to start the download before releasing its object URL.
+    const timer = browserWindow.setTimeout(() => {
+      browserWindow.URL.revokeObjectURL(url);
+      this.pendingDownloads.delete(url);
+    }, 1000);
+    this.pendingDownloads.set(url, timer);
+    try {
+      this.document.body.appendChild(anchor);
+      anchor.click();
+    } finally {
+      anchor.remove();
+    }
+  }
+
+  private dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.unsubscribe.next();
+    this.unsubscribe.complete();
+    const browserWindow = this.isBrowser ? this.document.defaultView : null;
+    for (const [url, timer] of this.pendingDownloads) {
+      browserWindow?.clearTimeout(timer);
+      browserWindow?.URL.revokeObjectURL(url);
+    }
+    this.pendingDownloads.clear();
   }
 }

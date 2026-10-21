@@ -6,7 +6,6 @@ import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NgClass, NgTemplateOutlet, formatNumber } from '@angular/common';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TableColumn, ExpandConfig } from './share-table.interface';
-import { PipeRegistryService } from '../../services/pipe-registry/pipe-registry.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +16,7 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
+import { PipeRegistryService } from '../../services/pipe-registry/pipe-registry.service';
 
 @Component({
   standalone: true,

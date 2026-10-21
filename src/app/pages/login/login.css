@@ -1,0 +1,40 @@
+:host { display: block; color: #173b42; }
+.login-page { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; }
+.login-panel { padding: 40px 9%; display: flex; flex-direction: column; background: #fff; }
+.brand { display: flex; gap: 12px; align-items: center; color: #173b42; font-size: 18px; font-weight: 700; text-decoration: none; }
+.brand-mark { width: 44px; height: 44px; display: grid; place-items: center; background: #0f766e; border-radius: 13px; color: #fff; font-size: 32px; }
+.brand small { display: block; margin-top: 2px; font-size: 12px; color: #70858a; font-weight: 400; }
+.login-content { width: 100%; max-width: 420px; margin: auto; padding: 64px 0; }
+.eyebrow { color: #0f766e; font-size: 11px; font-weight: 700; letter-spacing: 1.8px; }
+h1 { margin: 14px 0 12px; font-size: 36px; font-weight: 700; letter-spacing: -1px; color: #173b42; }
+.intro { color: #70858a; line-height: 1.7; margin-bottom: 32px; }
+.form-options { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 4px 0 24px; flex-wrap: wrap; }
+.password-toggle, .text-button { border: 0; background: transparent; color: #0f766e; cursor: pointer; padding: 4px; font-size: 13px; }
+button:focus-visible, a:focus-visible { outline: 2px solid #0f766e; outline-offset: 4px; }
+.submit-button { width: 100%; height: 48px; border-radius: 8px; font-weight: 600; }
+.remember-note { text-align: center; color: #70858a; font-size: 12px; margin-top: 16px; }
+.alert { margin-bottom: 20px; }
+footer { color: #87999d; font-size: 11px; line-height: 1.6; text-align: center; }
+:host ::ng-deep .ant-form-item-label > label { color: #173b42; font-weight: 600; }
+:host ::ng-deep .ant-input { min-height: 46px; border-radius: 8px; }
+:host ::ng-deep .ant-input-affix-wrapper { border-radius: 8px; padding: 0 12px; }
+:host ::ng-deep .ant-input-affix-wrapper > .ant-input { min-height: 44px; }
+.welcome-panel { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 80px 12%; overflow: hidden; color: #fff; background: radial-gradient(circle at 95% 0%, #3d9a93, transparent 55%), #104d4b; }
+.welcome-panel::before { content: ''; position: absolute; width: 520px; height: 520px; border: 1px solid #ffffff16; border-radius: 50%; bottom: -290px; right: -200px; pointer-events: none; }
+.welcome-tag { font-size: 10px; letter-spacing: 2px; color: #b9ded6; }
+h2 { font-size: clamp(28px, 3vw, 44px); line-height: 1.25; color: #fff; margin: 24px 0 20px; font-weight: 600; letter-spacing: -1px; }
+.welcome-panel > p { color: #b9d4d1; line-height: 1.8; max-width: 360px; }
+.appointment-card { margin-top: 36px; max-width: 390px; background: #fff; border-radius: 18px; padding: 26px; color: #173b42; box-shadow: 0 20px 60px #002c2a33; transform: rotate(-3deg); }
+.card-heading { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; }
+.card-heading small { display: block; color: #70858a; font-size: 10px; font-weight: 400; margin-top: 4px; }
+.calendar-mark { display: grid; place-items: center; width: 40px; height: 40px; background: #e7f4ef; color: #0f766e; font-size: 24px; border-radius: 12px; }
+.calendar-days, .calendar-dates { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; }
+.calendar-days { margin: 28px 0 12px; font-size: 10px; color: #87999d; }
+.calendar-dates span { padding: 9px 0; font-size: 12px; }
+.calendar-dates .selected { background: #0f766e; color: #fff; border-radius: 9px; }
+.card-bottom { margin-top: 24px; border-top: 1px solid #edf2f1; padding-top: 16px; font-size: 10px; color: #70858a; }
+.status-dot { display: inline-block; width: 6px; height: 6px; background: #0f766e; border-radius: 50%; margin-right: 8px; }
+.welcome-bottom { margin-top: 56px; font-size: 11px; color: #b9d4d1; }
+.welcome-bottom span { margin-right: 12px; color: #7faea8; }
+@media (max-width: 960px) { .login-page { grid-template-columns: 1fr; } .welcome-panel { display: none; } .login-panel { min-height: 100dvh; padding: 28px 24px; } }
+@media (max-width: 400px) { h1 { font-size: 30px; } .login-content { padding: 40px 0; } }

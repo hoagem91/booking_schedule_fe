@@ -1,0 +1,51 @@
+<app-site-header />
+<main class="profile-shell">
+  <nav class="breadcrumb" aria-label="Đường dẫn"><a routerLink="/portal">Trang chủ</a><span
+    aria-hidden="true">/</span><a routerLink="/profile">Cá nhân</a><span
+    aria-hidden="true">/</span><span>{{ sectionTitle() }}</span></nav>
+  <div class="profile-layout">
+    <aside aria-label="Menu cá nhân" class="sidebar">
+      <h2>Thông tin cá nhân</h2>
+      <div class="patient-summary">
+        <span class="patient-avatar"
+              aria-hidden="true">{{ (profile()?.fullName || 'B').slice(0, 1).toUpperCase() }}</span>
+        <div><strong>{{ profile()?.fullName || 'Hồ sơ của bạn' }}</strong>
+          @if (profile(); as patient) {
+            <p>{{ genderLabel(patient.gender) }} <span
+              aria-hidden="true">·</span> {{ patient.dateOfBirth ? (patient.dateOfBirth | date:'dd/MM/yyyy') : 'Chưa có ngày sinh' }}
+            </p>
+          } @else {
+            <p>Thông tin người bệnh</p>
+          }
+        </div>
+      </div>
+      <nav class="profile-nav" aria-label="Điều hướng hồ sơ">
+        <a routerLink="/profile" routerLinkActive="selected" [routerLinkActiveOptions]="{ exact: true }"
+           ariaCurrentWhenActive="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="7" r="4" />
+            <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+          </svg>
+          Hồ sơ cá nhân</a>
+        <a routerLink="/profile/appointments" routerLinkActive="selected" ariaCurrentWhenActive="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M8 3v4m8-4v4M3 11h18m-10 5h4" />
+          </svg>
+          Lịch sử đặt khám</a>
+        <a routerLink="/profile/insurance" routerLinkActive="selected" ariaCurrentWhenActive="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z" />
+            <path d="M9 12h6m-3-3v6" />
+          </svg>
+          Bảo hiểm y tế</a>
+      </nav>
+      <div class="support"><span>Bạn cần hỗ trợ?</span>
+        <p>Liên hệ tổng đài để được hướng dẫn.</p><a href="tel:1900888866">1900.888.866 <span
+          aria-hidden="true">↗</span></a></div>
+    </aside>
+    <section class="profile-content" aria-label="Nội dung cá nhân">
+      <router-outlet />
+    </section>
+  </div>
+</main>

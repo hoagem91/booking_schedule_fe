@@ -8,6 +8,7 @@ import {
   inject
 } from '@angular/core';
 import { DisplayErrorComponent } from '../../components/display-error/display-error.component';
+import { API_SUCCESS_CODE } from '../../models/api-response.model';
 
 @Directive({
   selector: '[appShowOnErrorCode]',
@@ -29,7 +30,7 @@ export class ShowErrorDirective {
 
       this.viewContainer.clear();
 
-      if (!code || code === '200') {
+      if (!code || code === String(API_SUCCESS_CODE)) {
         this.viewContainer.createEmbeddedView(this.originalTemplate);
       } else {
         const compRef = this.viewContainer.createComponent(DisplayErrorComponent, {

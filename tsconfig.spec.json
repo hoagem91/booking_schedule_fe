@@ -5,11 +5,21 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "types": [
-      "vitest/globals"
+      "jasmine"
     ]
   },
   "include": [
+    "src/app/components/base.component.spec.ts",
+    "src/app/management/**/*.spec.ts",
     "src/**/*.d.ts",
-    "src/**/*.spec.ts"
+    "src/app/app.spec.ts",
+    "src/app/pages/profile/profile.spec.ts",
+    "src/app/pages/profile/profile-layout.spec.ts",
+    "src/app/pages/appointment-history/appointment-history.spec.ts",
+    "src/app/pages/appointment-booking/appointment-booking.spec.ts",
+    "src/app/pages/appointment-detail/appointment-detail.spec.ts",
+    "src/app/pages/register/register.spec.ts",
+    "src/app/services/auth-register.spec.ts",
+    "src/app/interceptors/auth.interceptor.spec.ts"
   ]
 }

@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "a8f31086-97ac-4651-b67d-3301c54ade88"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -17,6 +18,9 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -25,6 +29,7 @@
               }
             ],
             "styles": [
+              "src/styles.less",
               "src/styles.css"
             ],
             "server": "src/main.server.ts",
@@ -62,6 +67,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "booking_schedule-fe:build:production"
@@ -73,7 +81,28 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "booking_schedule-fe:build:development",
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "karma",
+            "browsers": [
+              "ChromeHeadless"
+            ],
+            "include": [
+              "src/app/components/base.component.spec.ts",
+              "src/app/management/**/*.spec.ts",
+              "src/app/app.spec.ts",
+              "src/app/pages/profile/profile.spec.ts",
+              "src/app/pages/appointment-history/appointment-history.spec.ts",
+              "src/app/pages/appointment-booking/appointment-booking.spec.ts",
+              "src/app/pages/appointment-detail/appointment-detail.spec.ts",
+              "src/app/pages/register/register.spec.ts",
+              "src/app/services/auth-register.spec.ts",
+              "src/app/interceptors/auth.interceptor.spec.ts",
+              "src/app/pages/profile/profile-layout.spec.ts"
+            ]
+          }
         }
       }
     }

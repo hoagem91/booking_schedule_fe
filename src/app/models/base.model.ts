@@ -1,3 +1,4 @@
+
 export interface BaseModelResponse {
   id: number;
   createdAt: string;

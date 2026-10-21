@@ -1,0 +1,449 @@
+.page-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  min-height: 112px;
+}
+
+.eyebrow {
+  color: #258451;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+}
+
+h1 {
+  color: #168341;
+  font-size: 27px;
+  font-weight: 650;
+  margin: 8px 0;
+  line-height: 1.3;
+}
+
+.page-intro p {
+  max-width: 530px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #65776c;
+  margin: 0;
+}
+
+.profile-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 112px;
+  flex-shrink: 0;
+  border-radius: 65% 35% 45% 55%;
+  background: #eaf3ed;
+}
+
+.art-card {
+  position: relative;
+  width: 72px;
+  height: 88px;
+  background: white;
+  border: 1px solid #d7e8dc;
+  border-radius: 9px;
+  padding: 12px;
+  transform: rotate(8deg);
+  box-shadow: 0 5px 14px #254b3210;
+}
+
+.art-card > span {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+  color: #258451;
+}
+
+.art-card i {
+  display: block;
+  height: 4px;
+  width: 40px;
+  background: #dce9df;
+  margin-top: 9px;
+  border-radius: 4px;
+}
+
+.art-card i + i {
+  width: 28px;
+  margin-top: 6px;
+}
+
+.art-card b {
+  position: absolute;
+  bottom: -6px;
+  right: -12px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #168341;
+  color: white;
+  border: 3px solid #eaf3ed;
+}
+
+.art-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #efca7c;
+  border-radius: 50%;
+  left: 9px;
+  bottom: 13px;
+}
+
+.profile-card, .state-card {
+  background: white;
+  border: 1px solid #e4ebe6;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 4px 20px #163f2403;
+}
+
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #edf1ee;
+}
+
+.card-heading h2 {
+  font-size: 18px;
+  font-weight: 650;
+  margin: 0 0 5px;
+}
+
+.card-heading p, .insurance-heading p {
+  font-size: 12px;
+  color: #6c7d72;
+  margin: 0;
+  line-height: 1.7;
+}
+
+.patient-code {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a7c43;
+  background: #edf6ef;
+  padding: 6px 9px;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 24px;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #c74236;
+}
+
+.readonly-tag, .optional {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 400;
+  color: #718277;
+}
+
+.field input,.field select, .field textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #dce5df;
+  border-radius: 7px;
+  padding: 10px 12px;
+  color: #30493a;
+  font: inherit;
+  font-size: 14px;
+}
+
+select {
+  appearance: none;
+  padding-right: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23304c3b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+.field input[readonly] {
+  background: #f3f5f4;
+  color: #5c6e62;
+}
+
+.field textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.field input::placeholder, .field textarea::placeholder {
+  color: #8b978f;
+}
+
+.field [aria-invalid=true] {
+  border-color: #c74236;
+}
+
+.field-error {
+  margin: 5px 0 0;
+  color: #b4382d;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.insurance-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 26px 0 20px;
+  scroll-margin-top: 24px;
+}
+
+.insurance-heading h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.section-icon {
+  display: grid;
+  place-items: center;
+  background: #edf6ef;
+  color: #168341;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  font-size: 25px;
+}
+
+.insurance-field {
+  max-width: calc(50% - 12px);
+}
+
+.account-note {
+  font-size: 12px;
+  color: #6b7e70;
+  background: #f5f8f6;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 24px 0 0;
+  line-height: 1.7;
+}
+
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid #edf1ee;
+  margin-top: 24px;
+  padding-top: 22px;
+}
+
+.form-footer > span {
+  font-size: 12px;
+  color: #6a7b70;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  min-height: 44px;
+  border-radius: 7px;
+  padding: 10px 22px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.primary {
+  border: 1px solid #168341;
+  background: #168341;
+  color: white;
+}
+
+.primary:hover {
+  background: #116e36;
+}
+
+.secondary {
+  border: 1px solid #dce5df;
+  background: white;
+  color: #596d60;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+:is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #218448;
+  outline-offset: 3px;
+}
+
+.feedback {
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+.error {
+  background: #fff0ed;
+  color: #a72c23;
+}
+
+.success {
+  background: #edf7ef;
+  color: #166d36;
+}
+
+.state-card {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.state-card h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.state-card p {
+  margin: 0;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e1eee5;
+  border-top-color: #168341;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1000px) {
+  .profile-art {
+    display: none;
+  }
+
+  .profile-card {
+    padding: 22px;
+  }
+
+  .form-grid {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-intro {
+    min-height: auto;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .profile-card {
+    padding: 20px 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .insurance-field {
+    max-width: none;
+  }
+
+  .form-footer {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+
+  .card-heading {
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

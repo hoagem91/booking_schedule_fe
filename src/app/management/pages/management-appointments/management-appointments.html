@@ -1,0 +1,63 @@
+<ng-template [appShowOnErrorCode]="errorCode()" [errorMessage]="errorMessage()">
+  <div class="mb-4" id="header" nz-form [formGroup]="searchForm">
+    <div>
+      <p class="eyebrow">ĐIỀU PHỐI KHÁM</p>
+      <h1>Quản lý lịch hẹn</h1>
+      <p class="subtitle">Tra cứu lịch khám và theo dõi thông tin từng lượt hẹn.</p>
+    </div>
+  </div>
+  <app-share-table
+    [expandConfig]="{ expandRow: false, expandMultiple: false }"
+    [columns]="_visibleColumns"
+    [dataSource]="dataSource"
+    [loading]="isLoadingDataSource()"
+    [total]="total"
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50]"
+    [showTotal]="true"
+    paginationItemLabel="lịch hẹn"
+    [scrollY]="tableScrollY"
+    [scrollX]="tableScrollX"
+    (queryParamsChange)="onQueryParamsChange($event)"
+  >
+    <ng-template #customCell let-appointment let-column="column">
+      @switch (column.key) {
+        @case ('patientName') {
+          <div class="appointment-cell">
+            <strong>{{ appointment.patientName || 'Chưa cập nhật' }}</strong>
+            <small>{{ appointment.patientCode || 'Chưa có mã bệnh nhân' }}</small>
+            @if (appointment.patientPhone) {
+              <small>{{ appointment.patientPhone }}</small>
+            }
+          </div>
+        }
+        @case ('doctorName') {
+          <div class="appointment-cell">
+            <strong>{{ appointment.doctorName || 'Chưa cập nhật' }}</strong>
+            <small>{{ appointment.serviceName || 'Chưa cập nhật dịch vụ' }}</small>
+          </div>
+        }
+        @case ('appointmentDate') {
+          <div class="appointment-cell">
+            <strong>{{ appointment.appointmentDate | date: 'dd/MM/yyyy' }}</strong>
+            <small>{{ appointment.startTime?.slice(0, 5) || '—' }}
+              – {{ appointment.endTime?.slice(0, 5) || '—' }}</small>
+          </div>
+        }
+      }
+    </ng-template>
+    <ng-template #actionsCell let-data>
+        <button (click)="onOpenDetail(data.id, false)" nz-button nzType="text" nzSize="small"
+                class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Sửa thông tin lịch hẹn">
+          <nz-icon nzType="edit" class="!text-lg" nzTheme="outline" />
+        </button>
+        <button (click)="onOpenDetail(data.id, true)" nz-button nzType="text" nzSize="small"
+                class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
+          <nz-icon nzType="eye" class="!text-lg" nzTheme="outline" />
+        </button>
+    </ng-template>
+  </app-share-table>
+</ng-template>
+
+

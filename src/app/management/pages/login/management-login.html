@@ -1,0 +1,40 @@
+<main class="internal-login">
+  <section class="welcome" aria-label="Hệ thống quản lý khám">
+    <a class="brand" routerLink="/portal"><span class="brand-mark" aria-hidden="true">+</span> Booking Schedule</a>
+    <div class="welcome-copy"><span class="eyebrow">KHÔNG GIAN LÀM VIỆC NỘI BỘ</span>
+      <h1>Kết nối lịch hẹn.<br>Phối hợp chăm sóc.</h1>
+      <p>Cùng quản lý lịch khám và đồng hành với người bệnh trong từng lượt hẹn.</p>
+      <div class="workflow" aria-hidden="true"><span>01 <b>Đặt lịch</b></span><span>02 <b>Điều phối</b></span><span>03 <b>Thăm khám</b></span></div>
+    </div>
+    <p class="welcome-footer">Dành cho quản trị viên, nhân viên và bác sĩ.</p>
+  </section>
+  <section class="form-panel" aria-labelledby="internal-title">
+    <a class="back" routerLink="/portal">← Cổng thông tin</a>
+    <div class="form-content">
+      <span class="eyebrow">BOOKING SCHEDULE / QUẢN LÝ</span>
+      <h2 id="internal-title">Đăng nhập nội bộ</h2>
+      <p class="intro">Sử dụng tài khoản được cấp để vào không gian làm việc của bạn.</p>
+      <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
+        @if (error()) { <div role="alert" class="error">{{ error() }}</div> }
+        <label for="internal-username">Tên đăng nhập</label>
+        <input id="internal-username" formControlName="username" autocomplete="username" autocapitalize="none" spellcheck="false"
+          placeholder="Nhập tên đăng nhập" [readOnly]="busy()" [attr.aria-invalid]="form.controls.username.touched && form.controls.username.invalid"
+          aria-describedby="username-error" />
+        @if (form.controls.username.touched && form.controls.username.invalid) { <small class="field-error" id="username-error">Vui lòng nhập tên đăng nhập.</small> }
+        <label for="internal-password">Mật khẩu</label>
+        <div class="password-field"><input id="internal-password" formControlName="password" autocomplete="current-password"
+          [type]="passwordVisible() ? 'text' : 'password'" placeholder="Nhập mật khẩu" [readOnly]="busy()"
+          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid" aria-describedby="password-error" />
+          <button type="button" (click)="passwordVisible.set(!passwordVisible())" [attr.aria-pressed]="passwordVisible()"
+            [attr.aria-label]="passwordVisible() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">{{ passwordVisible() ? 'Ẩn' : 'Hiện' }}</button></div>
+        @if (form.controls.password.touched && form.controls.password.invalid) { <small class="field-error" id="password-error">Vui lòng nhập mật khẩu.</small> }
+        <button class="help" type="button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Cần hỗ trợ đăng nhập?</button>
+        @if (help()) { <p class="support" role="status">Liên hệ quản trị viên để được cấp tài khoản hoặc hỗ trợ khôi phục mật khẩu.</p> }
+        <button class="submit" type="submit" [disabled]="busy()">{{ busy() ? 'Đang xác minh…' : 'Đăng nhập' }} <span aria-hidden="true">→</span></button>
+        @if (error() && !denied() && hasSession()) { <button type="button" class="help" (click)="verifyExistingSession()" [disabled]="busy()">Thử xác minh phiên hiện tại</button> }
+      </form>
+      <p class="patient-link">Bạn muốn đặt lịch khám? <a routerLink="/login">Đăng nhập dành cho bệnh nhân</a></p>
+    </div>
+    <footer>Tài khoản nội bộ được quản trị viên cấp và quản lý.</footer>
+  </section>
+</main>

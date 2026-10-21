@@ -1,0 +1,206 @@
+<div class="history-content">
+
+  <div class="page-heading">
+    <div>
+      <h1>Lịch hẹn của tôi @if (result(); as data) {
+        <span class="count">{{ data.totalElements }}</span>
+        }</h1>
+      <p>Theo dõi các lịch hẹn và xem lại thông tin đăng ký khám của bạn.</p></div>
+    <a class="book-button" routerLink="/home"><nz-icon nzType="plus" class="text-lg" aria-hidden="true"/> Đặt lịch khám</a></div>
+
+  <section class="history-panel" aria-labelledby="list-heading" [attr.aria-busy]="loading()">
+    <div class="toolbar">
+      <div class="list-options">
+        <label>
+          Sắp xếp
+          <nz-select
+            class="specialty-select"
+            aria-label="Sắp xếp lịch hẹn"
+            [ngModel]="sort()"
+            (ngModelChange)="changeSort($event)"
+            style="width:180px"
+          >
+            <nz-option
+              class="specialty-option"
+              nzValue="id,desc"
+              nzLabel="Mới nhất"
+            ></nz-option>
+            <nz-option
+              nzValue="id,asc"
+              nzLabel="Cũ nhất"
+            ></nz-option>
+          </nz-select>
+        </label>
+        <label>
+          Hiển thị
+          <nz-select
+            class="specialty-select"
+            aria-label="Số lịch hẹn mỗi trang"
+            [ngModel]="pageSize()"
+            (ngModelChange)="changeSize($event)"
+            style="width:150px"
+          >
+            <nz-option class="specialty-option" [nzValue]="10" nzLabel="10 / trang"></nz-option>
+            <nz-option class="specialty-option" [nzValue]="20" nzLabel="20 / trang"></nz-option>
+            <nz-option class="specialty-option" [nzValue]="50" nzLabel="50 / trang"></nz-option>
+          </nz-select>
+        </label>
+      </div>
+    </div>
+    <div class="status-filters" aria-label="Lọc trạng thái trong trang hiện tại">
+      <div>
+        <button type="button" [class.active]="statusFilter() === ''" [attr.aria-pressed]="statusFilter() === ''"
+                (click)="statusFilter.set('')">Tất cả
+        </button>
+        @for (status of statuses; track status[0]) {
+          <button type="button" [class.active]="statusFilter() === status[0]"
+                  [attr.aria-pressed]="statusFilter() === status[0]"
+                  (click)="statusFilter.set(status[0])">{{ status[1] }}
+          </button>
+        }</div>
+    </div>
+    @let data = result();
+    @if (loading()) {
+      <div class="state" role="status"><span class="spinner" aria-hidden="true"></span>
+        <h3>Đang tải lịch hẹn…</h3>
+        <p>Vui lòng chờ trong giây lát.</p></div>
+    } @else if (error()) {
+      <div class="state error-state"><span class="state-symbol" aria-hidden="true">!</span>
+        <h3>Chưa thể tải lịch sử đặt khám</h3>
+        <p role="alert">{{ error() }}</p>
+        <button class="primary-button" type="button" (click)="load()">Thử lại</button>
+      </div>
+    } @else if (data) {
+      @if (data.content.length === 0) {
+        <div class="state"><span class="state-symbol" aria-hidden="true">▦</span>
+          <h3>{{ data.totalElements === 0 ? 'Bạn chưa có lịch hẹn nào' : 'Trang này chưa có lịch hẹn' }}</h3>
+          <p>{{ data.totalElements === 0 ? 'Lịch sử sẽ xuất hiện tại đây sau khi bạn đăng ký khám.' : 'Danh sách có thể vừa thay đổi. Hãy quay lại trang đầu để xem các lịch hẹn.' }}</p>@if (data.totalElements === 0) {
+            <a class="primary-button" routerLink="/home">Đặt lịch khám</a>
+          } @else {
+            <button class="primary-button" type="button" (click)="changePage(0)">Về trang đầu</button>
+          }</div>
+      } @else {
+        <div class="appointment-list">
+          @for (item of visibleItems(); track item.id) {
+            <article class="appointment-card" [attr.aria-labelledby]="'appointment-' + item.id">
+              <div class="card-top">
+                <span class="appointment-code">{{ item.appointmentCode }}</span>
+                <span class="status" [class]="'status ' + statusClass(item.status)">
+                  <span aria-hidden="true">●</span>
+                  {{ statusLabel(item.status) }}
+                </span>
+              </div>
+              <div class="card-body">
+                <div class="date-tile" aria-hidden="true">
+                  <span>THÁNG {{ item.appointmentDate | date:'MM' }}</span><strong>{{ item.appointmentDate | date:'dd' }}</strong><small>{{ item.appointmentDate | date:'yyyy' }}</small>
+                </div>
+                <div class="appointment-info"><h3
+                  [id]="'appointment-' + item.id">{{ item.serviceName || 'Dịch vụ khám' }}</h3>
+                  <p class="doctor"><span>Bác sĩ</span><strong>{{ item.doctorName || 'Chưa cập nhật' }}</strong></p>
+                  <div class="schedule"><span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="16" rx="2" />
+                      <path d="M8 3v4m8-4v4M3 11h18" />
+                    </svg>
+                    {{ item.appointmentDate | date:'dd/MM/yyyy' }}</span>
+                    <span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                      {{ item.startTime.slice(0, 5) }} – {{ item.endTime.slice(0, 5) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="amount">
+                  <span>Chi phí</span>
+                  <strong>{{ item.finalAmount !== null ? (item.finalAmount | currency:'VND':'symbol':'1.0-0':'vi') : 'Chưa xác định' }}</strong>
+                </div>
+              </div>
+              <details>
+                <summary>Thông tin lịch hẹn
+                  <nz-icon
+                    nzType="down"
+                    nzTheme="outline"
+                    class="text-ms"
+                    aria-hidden="true"
+                  />
+                </summary>
+                <div class="details-content">
+                  <dl>
+                    <div>
+                      <dt>Người khám</dt>
+                      <dd>{{ item.patientName || 'Chưa cập nhật' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Mã bệnh nhân</dt>
+                      <dd>{{ item.patientCode }}</dd>
+                    </div>
+                    <div>
+                      <dt>Số điện thoại</dt>
+                      <dd>{{ item.patientPhone || 'Chưa cập nhật' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Mã bác sĩ</dt>
+                      <dd>{{ item.doctorCode }}</dd>
+                    </div>
+                    <div class="wide">
+                      <dt>Lý do khám</dt>
+                      <dd>{{ item.reason || 'Chưa cập nhật' }}</dd>
+                    </div>@if (item.note) {
+                    <div class="wide">
+                      <dt>Ghi chú</dt>
+                      <dd>{{ item.note }}</dd>
+                    </div>
+                  }
+                    <div>
+                      <dt>Giá dịch vụ</dt>
+                      <dd>{{ item.servicePrice !== null ? (item.servicePrice | currency:'VND':'symbol':'1.0-0':'vi') : 'Chưa xác định' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Ưu đãi áp dụng</dt>
+                      <dd>{{ item.promotionName || item.promotionCode || 'Không áp dụng' }}@if (item.promotionName && item.promotionCode) {
+                        <span class="muted"> ({{ item.promotionCode }})</span>
+                      }</dd>
+                    </div>
+                    <div>
+                      <dt>Ngày đặt</dt>
+                      <dd>{{ item.createdAt | date:'dd/MM/yyyy, HH:mm' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Cập nhật gần nhất</dt>
+                      <dd>{{ item.updatedAt | date:'dd/MM/yyyy, HH:mm' }}</dd>
+                    </div>
+                  </dl>
+                  <p class="cost-note">Chi phí hiển thị theo lịch hẹn, không thể hiện trạng thái thanh toán.</p></div>
+              </details>
+              <div class="card-actions">@if (item.status === 'COMPLETED' && item.reviewEligible) {
+                <span>☆ Có thể gửi đánh giá</span>
+              }<a [routerLink]="['/profile/appointments', item.id]">Xem chi tiết lịch hẹn →</a></div>
+            </article>
+          }
+          @if (!visibleItems().length) {
+            <div class="state"><h3>Không có lịch hẹn phù hợp trong trang này</h3>
+              <p>Chọn trạng thái khác hoặc chuyển trang để xem thêm.</p>
+              <button type="button" class="primary-button" (click)="statusFilter.set('')">Xem tất cả trạng thái</button>
+            </div>
+          }
+        </div>
+      }
+      @if (data.totalElements > 0) {
+        <nav class="pagination" aria-label="Phân trang lịch sử"><p>Hiển thị <strong>{{ firstItem(data) }}
+          –{{ lastItem(data) }}</strong> trong <strong>{{ data.totalElements }}</strong> lịch hẹn</p>
+          <div>
+            <button type="button" (click)="changePage(data.number - 1)" [disabled]="data.number <= 0"
+                    aria-label="Trang trước">← <span>Trước</span></button>
+            <span class="page-number" aria-live="polite">Trang {{ data.number + 1 }} / {{ data.totalPages }}</span>
+            <button type="button" (click)="changePage(data.number + 1)" [disabled]="data.number + 1 >= data.totalPages"
+                    aria-label="Trang sau"><span>Sau</span> →
+            </button>
+          </div>
+        </nav>
+      }
+    }
+  </section>
+  <p class="help-text">Cần hỗ trợ về lịch hẹn? Liên hệ <a href="tel:1900888866">1900.888.866</a> để được hướng dẫn.</p>
+</div>

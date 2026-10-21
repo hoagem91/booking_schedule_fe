@@ -1,0 +1,161 @@
+<a class="back-link" routerLink="/profile/appointments">← Lịch hẹn của tôi</a>
+<header class="page-heading">
+  <h1>Chi tiết lịch hẹn</h1>
+  <p>Xem thông tin khám và theo dõi lịch hẹn của bạn.</p></header>
+@let item = appointment();
+@if (feedback()) {
+  <div class="feedback" role="status">✓ {{ feedback() }}</div>
+}
+@if (loading()) {
+  <div class="state" role="status">Đang tải thông tin lịch hẹn…</div>
+} @else if (error()) {
+  <div class="state"><h2>Chưa thể tải lịch hẹn</h2>
+    <p role="alert">{{ error() }}</p>
+    <button class="primary" type="button" (click)="load()">Thử lại</button>
+  </div>
+} @else if (item) {
+  <section class="detail-card" aria-labelledby="appointment-title">
+    <div class="card-heading"><span>{{ item.appointmentCode }}</span><span class="status"
+                                                                           [class]="'status ' + item.status.toLowerCase()">{{ statusLabels[item.status] || 'Chưa xác định' }}</span>
+    </div>
+    <div class="service-heading"><span class="service-icon" aria-hidden="true">✚</span>
+      <div><span class="eyebrow">DỊCH VỤ KHÁM</span>
+        <h2 id="appointment-title">{{ decodeText(item.serviceName) }}</h2>
+        <p>Bác sĩ {{ item.doctorName }}</p></div>
+    </div>
+    <div class="visit-summary">
+      <div><small>NGÀY KHÁM</small><strong>{{ item.appointmentDate | date:'dd/MM/yyyy' }}</strong></div>
+      <div><small>KHUNG GIỜ</small><strong>{{ item.startTime.slice(0, 5) }} – {{ item.endTime.slice(0, 5) }}</strong>
+      </div>
+      <div><small>CHI PHÍ</small><strong
+        class="price">{{ item.finalAmount !== null ? (item.finalAmount | currency:'VND':'symbol':'1.0-0':'vi') : 'Chưa xác định' }}</strong>
+      </div>
+    </div>
+    <div class="detail-section"><h3>Thông tin người khám</h3>
+      <dl>
+        <div>
+          <dt>Họ và tên</dt>
+          <dd>{{ item.patientName }}</dd>
+        </div>
+        <div>
+          <dt>Mã bệnh nhân</dt>
+          <dd>{{ item.patientCode }}</dd>
+        </div>
+        <div>
+          <dt>Số điện thoại</dt>
+          <dd>{{ item.patientPhone || 'Chưa cập nhật' }}</dd>
+        </div>
+        <div>
+          <dt>Mã bác sĩ</dt>
+          <dd>{{ item.doctorCode }}</dd>
+        </div>
+      </dl>
+    </div>
+    <div class="detail-section"><h3>Nội dung đăng ký</h3>
+      <dl>
+        <div class="wide">
+          <dt>Lý do khám</dt>
+          <dd>{{ item.reason || 'Không có thông tin bổ sung' }}</dd>
+        </div>
+        <div class="wide">
+          <dt>Ghi chú</dt>
+          <dd>{{ item.note || 'Không có ghi chú' }}</dd>
+        </div>
+        <div>
+          <dt>Giá dịch vụ</dt>
+          <dd>{{ item.servicePrice !== null ? (item.servicePrice | currency:'VND':'symbol':'1.0-0':'vi') : 'Chưa xác định' }}</dd>
+        </div>
+        <div>
+          <dt>Ưu đãi</dt>
+          <dd>{{ item.promotionName ? decodeText(item.promotionName) : item.promotionCode || 'Không áp dụng' }}</dd>
+        </div>
+        <div>
+          <dt>Ngày đặt lịch</dt>
+          <dd>{{ item.createdAt | date:'HH:mm, dd/MM/yyyy' }}</dd>
+        </div>
+        <div>
+          <dt>Cập nhật lần cuối</dt>
+          <dd>{{ item.updatedAt | date:'HH:mm, dd/MM/yyyy' }}</dd>
+        </div>
+      </dl>
+    </div>
+    @if (item.status === 'PENDING' || item.status === 'CONFIRMED') {
+      <div class="guidance">
+        <strong>{{ item.status === 'PENDING' ? 'Lịch hẹn đang chờ xác nhận' : 'Lịch hẹn đã được xác nhận' }}</strong>
+        <p>Vui lòng theo dõi cập nhật và mang theo giấy tờ tùy thân khi đến khám.</p></div>
+    } @else if (item.status === 'IN_PROGRESS') {
+      <div class="guidance">
+        <strong>Ca khám đang được thực hiện</strong>
+        <p>Bạn có thể gửi đánh giá sau khi ca khám hoàn thành.</p>
+      </div>
+    } @else if (item.status === 'COMPLETED') {
+      <div class="guidance">
+        <strong>{{ item.reviewEligible ? 'Chia sẻ trải nghiệm khám của bạn' : 'Ca khám đã hoàn thành' }}</strong>
+        <p>{{ item.reviewEligible ? 'Đánh giá của bạn giúp cải thiện chất lượng phục vụ.' : 'Lịch hẹn này hiện không còn nhận đánh giá mới.' }}</p>
+      </div>
+    } @else {
+      <div class="guidance neutral"><strong>{{ statusLabels[item.status] || 'Lịch hẹn đã kết thúc' }}</strong>
+        <p>Bạn có thể đặt một lịch khám mới khi cần được thăm khám.</p></div>
+    }
+    <div class="card-actions">
+      @if (canCancel(item)) {
+        <button type="button" class="danger-outline" (click)="openAction('cancel')">Hủy lịch hẹn</button>
+      }
+      @if (item.status === 'COMPLETED' && item.reviewEligible) {
+        <button type="button" class="primary" (click)="openAction('review')">☆ Viết đánh giá</button>
+      }
+      <a class="secondary" routerLink="/home">Đặt lịch khám mới →</a>
+    </div>
+  </section>
+  <p class="help-text">Cần hỗ trợ về lịch hẹn? Liên hệ <a href="tel:1900888866">1900.888.866</a>.</p>
+}
+<dialog #actionDialog aria-labelledby="dialog-title" (cancel)="onDialogCancel($event)">
+  <form (ngSubmit)="submitAction()">
+    <div class="dialog-heading"><span class="dialog-symbol"
+                                      aria-hidden="true">{{ action() === 'cancel' ? '!' : '☆' }}</span>
+      <button type="button" class="close-dialog" aria-label="Đóng hộp thoại" [disabled]="saving()"
+              (click)="closeAction()">×
+      </button>
+    </div>
+    <h2 id="dialog-title">{{ action() === 'cancel' ? 'Bạn muốn hủy lịch hẹn?' : 'Trải nghiệm khám của bạn' }}</h2>
+    <p
+      class="dialog-description">{{ action() === 'cancel' ? 'Sau khi hủy, khung giờ này sẽ được dành cho người khác. Yêu cầu hủy được xử lý theo thời hạn của phòng khám.' : 'Chọn mức độ hài lòng và chia sẻ cảm nhận của bạn về ca khám.' }}</p>
+    @if (action() === 'cancel') {
+      <label for="cancel-note">Lý do hủy <span>(không bắt buộc)</span></label><textarea id="cancel-note"
+                                                                                        name="cancelNote"
+                                                                                        [(ngModel)]="cancelNote"
+                                                                                        rows="3" maxlength="2000"
+                                                                                        placeholder="Chia sẻ lý do bạn không thể đến khám…"
+                                                                                        [disabled]="saving()"></textarea>
+    } @else {
+      <fieldset class="rating">
+        <legend>Mức độ hài lòng <span aria-hidden="true">*</span></legend>
+        <div>
+          @for (star of stars; track star) {
+            <label [class.filled]="rating >= star"><input type="radio" name="rating" [value]="star" [(ngModel)]="rating"
+                                                          [disabled]="saving()"
+                                                          [attr.aria-label]="star + ' sao'" /><span
+              aria-hidden="true">★</span></label>
+          }
+        </div>
+        <p>{{ rating ? rating + ' / 5 sao' : 'Chọn từ 1 đến 5 sao' }}</p></fieldset>
+      <label for="review-comment">Nhận xét <span>(không bắt buộc)</span></label><textarea id="review-comment"
+                                                                                          name="comment"
+                                                                                          [(ngModel)]="comment" rows="4"
+                                                                                          maxlength="2000"
+                                                                                          placeholder="Điều gì khiến bạn hài lòng hoặc cần cải thiện?"
+                                                                                          [disabled]="saving()"></textarea>
+    }
+    @if (actionError()) {
+      <p class="action-error" role="alert">{{ actionError() }}</p>
+    }
+    <footer class="dialog-footer">
+      <button type="button" class="secondary" (click)="closeAction()"
+              [disabled]="saving()">{{ action() === 'cancel' ? 'Giữ lại lịch hẹn' : 'Để sau' }}
+      </button>
+      <button type="submit" [class]="action() === 'cancel' ? 'danger' : 'primary'"
+              [disabled]="saving() || (action() === 'review' && !rating)">{{ saving() ? 'Đang xử lý…' : action() === 'cancel' ? 'Xác nhận hủy' : 'Gửi đánh giá' }}
+      </button>
+    </footer>
+  </form>
+</dialog>

@@ -1,0 +1,27 @@
+@if (booked(); as item) {
+    <section class="success-panel" aria-labelledby="success-title" role="status">
+      <span class="success-mark" aria-hidden="true">✓</span>
+      <span class="eyebrow">ĐÃ TIẾP NHẬN LỊCH HẸN</span>
+      <h1 id="success-title">Bạn đã đặt lịch thành công!</h1>
+      <p>Lịch hẹn đang chờ xác nhận. Bạn có thể theo dõi cập nhật trong mục Lịch hẹn của tôi.</p>
+      <div class="confirmation-code"><small>MÃ LỊCH HẸN CỦA BẠN</small><strong>{{ item.appointmentCode }}</strong></div>
+      <dl class="success-summary">
+        <div><dt>Dịch vụ</dt><dd>{{ decodeText(item.serviceName) }}</dd></div>
+        <div><dt>Bác sĩ</dt><dd>{{ item.doctorName }}</dd></div>
+        <div><dt>Ngày khám</dt><dd>{{ item.appointmentDate | date:'dd/MM/yyyy' }}</dd></div>
+        <div><dt>Khung giờ</dt><dd>{{ item.startTime.slice(0, 5) }} – {{ item.endTime.slice(0, 5) }}</dd></div>
+      </dl>
+      <div class="success-links"><a class="primary" [routerLink]="['/profile/appointments', item.id]">Xem chi tiết lịch hẹn →</a><a routerLink="/profile/appointments">Lịch hẹn của tôi</a></div>
+    </section>
+} @else {
+      <aside class="summary-content" aria-labelledby="summary-title">
+        <div class="summary-card"><span class="eyebrow">LỊCH KHÁM CỦA BẠN</span><h2 id="summary-title">Thông tin đã chọn</h2><dl>
+          <div><dt>Chuyên khoa</dt><dd>{{ specialty() ? decodeText(specialty()!.name) : 'Chưa chọn' }}</dd></div>
+          <div><dt>Dịch vụ</dt><dd>{{ service() ? decodeText(service()!.name) : 'Chưa chọn' }}</dd></div>
+          <div><dt>Bác sĩ</dt><dd>{{ schedule()?.doctorName || 'Chưa chọn' }}</dd></div>
+          <div><dt>Ngày khám</dt><dd>{{ schedule() ? (date() | date:'dd/MM/yyyy') : 'Chưa chọn' }}</dd></div>
+          <div><dt>Khung giờ</dt><dd>{{ slot() ? slot()!.startTime.slice(0, 5) + ' – ' + slot()!.endTime.slice(0, 5) : 'Chưa chọn' }}</dd></div>
+        </dl><div class="summary-price"><span>Chi phí dịch vụ</span><strong>{{ service() ? (service()!.price | currency:'VND':'symbol':'1.0-0':'vi') : '—' }}</strong></div><p class="hint">Chi phí dịch vụ được xác nhận cùng thông tin lịch hẹn.</p></div>
+        <div class="support-card"><span aria-hidden="true">✚</span><div><strong>Cần hỗ trợ đặt lịch?</strong><p>Chúng tôi luôn sẵn sàng hỗ trợ bạn.</p><a href="tel:1900888866">1900.888.866</a></div></div>
+      </aside>
+}

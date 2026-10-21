@@ -1,0 +1,67 @@
+:host { display: block; }
+.site-header { background: #fff; color: #203d35; border-bottom: 1px solid #e4ece7; }
+.header-container { width: min(1200px, calc(100% - 64px)); margin-inline: auto; }
+.masthead { min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 22px; }
+.identity, .brand, .utility-row { display: flex; align-items: center; }
+.identity { gap: 20px; flex-shrink: 0; }
+.brand { gap: 10px; color: #203d35; text-decoration: none; white-space: nowrap; }
+.brand img { display: block; object-fit: contain; }
+.brand > span { font-size: 19px; line-height: 1.3; letter-spacing: -.5px; }
+.brand strong { font-weight: 700; }
+.brand small { display: block; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: #73877d; margin-top: 7px; }
+.brand-divider { height: 38px; width: 1px; background: #e3ebe6; }
+.slogan { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 600; color: #b86908; font-size: 25px; line-height: 1.5; margin: 0; white-space: nowrap; }
+.header-information { min-width: 0; }
+.utility-row { justify-content: flex-end; gap: 16px; }
+.hotline { display: flex; align-items: center; gap: 9px; color: #203d35; text-decoration: none; white-space: nowrap; }
+.hotline svg { width: 18px; height: 18px; color: #168447; }
+.hotline small, .account-label small { display: block; color: #607468; font-size: 12px; line-height: 1.5; }
+.hotline strong { font-size: 15px; letter-spacing: .3px; }
+.utility-divider { height: 28px; width: 1px; background: #e3ebe6; }
+svg { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.address { display: flex; align-items: flex-start; justify-content: flex-end; gap: 7px; margin: 12px 0 0; color: #607468; font-size: 13px; line-height: 1.5; }
+.address svg { width: 14px; height: 16px; }
+.account { position: relative; }
+.account-trigger { display: flex; align-items: center; gap: 9px; border: 0; padding: 3px 0; background: none; cursor: pointer; color: #203d35; }
+.avatar { display: grid; place-items: center; width: 35px; height: 35px; background: #eaf5ed; border: 1px solid #d5e8d9; color: #167c40; border-radius: 50%; font-size: 14px; font-weight: 700; }
+.account-label { text-align: left; max-width: 150px; }
+.account-label strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.chevron { width: 15px; height: 15px; color: #7d8c82; }
+.language { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #607468; white-space: nowrap; }
+.language > span { font-size: 18px; }
+.login-link, .register-link { font-size: 13px; font-weight: 600; white-space: nowrap; text-decoration: none; color: #167c40; }
+.register-link { padding: 9px 12px; border: 1px solid #d6e5db; border-radius: 6px; }
+.account-popover { position: absolute; right: 0; top: calc(100% + 12px); width: 230px; padding: 8px; z-index: 100; background: #fff; border: 1px solid #e2eae4; border-radius: 10px; box-shadow: 0 12px 32px #173b4221; }
+.popover-title { display: block; padding: 10px; color: #8a988e; font-size: 10px; letter-spacing: 1px; }
+.account-popover a, .account-popover button { display: block; width: 100%; padding: 12px; border: 0; border-radius: 5px; text-align: left; background: #fff; color: #264436; font: inherit; font-size: 14px; text-decoration: none; cursor: pointer; }
+.account-popover a:hover, .account-popover button:hover { background: #f0f7f1; }
+.account-popover button:disabled { opacity: .6; cursor: wait; }
+.account-popover p { padding: 8px; font-size: 12px; color: #b42318; }
+.navigation { background: #168341; }
+.navigation-inner { display: flex; align-items: center; justify-content: center; gap: 12px; padding-block: 8px; }
+.navigation a { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 28px; border-radius: 6px; color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: .25px; transition: background .15s; }
+.navigation a:hover, .navigation a.is-active { background: #107235; color: #fff; }
+.navigation a.is-active::after { content: ''; position: absolute; bottom: 0; inset-inline: 28px; height: 3px; background: #f9ce75; border-radius: 3px 3px 0 0; }
+.navigation .booking-link { background: #ffdc91; color: #25442e; box-shadow: 0 2px 4px #08552b26; }
+.navigation .booking-link:hover, .navigation .booking-link.is-active { background: #ffcd66; color: #173821; }
+.navigation .booking-link.is-active::after { background: #25442e; }
+.booking-link svg { width: 19px; height: 19px; }
+.nav-person { width: 15px; height: 15px; }
+.menu-toggle { display: none; border: 1px solid #dce7df; border-radius: 6px; background: #fff; color: #168341; width: 42px; height: 42px; align-items: center; justify-content: center; cursor: pointer; }
+.menu-toggle svg { width: 22px; height: 22px; }
+a:focus-visible, button:focus-visible { outline: 2px solid #c88b19; outline-offset: 4px; }
+@media (max-width: 1150px) { .slogan { font-size: 19px; } .identity { gap: 16px; } .masthead { gap: 20px; } .utility-row { gap: 10px; } .header-container { width: calc(100% - 40px); } }
+@media (max-width: 1100px) { .identity { flex-wrap: wrap; gap: 0 12px; } .brand-divider { display: none; } .slogan { flex-basis: 100%; margin-left: 62px; font-size: 20px; } .address { max-width: 370px; } }
+@media (max-width: 700px) { .header-container { width: calc(100% - 32px); } .masthead { position: relative; flex-wrap: wrap; gap: 16px; padding-block: 18px 14px; } .identity { padding-right: 54px; } .brand img { width: 44px; height: 44px; } .brand > span { font-size: 18px; } .brand small { font-size: 8px; margin-top: 5px; } .slogan { margin-left: 54px; font-size: 16px; } .header-information { width: 100%; padding-top: 12px; border-top: 1px solid #edf1ee; } .utility-row { justify-content: space-between; gap: 10px; } .hotline small { display: none; } .hotline strong { font-size: 13px; } .hotline svg { width: 15px; } .utility-divider, .address, .language { display: none; } .account-label strong { max-width: 110px; } .menu-toggle { display: flex; position: absolute; right: 0; top: 22px; } .navigation { display: none; } .navigation.is-open { display: block; } .navigation-inner { flex-direction: column; gap: 0; padding-block: 8px; } .navigation a { justify-content: flex-start; min-height: 48px; padding-inline: 16px; border-radius: 5px; } .navigation a.is-active::after { inset-inline: 0 auto; height: 20px; width: 3px; top: 14px; border-radius: 2px; } .account-popover { top: calc(100% + 8px); } }
+@media (max-width: 700px) {
+  .identity { width: 100%; min-width: 0; flex-shrink: 1; }
+  .slogan { flex-basis: auto; white-space: normal; }
+  .navigation-inner { align-items: stretch; }
+}
+@media (max-width: 360px) {
+  .brand > span { font-size: 16px; }
+  .brand small { letter-spacing: 1px; }
+  .utility-row { flex-wrap: wrap; }
+  .account-label { max-width: 95px; }
+}
+@media (prefers-reduced-motion: reduce) { .navigation a { transition: none; } }

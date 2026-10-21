@@ -1,0 +1,81 @@
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-title">
+    <a class="brand" href="/login" aria-label="Booking Schedule">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 512 512" role="img" aria-label="Logo trái tim hình người màu xanh gradient">
+        <defs>
+          <linearGradient id="heartGradient" x1="0" y1="0.5" x2="1" y2="0.5" objectBoundingBox="true">
+            <stop offset="0%" stop-color="#5BC8F5"/>
+            <stop offset="48%" stop-color="#57D9A1"/>
+            <stop offset="72%" stop-color="#65E879"/>
+            <stop offset="100%" stop-color="#B3ED7B"/>
+          </linearGradient>
+          <clipPath id="heartClip">
+            <path d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z"/>
+          </clipPath>
+        </defs>
+        <path fill="url(#heartGradient)" d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z"/>
+        <g clip-path="url(#heartClip)" fill="#007F80">
+          <path d="M256 89 C234 106 196 135 190 175 C183 224 216 258 256 258 C296 258 329 224 322 175 C316 135 278 106 256 89 Z"/>
+          <path d="M109 344 C143 293 192 285 214 284 C228 282 242 281 256 281 C270 281 284 282 298 284 C320 285 369 293 403 344 L358 399 C305 462 207 462 154 399 Z"/>
+        </g>
+      </svg>
+
+      <span>Booking Schedule<small>Hệ thống đặt lịch khám</small></span>
+    </a>
+    <div class="login-content">
+      <h1 id="login-title">Đăng nhập</h1>
+      <p class="intro">Đăng nhập để quản lý lịch hẹn và kết nối với dịch vụ chăm sóc sức khỏe.</p>
+      <form nz-form nzLayout="vertical" [formGroup]="loginForm" (ngSubmit)="submitForm()" [attr.aria-busy]="isLoading">
+        @if (errorMessage) {
+          <div class="alert" role="alert"><nz-alert nzType="error" [nzMessage]="errorMessage" nzShowIcon /></div>
+        }
+        <nz-form-item>
+          <nz-form-label nzFor="username" nzRequired>Tên đăng nhập</nz-form-label>
+          <nz-form-control nzErrorTip="Vui lòng nhập tên đăng nhập.">
+            <input nz-input id="username" formControlName="username" placeholder="Nhập tên đăng nhập"
+              autocomplete="username" autocapitalize="none" spellcheck="false" [readOnly]="isLoading" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label class="mt-2" nzFor="password" nzRequired>Mật khẩu</nz-form-label>
+          <nz-form-control nzErrorTip="Vui lòng nhập mật khẩu.">
+            <nz-input-group [nzSuffix]="passwordToggle">
+              <input nz-input id="password" formControlName="password" placeholder="Nhập mật khẩu"
+                [type]="passwordVisible ? 'text' : 'password'" autocomplete="current-password" [readOnly]="isLoading" />
+            </nz-input-group>
+            <ng-template #passwordToggle>
+              <button class="password-toggle" type="button" (click)="passwordVisible = !passwordVisible"
+                [attr.aria-label]="passwordVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+                [attr.aria-pressed]="passwordVisible">{{ passwordVisible ? 'Ẩn' : 'Hiện' }}</button>
+            </ng-template>
+          </nz-form-control>
+        </nz-form-item>
+        <div class="form-options">
+          <label nz-checkbox formControlName="remember" [nzDisabled]="isLoading">Ghi nhớ tài khoản</label>
+          <button type="button" class="text-button" (click)="showPasswordHelp = !showPasswordHelp"
+            [attr.aria-expanded]="showPasswordHelp">Quên mật khẩu?</button>
+        </div>
+        @if (showPasswordHelp) {
+          <div class="alert" role="status"><nz-alert nzType="info"
+            nzMessage="Vui lòng liên hệ quản trị viên để được hỗ trợ khôi phục mật khẩu." /></div>
+        }
+        <button nz-button nzType="primary" nzSize="large" class="submit-button" type="submit"
+          [nzLoading]="isLoading" [disabled]="isLoading">{{ isLoading ? 'Đang đăng nhập' : 'Đăng nhập' }}</button>
+        <p class="remember-note">Chưa có tài khoản? <a routerLink="/register">Đăng kí</a></p>
+      </form>
+    </div>
+    <footer>Booking Schedule · Chăm sóc sức khỏe từ những điều nhỏ nhất</footer>
+  </section>
+  <aside class="welcome-panel" aria-label="Giới thiệu hệ thống">
+    <span class="welcome-tag">ĐỒNG HÀNH CÙNG SỨC KHỎE CỦA BẠN</span>
+    <h2>Lịch khám chủ động.<br>An tâm mỗi ngày.</h2>
+    <p>Một nơi để kết nối, sắp xếp lịch hẹn và bắt đầu hành trình chăm sóc sức khỏe.</p>
+    <div class="appointment-card" aria-hidden="true">
+      <div class="card-heading"><span class="calendar-mark">+</span><div>Lịch hẹn khám<small>Chủ động sắp xếp thời gian của bạn</small></div></div>
+      <div class="calendar-days"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+      <div class="calendar-dates"><span>12</span><span>13</span><span class="selected">14</span><span>15</span><span>16</span><span>17</span><span>18</span></div>
+      <div class="card-bottom"><span class="status-dot"></span>Sẵn sàng cho lịch hẹn tiếp theo</div>
+    </div>
+    <div class="welcome-bottom">Thuận tiện hơn. Gần gũi hơn.</div>
+  </aside>
+</main>

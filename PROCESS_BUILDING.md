@@ -1,0 +1,333 @@
+Để đội ngũ Frontend (FE) hiểu rõ và thiết kế giao diện sát với nghiệp vụ Backend, **`Appointment` (Lịch hẹn khám)** cần được xem là **entity trung tâm của toàn bộ hệ thống**. Mọi luồng tương tác từ Bệnh nhân, Bác sĩ, Lễ tân cho đến Thanh toán và Đánh giá đều xoay quanh bảng dữ liệu này.
+
+Dưới đây là tài liệu phân tích chi tiết quy trình nghiệp vụ và hướng dẫn thiết kế UI/UX dành riêng cho team FE.
+
+---
+
+### 1. Mô hình Dữ liệu và Các mối liên kết của `Appointment`
+
+Bản ghi `Appointment` kết nối trực tiếp 5 thành phần nghiệp vụ:
+* **`patient_id`**: Hồ sơ bệnh nhân thực hiện đặt lịch.
+* **`doctor_id`**: Bác sĩ phụ trách ca khám.
+* **`service_id`**: Dịch vụ khám bệnh được chọn (có giá `price` và thời lượng `duration_minutes`).
+* **`time_slot_id`**: Khung giờ khám cụ thể trong ca làm việc của bác sĩ.
+* **`promotion_id`** *(Optional)*: Mã giảm giá được áp dụng.
+
+---
+
+### 2. Vòng đời Trạng thái & Quy tắc Hiển thị UI (`AppointmentStatus`)
+
+Trạng thái của lịch hẹn quyết định các nút bấm (Actions) và màu sắc nhãn (Badge Status) hiển thị trên màn hình:
+
+```text
+[ PENDING ] ──(Xác nhận)──> [ CONFIRMED ] ──(Bắt đầu khám)──> [ IN_PROGRESS ] ──(Hoàn tất)──> [ COMPLETED ]
+     │                           │
+     ├──────────(Hủy)────────────┴──────────(Vắng mặt)────────────────────────────────────────> [ CANCELLED / NO_SHOW ]
+```
+
+* **`PENDING` (Chờ xác nhận - Badge Vàng)**: Lịch hẹn vừa được khởi tạo từ Client.
+  * *FE Action*: Bệnh nhân hoặc Lễ tân có thể bấm **[Hủy lịch]**. Admin/Lễ tân có nút **[Xác nhận]**.
+* **`CONFIRMED` (Đã xác nhận - Badge Xanh lá)**: Lịch hẹn đã được xác nhận hoặc đã thanh toán thành công.
+  * *FE Action*: Lễ tân có nút **[Bắt đầu khám]** khi bệnh nhân tới phòng khám. Bệnh nhân vẫn có thể bấm **[Hủy lịch]** nếu còn trong thời hạn quy định.
+* **`IN_PROGRESS` (Đang khám - Badge Xanh dương)**: Bệnh nhân đang trong phòng khám cùng bác sĩ.
+  * *FE Action*: Bác sĩ hoặc Lễ tân có nút **[Hoàn thành ca khám]**.
+* **`COMPLETED` (Đã hoàn thành - Badge Xanh đậm)**: Ca khám kết thúc thành công.
+  * *FE Action*: Mở quyền cho bệnh nhân bấm **[Viết đánh giá (Review)]** hoặc **[Thanh toán / Xem hóa đơn]**.
+* **`CANCELLED` (Đã hủy - Badge Đỏ)** / **`NO_SHOW` (Vắng mặt - Badge Xám)**: Lịch hẹn bị hủy hoặc bệnh nhân không đến.
+  * *FE Action*: Khóa toàn bộ nút thao tác.
+
+---
+
+### 3. Thiết kế Luồng Đặt Lịch Khám cho Client (Patient Booking Wizard)
+
+Giao diện đặt lịch nên được thiết kế dưới dạng **Wizard / Stepper 4 bước** để tối ưu trải nghiệm :
+
+#### **Bước 1: Chọn Chuyên khoa & Dịch vụ khám**
+* FE gọi API danh mục Dịch vụ. Render danh sách dạng Card bao gồm Tên dịch vụ (`name`), Giá tiền (`price`) và Thời lượng khám (`duration_minutes`).
+
+#### **Bước 2: Chọn Bác sĩ & Ngày khám**
+* FE hiển thị Datepicker chọn ngày khám (`appointment_date`) và danh sách Bác sĩ thuộc Chuyên khoa tương ứng.
+
+#### **Bước 3: Chọn Khung giờ (`TimeSlot Grid`)**
+* FE gọi API lấy danh sách `time_slots` thuộc ca làm việc (`doctor_schedules`) của bác sĩ trong ngày đã chọn.
+* **Logic Render Khung giờ trên UI**:
+  * Nếu `status == 'AVAILABLE'` và `booked_count < max_patients`: Render Button **Màu xanh / Cho phép chọn**.
+  * Nếu `status == 'FULL'` hoặc `booked_count >= max_patients`: Render Button **Màu xám, bị khóa (Disabled) kèm nhãn "Đã kín"**.
+
+#### **Bước 4: Nhập thông tin & Xác nhận (`POST /api/admin/appointments` hoặc Public Booking API)**
+* Form hiển thị tóm tắt: Tên Bác sĩ, Dịch vụ, Ngày giờ, Giá tiền, Ô nhập Lý do khám (`reason`) và Ô nhập Mã giảm giá (`promotion_id`).
+* **Xử lý Response & Lỗi tranh chấp (Concurrency)**:
+  * Nếu Backend trả về thành công (`code = 1000`): Hiển thị Popup chúc mừng kèm Mã lịch hẹn (`appointment_code`). Chuyển hướng về màn hình "Lịch hẹn của tôi".
+  * Nếu Backend trả về lỗi `400 Bad Request` (do ô giờ vừa bị người khác đặt kín trong vài miligiây): Alert *"Khung giờ này vừa có người đặt. Vui lòng chọn khung giờ khác!"* và tự động load lại danh sách `time_slots` ở Bước 3.
+
+---
+
+### 4. Thiết kế Màn hình Quản lý Lịch hẹn (Dashboard)
+
+#### **A. Giao diện phía Bệnh nhân (`My Appointments`)**
+* Thiết kế TabControl phân loại theo trạng thái: `Tất cả`, `Chờ xác nhận`, `Đã xác nhận`, `Đã hoàn thành`, `Đã hủy`.
+* Mỗi Card lịch hẹn hiển thị: Mã lịch hẹn (`appointment_code`), Tên bác sĩ, Dịch vụ, Ngày giờ khám, Lý do và Nút **[Hủy lịch]** (chỉ hiện khi status là `PENDING` hoặc `CONFIRMED`).
+
+#### **B. Giao diện phía Admin / Lễ tân (`Appointment Management`)**
+* Bảng dữ liệu (Table View) tích hợp thanh lọc (Filter):
+  * Lọc theo khoảng ngày (`appointment_date`), theo Bác sĩ (`doctor_id`), Bệnh nhân (`patient_id`), hoặc Trạng thái (`status`).
+* **Cấu hình Nút hành động trực tiếp trên Table (Dedicated Action APIs)**:
+  * Bấm **[Xác nhận]** ➔ Gọi `PATCH /api/admin/appointments/{id}/confirm`.
+  * Bấm **[Hủy lịch]** ➔ Mở Modal nhập lý do ➔ Gọi `PATCH /api/admin/appointments/{id}/cancel`.
+  * Bấm **[Hoàn thành]** ➔ Gọi `PATCH /api/admin/appointments/{id}/complete`.
+
+---
+
+### 5. Tương tác Mở rộng sau khi Đặt lịch thành công
+
+* **Thanh toán (`Payment`)**: Mô hình 1 `Appointment` liên kết với tối đa 01 `Payment`. Khi bệnh nhân thanh toán online hoặc lễ tân thu tiền mặt, trạng thái `Payment` chuyển `PAID` và tự động cập nhật `Appointment` sang `CONFIRMED`.
+* **Đánh giá (`Review`)**: Sau khi trạng thái chuyển sang `COMPLETED`, màn hình chi tiết lịch hẹn phía Bệnh nhân sẽ hiển thị form cho phép gửi Đánh giá (Rating 1-5 sao + Comment).
+
+---
+
+💡 Đội ngũ FE có thể dựa vào quy trình này để dựng khung Component Angular, thiết kế Form Validation và cấu hình các HTTP Interceptor cho luồng đặt lịch hẹn.
+
+---
+
+## 6. Nhật ký triển khai giao diện bệnh nhân — 16–17/10/2026 (Asia/Bangkok)
+
+### 6.1. Phạm vi và kiểm tra trước khi làm
+
+Yêu cầu: xây dựng giao diện bệnh nhân đặt lịch và các thao tác còn thiếu; chưa triển khai quản lý lễ tân/admin, thanh toán hoặc hóa đơn.
+
+Đã đọc tài liệu này, đối chiếu frontend và backend trong `../examine`, gồm AppointmentController, AppointmentService, AppointmentReviewService, các public controller chuyên khoa/dịch vụ/lịch bác sĩ/khung giờ và DTO tương ứng. Giữ nguyên các thay đổi có trước trong workspace; không sửa backend.
+
+Các điểm khác giữa mô tả nghiệp vụ ban đầu và API hiện có:
+
+- Bệnh nhân đặt lịch qua `POST /api/patient/appointments`; backend xác định bệnh nhân từ phiên đăng nhập. Frontend không gửi patientId/userId và không dùng endpoint admin.
+- Lịch sử bệnh nhân chỉ hỗ trợ page/size/sort. Bộ lọc trạng thái được ghi rõ **“Lọc trong trang hiện tại”**; không coi đây là bộ lọc toàn bộ lịch sử.
+- Public API khung giờ hiện chỉ trả các giờ còn nhận lịch; frontend vẫn xử lý đúng trường hợp FULL/CLOSED/UNAVAILABLE nếu có trong response, nhưng không tự tạo các giờ đã kín mà backend không trả.
+- Lỗi hết chỗ là nghiệp vụ `7003`, backend có thể trả HTTP 409; không coi mọi lỗi HTTP 400/409 là lỗi kín chỗ.
+- Hạn hủy phụ thuộc cấu hình CANCEL_BEFORE_HOURS của backend; frontend không gán cố định 24 giờ. Backend quyết định yêu cầu hủy có hợp lệ tại thời điểm gửi hay không.
+- Chưa có API public tra cứu mã ưu đãi, nên chưa đưa ô áp mã vào luồng đặt lịch; dữ liệu ưu đãi có sẵn trên lịch hẹn vẫn được hiển thị.
+
+### 6.2. Thiết kế và triển khai luồng đặt lịch
+
+Route `/home` được thay từ trang chờ bằng màn đặt lịch có auth guard, dùng header/màu xanh hiện có. Không thay đổi đường dẫn các nút “Đặt lịch khám” đang có.
+
+Giao diện gồm stepper 4 bước, phần nội dung bên trái và bản tóm tắt lựa chọn bên phải; trên điện thoại bố cục chuyển thành một cột.
+
+1. **Chuyên khoa và dịch vụ:** chọn chuyên khoa, tải dịch vụ tương ứng; thẻ dịch vụ có tên, mô tả, giá, thời lượng và trạng thái được chọn. Dịch vụ chưa có giá hợp lệ không cho chọn; giá 0 được hỗ trợ.
+2. **Bác sĩ và ngày khám:** chọn ngày từ hôm nay trở đi, tải các ca khám theo chuyên khoa và ngày; mỗi lựa chọn hiển thị bác sĩ, chuyên khoa, phòng, khoảng giờ và khả năng nhận lịch.
+3. **Khung giờ:** tải giờ theo scheduleId; hiển thị thời gian và số chỗ còn lại/tổng chỗ; chặn giờ đã kín, không khả dụng hoặc đã qua. Có trạng thái rỗng và nút quay lại chọn ca khác.
+4. **Thông tin và xác nhận:** hiển thị người khám từ hồ sơ hiện tại, lý do khám và ghi chú không bắt buộc, mỗi trường tối đa 2.000 ký tự; tóm tắt lựa chọn/chi phí và lưu ý trước khi đến khám.
+
+Sau khi backend xác nhận thành công, hiển thị mã lịch hẹn cùng thông tin dịch vụ/bác sĩ/ngày/giờ; người dùng chọn xem chi tiết hoặc danh sách lịch hẹn. Không tự chuyển sang thanh toán.
+
+Các xử lý bổ sung:
+
+- Đổi chuyên khoa, dịch vụ hoặc ngày sẽ xóa các lựa chọn phụ thuộc không còn hợp lệ.
+- Hủy request đọc cũ trước khi gửi request mới; hủy subscription khi component bị đóng.
+- `load...()` gọi service trực tiếp; `finalize()` kết thúc loading; `subscribe()` kiểm tra response và gán signals, theo cách tổ chức trong check1.txt.
+- Chặn gửi trùng khi đang tạo lịch. Nếu backend báo thành công nhưng thiếu thông tin xác nhận, yêu cầu kiểm tra lịch sử và khóa gửi lại để tránh tạo trùng.
+- Khi nhận lỗi khung giờ không còn khả dụng, quay về bước 3, bỏ giờ đã chọn và tải lại danh sách. Lỗi trùng lịch bệnh nhân có thông báo riêng, không bị xử lý nhầm thành kín chỗ.
+- Có loading, lỗi, thử lại và trạng thái rỗng cho các danh mục/lịch/giờ.
+
+### 6.3. Lịch hẹn, chi tiết, hủy và đánh giá
+
+- `/profile/appointments`: đổi tiêu đề thành “Lịch hẹn của tôi”, giữ phân trang/sắp xếp; bổ sung lọc trong trang theo cả 6 trạng thái, thông báo khi không có kết quả phù hợp và liên kết tới trang chi tiết.
+- `/profile/appointments/:id`: thêm trang chi tiết dùng layout cá nhân hiện có; hiển thị mã/trạng thái, dịch vụ, bác sĩ, người khám, ngày giờ, giá, ưu đãi, lý do, ghi chú và thời điểm tạo/cập nhật.
+- Hủy lịch: mở hộp thoại xác nhận từ lịch PENDING/CONFIRMED còn ở tương lai, nhập lý do không bắt buộc, tối đa 2.000 ký tự; gửi PATCH và cập nhật theo dữ liệu backend. Nếu đã quá hạn hủy, giữ hộp thoại và thông báo lỗi để người dùng biết; không tự giả định hủy thành công.
+- Đánh giá: chỉ mở khi COMPLETED và reviewEligible=true; dùng radio 1–5 sao, nhận xét không bắt buộc/tối đa 2.000 ký tự; gửi một lần và cập nhật reviewEligible=false sau thành công.
+- Dialog dùng native showModal để giữ focus; hỗ trợ Escape, nút đóng, bàn phím và nhãn truy cập. Khi đang gửi, khóa đóng dialog và chặn gửi lại.
+- Chỉnh màu nhãn theo tài liệu: chờ xác nhận vàng, xác nhận xanh lá, đang khám xanh dương, hoàn thành xanh đậm, hủy đỏ và vắng mặt xám.
+- Route chi tiết dùng client rendering như các trang cần phiên đăng nhập khác. Không thay đổi backend hoặc quyền quản trị.
+
+### 6.4. Tổ chức service và API
+
+AppointmentService tiếp tục kế thừa BaseService. Dùng `get()`/`post()` đã có để khai báo endpoint, params và payload; xử lý và gán dữ liệu tại component. Không thêm phương thức vào BaseService và không sửa hành vi các phương thức hiện có trong đợt này.
+
+Riêng hủy lịch cần PATCH, trong khi BaseService chưa có wrapper PATCH: AppointmentService dùng `http`, `apiUrl`, `joinUrl`, `handleResponse(false)` được kế thừa để gọi đúng phương thức backend, không dùng PUT/POST thay thế.
+
+| Chức năng | API |
+| --- | --- |
+| Chuyên khoa | GET /api/public/specialties |
+| Dịch vụ | GET /api/public/services?specialtyId=... |
+| Ca bác sĩ | GET /api/public/doctor-schedules?specialtyId=...&fromDate=...&toDate=... |
+| Khung giờ | GET /api/public/time-slots?scheduleId=... |
+| Tạo lịch | POST /api/patient/appointments |
+| Lịch sử | GET /api/patient/appointments/my-history?page=...&size=...&sort=... |
+| Chi tiết của mình | GET /api/patient/appointments/{id} |
+| Hủy lịch của mình | PATCH /api/patient/appointments/{id}/cancel |
+| Gửi đánh giá | POST /api/patient/appointments/{id}/review |
+
+URL gốc dùng environment.api.baseUrl; interceptor xác thực và proxy hiện có tiếp tục được sử dụng. Response hỗ trợ code/result từ backend và errorCode/result theo model dùng chung; lỗi HTTP đã được BaseService chuyển thành response success=false vẫn được hiển thị tại component. Helper dùng chung chỉ xử lý nhãn, thông báo và giải mã text an toàn cho interpolation.
+
+### 6.5. Tệp triển khai
+
+- `src/app/pages/appointment-booking/appointment-booking.ts`, `.html`, `.css`: luồng đặt lịch.
+- `src/app/pages/appointment-booking/booking-summary.ts`, `.html`, `.css`: tóm tắt lựa chọn và xác nhận thành công; tách riêng để giữ từng component dưới budget CSS hiện có.
+- `src/app/pages/appointment-detail/appointment-detail.ts`, `.html`, `.css`: chi tiết/hủy/đánh giá.
+- `src/app/pages/appointment-history/appointment-history.ts`, `.html`, `.css`: lọc trạng thái trong trang và đường dẫn chi tiết.
+- `src/app/models/booking.model.ts`: model dữ liệu chọn lịch, request đặt lịch và đánh giá.
+- `src/app/services/appointment/appointment.service.ts`, `src/app/constants/api-constants.ts`: khai báo API bệnh nhân và danh mục public.
+- `src/app/utils/appointment-ui.utils.ts`: nhãn trạng thái, thông báo lỗi và giải mã entity.
+- `src/app/app.routes.ts`, `src/app/app.routes.server.ts`, `src/app/pages/profile/profile.ts`: route và tiêu đề layout.
+- Các file `appointment-booking.spec.ts`, `appointment-detail.spec.ts`, cấu hình `angular.json`/`tsconfig.spec.json`: đăng ký kiểm thử.
+- `docs/qa/patient-appointments.cjs`: kiểm tra trình duyệt bằng fixture; chặn toàn bộ request API để không truy cập dữ liệu thật.
+- `docs/screenshots/patient-appointments/`: ảnh minh họa dùng dữ liệu giả.
+
+### 6.6. Kết quả kiểm tra và giới hạn
+
+- `node node_modules/@angular/cli/bin/ng.js test --watch=false`: **32/32 kiểm thử đạt** trên ChromeHeadless, gồm App, lịch sử và các test đặt lịch/chi tiết/hủy/đánh giá mới.
+- Kiểm thử mới bao phủ: khởi tạo danh mục sau render, đổi lựa chọn và xóa dữ liệu phụ thuộc, hủy request ngày cũ, khóa giờ kín/đã qua, payload không gửi định danh bệnh nhân, chống gửi trùng, nội dung quá dài, hết chỗ khi xác nhận, trùng lịch, response xác nhận thiếu dữ liệu, giờ hết hạn trước lúc gửi, route chi tiết không hợp lệ, hủy theo trạng thái/thời điểm, lỗi quá hạn hủy, điều kiện đánh giá và gửi đánh giá một lần.
+- Kiểm tra trình duyệt bằng `docs/qa/patient-appointments.cjs`: **PASS**, thực hiện 25 request API giả lập, tạo 1 lịch và gửi 1 đánh giá trong fixture. Không có lỗi JavaScript trên trang.
+- Đã đi qua đủ 4 bước đặt lịch, kiểm tra nút giờ FULL bị khóa, xác nhận thành công, mở chi tiết, hủy lịch, đóng dialog bằng Escape, gửi đánh giá, cập nhật quyền đánh giá và lọc lịch sử. Kiểm tra thêm tình huống hết chỗ tại bước xác nhận và quay lại chọn giờ.
+- Kiểm tra desktop 1440px và điện thoại 390px/320px; xác nhận không tràn ngang ở các màn đã chụp. Lưu 19 ảnh minh họa trong `docs/screenshots/patient-appointments/`, gồm các bước đặt lịch, chi tiết, dialog hủy/đánh giá, lịch sử và lỗi hết chỗ.
+- Đã mở và kiểm tra trực quan ảnh desktop/mobile của đặt lịch, xác nhận, đánh giá và trạng thái xung đột khung giờ.
+- Build production thành công sau khi tách component tóm tắt; còn cảnh báo bundle initial khoảng 632 kB và một số CSS vượt mức cảnh báo 4 kB. Các component mới nằm dưới mức lỗi CSS 8 kB; không nâng budget để bỏ qua lỗi.
+- Chưa chạy thao tác bằng tài khoản thật/backend thật; các kiểm thử ghi dữ liệu đều chạy trên fixture và không thay đổi dữ liệu backend.
+
+Cách chạy lại kiểm tra trình duyệt: chạy `ng serve --host 127.0.0.1 --port 4305`, sau đó chạy `node docs/qa/patient-appointments.cjs`. Script dùng Playwright, Chrome và dữ liệu giả. Có thể cấu hình đường dẫn thư viện bằng PATIENT_QA_NODE_MODULES, đường dẫn Chrome bằng PATIENT_QA_CHROME và URL bằng PATIENT_QA_URL.
+
+Ảnh tham khảo: [Đặt lịch desktop](docs/screenshots/patient-appointments/booking-desktop.png), [Xác nhận mobile](docs/screenshots/patient-appointments/booking-confirmation-mobile.png), [Đánh giá mobile](docs/screenshots/patient-appointments/appointment-review-mobile.png).
+
+Các phần còn phụ thuộc backend: lọc trạng thái trên toàn bộ lịch sử, tra cứu/áp mã ưu đãi từ mã nhập, cung cấp thời hạn/quyền hủy cụ thể để frontend biết trước. Không hiển thị các nút thanh toán/hóa đơn hay chức năng quản lý lễ tân/admin.
+
+## 7. Xây dựng nền tảng giao diện quản lý — 19/10/2026
+
+### 7.1. Phạm vi và thứ tự thực hiện
+
+Yêu cầu: triển khai lần lượt 8 mục tiêu đã thống nhất: (1) vai trò/phạm vi, (2) menu, (3) route/layout, (4) xác thực nội bộ, (5) giao diện responsive, (6) kiểm soát quyền, (7) trạng thái và trang lịch hẹn đầu tiên, (8) kiểm tra hồi quy. Ghi nhận từng kết quả tại mục này; giữ nguyên các mục lịch sử phía trên.
+
+- Đang thực hiện: nền tảng quản lý dùng chung Angular/backend với bệnh nhân, layout riêng tại /management.
+- Không sửa backend hoặc thay đổi quy trình khám trong đợt xây layout.
+- Mã nguồn hiện có nhiều thay đổi của người dùng; chỉ chỉnh các file cần thiết, không reset/stage/commit các thay đổi có sẵn.
+
+### 7.2. Khảo sát nghiệp vụ và hợp đồng backend
+
+Đã đọc mã backend tại ../examine (chỉ đọc): UserController, UserResponse, RoleResponse, AuthenticationResponse, SecurityConfig, AdminAppointmentController, AppointmentService.
+
+- POST /auth/token: trả token, expiryTime, authenticated, userId, patientId; KHÔNG trả roles.
+- GET /users/me: trả id, username, fullName, email, phone, status và roles[{id,name}]. Dùng API này xác minh quyền, không suy luận từ patientId hay giải mã JWT để cấp quyền.
+- Vai trò hiện có: SUPER_ADMIN, ADMIN, STAFF, DOCTOR, PATIENT. Chỉ tài khoản ACTIVE có vai trò nội bộ được vào layout.
+- GET /api/admin/appointments: ADMIN/SUPER_ADMIN/STAFF; hỗ trợ keyword (mã lịch/tên bệnh nhân, chưa hỗ trợ số điện thoại), doctorId, patientId, status, fromDate, toDate, page, size, sort.
+- GET /api/admin/appointments/{id}: cùng quyền như danh sách.
+- Chưa có trạng thái CHECKED_IN, API đổi lịch, API bác sĩ chỉ xem lịch của mình, hay phạm vi cơ sở trong /users/me. Không tạo giao diện thao tác giả cho các chức năng này.
+- Các guard cũ admin-only.guard.ts/normal.guard.ts mang nghiệp vụ bán hàng và tham chiếu mã không tồn tại; không đưa vào route mới.
+
+### 7.3. Ma trận quyền của mốc layout
+
+| Chức năng đã triển khai | SUPER_ADMIN/ADMIN | STAFF | DOCTOR | PATIENT |
+| --- | --- | --- | --- | --- |
+| Không gian làm việc, tài khoản cá nhân | Có | Có | Có | Không |
+| Danh sách/chi tiết lịch hẹn quản lý | Có | Có | Không | Không |
+| Trang mặc định | Không gian làm việc | Lịch hẹn | Không gian làm việc | 403 |
+
+Menu chỉ chứa chức năng có giao diện và hợp đồng backend khả dụng. Các trang danh mục, tài khoản nhân viên, lịch bác sĩ, báo cáo và nhật ký nghiệp vụ thuộc các mốc tiếp theo; không hiển thị menu rỗng hoặc số liệu giả. Backend hiện cho ADMIN/STAFF xem toàn hệ thống, chưa thể tuyên bố đã phân quyền theo cơ sở.
+
+### 7.4. Kết quả triển khai các mục tiêu 1–7
+
+1. **Vai trò/phạm vi:** đã khai báo policy tập trung ở management.models.ts; nhận cả SUPER_ADMIN; hỗ trợ nhiều vai trò. Tài khoản không ACTIVE hoặc không có vai trò nội bộ bị chặn. Không tự tạo quyền cơ sở khi backend chưa cung cấp.
+2. **Menu:** dùng cấu hình chung có permission; ADMIN/STAFF có danh sách lịch hẹn, DOCTOR chỉ có không gian làm việc và tài khoản. Không dựng số liệu dashboard giả. Menu danh mục, phân quyền, bác sĩ cá nhân và báo cáo chưa đưa vào sử dụng.
+3. **Route/layout:** lazy-load /management; login và trang lỗi xác minh nằm ngoài layout bảo vệ; layout dùng guard cha/con. Route mặc định chuyển STAFF đến lịch hẹn, ADMIN/DOCTOR đến không gian làm việc. Có 403/404; route nội bộ không tồn tại chuyển 404. /management và /management/** dùng client rendering để đọc phiên trình duyệt, không prerender dữ liệu nội bộ.
+4. **Xác thực:** GET /users/me sau đăng nhập và khi vào route bảo vệ; đối chiếu id với userId của phiên. Quyền chỉ lưu trong bộ nhớ, bị vô hiệu hóa khi thay đổi phiên. Request cũ không được gán profile cho phiên mới. Giữ deep link sau đăng nhập với danh sách đường dẫn nội bộ cho phép; từ chối URL ngoài, vòng lặp login và route chưa triển khai.
+5. **Giao diện:** sidebar thu gọn trên desktop; menu dialog trên mobile có focus trap/Escape; header, breadcrumb, tiêu đề, tài khoản, đăng xuất, skip link. Khi guard xác minh quyền có trạng thái tải che nội dung. Màu xanh đồng bộ khu vực bệnh nhân, bố cục tối ưu cho vận hành.
+6. **Quyền:** kiểm tra menu và route theo cùng policy; DOCTOR/PATIENT không gọi API danh sách quản lý. Backend vẫn là nơi thực thi quyền. Không tái sử dụng guard nghiệp vụ bán hàng cũ. AuthService bổ sung vùng đăng nhập để hết phiên/đăng xuất nội bộ về /management/login; luồng bệnh nhân vẫn về /login.
+7. **Trang đầu tiên:** danh sách lịch hẹn gọi GET /api/admin/appointments, mặc định ngày hiện tại Asia/Bangkok; lọc mã lịch/tên bệnh nhân, trạng thái, ID bác sĩ, khoảng ngày; phân trang 10/20/50. Query được lưu trong URL và giữ khi vào chi tiết/quay về/tải lại. Có tải, rỗng, lỗi, thử lại; kiểm tra ngày thực, khoảng ngày, ID nguyên dương và giới hạn từ khóa. Hủy request danh sách cũ khi đổi bộ lọc để tránh dữ liệu trả chậm ghi đè. Chi tiết chỉ đọc từ GET /api/admin/appointments/{id}; phân biệt giá trị lịch với tiền thực thu.
+
+Đợt này CHƯA thêm nút xác nhận/hủy/đổi lịch/tiếp nhận/bắt đầu/kết thúc khám. Dù một số API chuyển trạng thái đã tồn tại, đây là mốc layout và tra cứu; việc thêm thao tác sẽ đi cùng quy tắc trạng thái, xác nhận và xử lý xung đột ở mốc nghiệp vụ tiếp theo. Chưa triển khai chỉnh hồ sơ/đổi mật khẩu trong giao diện nội bộ; tài khoản hiển thị thông tin hiện tại và hướng dẫn liên hệ quản trị viên.
+
+### 7.5. Kiểm tra bước đầu và sửa lỗi
+
+- Build/compile phần quản lý: không có lỗi TypeScript/template.
+- Phát hiện test lịch sử cũ truyền Event cho changeSort trong khi component nhận string; chỉ sửa lời gọi test sang select.value, giữ hành vi ứng dụng và kỳ vọng lỗi hiện có.
+- Toàn bộ unit test: 49/49 đạt, gồm 13 test mới cho policy/guard/profile/đăng xuất/API bộ lọc và 36 test hiện có.
+- Script docs/qa/management.cjs: PASS, 55 request fixture, không lỗi JavaScript/không gọi API ngoài fixture. Bao phủ deep link đăng nhập, staff/doctor/patient/admin, phân trang, lọc trạng thái, giữ query qua trang chi tiết/tải lại, request chậm, lỗi danh sách và thử lại, ngày không hợp lệ, mobile dialog/Escape, đổi tài khoản, thu gọn sidebar, lỗi xác minh, hết phiên, chặn URL trả về ngoài và 404.
+- Đã mở ảnh để kiểm tra trực quan danh sách desktop/mobile và menu mobile. Bảng cuộn ngang bên trong vùng bảng; không tràn ngang toàn trang.
+- Build production ban đầu bị chặn bởi budget CSS có sẵn của src/app/pages/appointment-booking/appointment-booking.css (9,41 kB > 8 kB), file không được chỉnh trong đợt quản lý. Không tăng budget để bỏ qua. Các cảnh báo bundle/CSS cũ vẫn còn; CSS layout quản lý khoảng 4,79 kB, dưới ngưỡng lỗi 8 kB.
+- Rà soát bổ sung: khi URL bộ lọc không hợp lệ phải hủy cả request trước đó; không tự reload query cũ khi điều hướng bị hủy. Đã sửa và đang chạy lại kiểm tra.
+
+### 7.6. Kết quả cuối mốc layout và tra cứu lịch hẹn
+
+| Mục tiêu | Trạng thái | Bằng chứng |
+| --- | --- | --- |
+| 1. Chốt vai trò/phạm vi | Hoàn thành trong phạm vi API hiện có | Policy tập trung, vai trò lấy từ /users/me |
+| 2. Menu theo quyền | Hoàn thành cho chức năng khả dụng | ADMIN/STAFF có lịch hẹn; DOCTOR không thấy chức năng quản lý toàn hệ thống |
+| 3. Route/layout riêng | Hoàn thành | Lazy load, client rendering, default route, 403/404 |
+| 4. Xác thực nội bộ | Hoàn thành | Login riêng, profile server, bảo vệ deep link, hết phiên/đăng xuất đúng khu vực |
+| 5. Giao diện quản lý | Hoàn thành | Sidebar desktop, menu mobile, header, breadcrumb, tài khoản |
+| 6. Kiểm soát quyền | Hoàn thành cho các route mới | Chặn menu, URL trực tiếp; gọi API đúng quyền backend hiện có |
+| 7. Trạng thái/trang đầu tiên | Hoàn thành | Danh sách và chi tiết thật theo API, trạng thái tải/rỗng/lỗi/thử lại |
+| 8. Kiểm tra | Đã chạy; còn lỗi budget production cũ | 54/54 unit test, build development đạt, browser QA đạt; xem giới hạn bên dưới |
+
+Kết quả kiểm tra sau các sửa lỗi cuối:
+
+- node node_modules/@angular/cli/bin/ng.js test --watch=false: **54/54 PASS** (18 test mới, 36 test hiện có). Bổ sung kiểm tra hủy request khi URL bộ lọc không hợp lệ, request chậm, thử lại sau HTTP lỗi, không gán dữ liệu của phiên cũ và không khôi phục profile từ request trước khi reset cùng tài khoản.
+- node node_modules/@angular/cli/bin/ng.js build --configuration development: **PASS**, gồm browser/server bundle và prerender các trang public. Các trang management được cấu hình Client.
+- docs/qa/management.cjs: **PASS**, 55 request fixture, không lỗi JavaScript và không có request ngoài danh sách fixture. Ảnh tại docs/screenshots/management/.
+- docs/qa/patient-appointments.cjs: **PASS**, 23 request fixture, 1 lần tạo lịch và 1 đánh giá trong bộ nhớ fixture, không lỗi JavaScript; kiểm tra đủ đặt lịch/chi tiết/hủy/đánh giá và mobile. Không ghi dữ liệu thật.
+- git diff --check cho các file tracked được chỉnh trong đợt này: không lỗi whitespace.
+- Production build: **chưa đạt** do CSS trang bệnh nhân appointment-booking.css hiện có 9,41 kB, vượt maximumError 8 kB. Đây không phải lỗi TypeScript/template của quản lý; giữ nguyên file và budget, không sửa giao diện bệnh nhân ngoài phạm vi. Cần xử lý CSS này trước khi đóng gói production.
+- Chưa đăng nhập tài khoản thật để kiểm thử backend đang chạy. Đã đối chiếu hợp đồng với mã backend; mọi kiểm tra trình duyệt ghi dữ liệu dùng fixture cô lập. Chưa xác nhận phân quyền theo cơ sở vì backend chưa cung cấp.
+
+### 7.7. Cách mở và kiểm tra lại
+
+- Chạy npm start hoặc node node_modules/@angular/cli/bin/ng.js serve.
+- Mở /management/login trên máy chủ frontend, đăng nhập bằng tài khoản nội bộ được backend cấp. STAFF vào danh sách lịch hẹn; ADMIN/SUPER_ADMIN và DOCTOR vào không gian làm việc.
+- Các trang hiện có: /management/dashboard, /management/appointments, /management/appointments/:id, /management/account; /403, /404, /management/access-error.
+- Không có tài khoản nội bộ mặc định hoặc mật khẩu được thêm vào frontend.
+- Unit tests: node node_modules/@angular/cli/bin/ng.js test --watch=false.
+- Browser QA: chạy dev server tại http://127.0.0.1:4305 rồi chạy node docs/qa/management.cjs. Script cần thư viện playwright và Chrome; cấu hình MANAGEMENT_QA_NODE_MODULES (thư mục node_modules chứa playwright), MANAGEMENT_QA_CHROME, MANAGEMENT_QA_URL nếu khác mặc định. Script chặn toàn bộ API /booking-schedule/** và trả fixture, không dùng dữ liệu backend thật.
+
+### 7.8. Tệp liên quan và phần tiếp theo
+
+- src/app/management/management.models.ts: ma trận quyền, menu, trang mặc định, kiểm tra returnUrl.
+- src/app/management/management-access.service.ts và management.guard.ts: xác minh danh tính, cache theo phiên, guard cha/con và trạng thái lỗi.
+- src/app/management/management.routes.ts: nhóm route quản lý lazy load.
+- src/app/management/layout/: bố cục quản lý và menu responsive.
+- src/app/management/pages/: đăng nhập, không gian làm việc, tài khoản, danh sách/chi tiết lịch và trang 403/404/lỗi xác minh.
+- src/app/management/management-appointments.service.ts: danh sách/chi tiết theo hợp đồng backend và ngày vận hành Asia/Bangkok; dùng HttpClient để giữ HTTP status cho giao diện phân biệt lỗi, không sửa BaseService.
+- src/app/management/management.spec.ts: 18 kiểm thử mới.
+- src/app/services/auth.service.ts: thêm userId getter và ngữ cảnh đăng nhập nội bộ; lưu cùng phiên trong sessionStorage, không lưu mật khẩu.
+- src/app/app.ts, app.html, app.css: trạng thái xác minh quyền khi điều hướng.
+- src/app/app.routes.ts, app.routes.server.ts: nối route và chế độ render.
+- angular.json, tsconfig.spec.json: đưa test mới vào bộ kiểm tra hiện tại.
+- src/app/pages/appointment-history/appointment-history.spec.ts: sửa một lời gọi changeSort cho đúng chữ ký hiện có.
+- docs/qa/management.cjs và docs/screenshots/management/: kiểm tra trình duyệt và ảnh dữ liệu giả.
+
+Thứ tự mốc nghiệp vụ tiếp theo:
+
+1. Chốt quy tắc xác nhận/hủy và thêm thao tác có dialog xác nhận, lý do, chống gửi trùng, xử lý lịch vừa đổi trạng thái.
+2. Bổ sung hợp đồng tiếp nhận CHECKED_IN/checkedInAt và quyền thao tác ở backend trước khi thêm nút tiếp nhận.
+3. API đổi lịch có giao dịch giữ/nhả chỗ; không mô phỏng bằng hủy rồi tạo mới riêng rẽ.
+4. Quản lý ca/lịch bác sĩ và danh mục; cung cấp API danh sách bác sĩ tối thiểu cho STAFF để thay bộ lọc ID bằng chọn bác sĩ theo tên. GET /api/admin/doctors hiện chỉ cho ADMIN/SUPER_ADMIN.
+5. Tài khoản nhân viên, phân quyền và chỉnh hồ sơ/đổi mật khẩu theo quy trình xác thực phù hợp.
+6. API lịch bác sĩ cá nhân kiểm tra quan hệ tài khoản–bác sĩ trước khi triển khai danh sách khám của DOCTOR.
+7. Báo cáo, nhật ký thao tác và thông báo theo dữ liệu vận hành thật.
+
+## 8. Refactor BaseComponent theo hệ thống đặt lịch khám — 19/10/2026
+
+### 8.1. Phạm vi và thay đổi
+
+Yêu cầu: refactor src/app/components/base.component.ts cho phù hợp dự án hiện tại. Giữ BaseFormComponent/BaseListComponent và luồng màn hình đang được người dùng chỉnh; không refactor toàn bộ bảng hoặc nghiệp vụ lịch hẹn trong đợt này.
+
+- Đổi base thành abstract @Directive(), dùng cho kế thừa thay vì một component có template rỗng.
+- Bỏ model/store user-profile, UserTypeEnum, DateFormatConstants không tồn tại và logic giải mã permission AES/NgxPermissionsService của dự án bán hàng cũ.
+- Dùng signal currentUser từ ManagementAccessService và helper hasRole(InternalRole), hasPermission(ManagementPermission) theo backend /users/me. Base không tự gọi API profile hoặc cấp quyền toàn cục trong ngOnInit. Guard/service tiếp tục chịu trách nhiệm xác thực và nạp profile.
+- Giữ fb, errorCode/errorMessage, unsubscribe, các hook ngOnInit/ngAfterViewInit/ngOnDestroy cần cho lớp form/list hiện có. Bỏ các hook vòng đời trống không có lớp con sử dụng.
+- Thêm setError()/clearError() để cập nhật trạng thái lỗi thống nhất.
+- Subject<void> thay Subject<any>; DestroyRef giải phóng subscription ngay cả khi lớp con không gọi super.ngOnDestroy(). Cleanup có kiểm tra để không chạy hai lần.
+- Dùng DOCUMENT, PLATFORM_ID và document.defaultView cho các tiện ích trình duyệt. Trên SSR, widthForModal trả 60%, mở tab/tải Blob không thực hiện thao tác DOM.
+- openNewTab chỉ mở đường dẫn cùng origin ứng dụng, dùng noopener,noreferrer; bỏ phụ thuộc Electron không có trong frontend hiện tại.
+- Giữ hợp đồng formatterVND/parserVND của nz-input-number: 10000 <-> 10,000. Dùng Intl, xử lý null/NaN/Infinity; không đổi định dạng tiền hiển thị qua pipe hiện có.
+- isImageFile nhận phần mở rộng không phân biệt hoa/thường, có query/hash; bổ sung AVIF. Đây chỉ là kiểm tra tên cho UI, không thay thế xác thực file upload phía server.
+- downloadFileFromBlob gắn anchor vào DOM rồi xóa, thu hồi object URL sau khi trình duyệt bắt đầu tải; giải phóng URL/timer còn lại khi đóng component.
+
+### 8.2. Kiểm tra
+
+- Build development: PASS, cả browser/server bundle và prerender 6 trang public. Còn cảnh báo DatePipe/RouterLink chưa dùng ở ManagementAppointments hiện có; không sửa màn hình ngoài phạm vi.
+- Kiểm thử riêng BaseComponent: 8/8 PASS trên ChromeHeadless. Bao phủ thay đổi role/quyền, khóa tài khoản, hủy subscription không gọi super, định dạng/parser tiền, URL mở tab, tải Blob/cleanup, SSR không chạm browser globals, tên ảnh và xóa lỗi.
+- Đã đăng ký src/app/components/base.component.spec.ts trong angular.json và tsconfig.spec.json để các lần chạy sau có test này.
+- Đang chạy thêm bộ kiểm thử chung để ghi nhận tình trạng tích hợp của mã hiện tại.
+
+Kết quả bộ kiểm thử chung: **58/62 PASS, 4 FAIL**. Cả 4 lỗi nằm trong nhóm Management appointment request lifecycle ở management.spec.ts: test chờ HTTP ngay sau new ManagementAppointments(), trong khi màn hình hiện tại đã chuyển phần khởi tạo request từ constructor sang loadData() khi kế thừa BaseListComponent. Base không tự kích hoạt loadData của lớp con. Giữ nguyên màn hình/test nghiệp vụ đang được chỉnh, không thay đổi ngoài yêu cầu refactor base.
+
+Lưu ý tích hợp tiếp theo: BaseListComponent vẫn có logic window/đo kích thước bảng riêng và ShareTable vẫn dùng ngxPermissionsOnly. Refactor này chỉ bảo vệ SSR cho các tiện ích của BaseComponent và cung cấp nguồn quyền mới; chưa chuyển toàn bộ bảng dùng chung sang policy quản lý. Nếu dùng column.permissions, cần đồng bộ cơ chế đó tại ShareTable/service hoặc cấu hình provider thư viện phù hợp; không khôi phục giải mã permission AES trong base.
+
+Các file chỉnh trong đợt này: base.component.ts, base.component.spec.ts, angular.json, tsconfig.spec.json và mục 8 của PROCESS_BUILDING.md. Không chỉnh BaseListComponent, BaseFormComponent, ShareTable hoặc ManagementAppointments.

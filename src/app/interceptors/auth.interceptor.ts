@@ -3,7 +3,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap, finalize, shareReplay, tap } from 'rxjs/operators';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { ApiConstants } from '../constants/api.constants';
+import { ApiConstants } from '../constants/api-constants';
+import { environment } from '../../environments/environment';
 import { LoginResponse } from '../models/auth.model';
 
 const REFRESH_RETRY_CONTEXT = new HttpContextToken<boolean>(() => false);
@@ -11,6 +12,8 @@ let refreshInFlight$: Observable<LoginResponse> | null = null;
 
 export const AuthInterceptor = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
+  // Only attach session credentials to this application's API.
+  if (!req.url.startsWith(`${environment.api.baseUrl}/`)) return next(req);
   const token = authService.getToken();
   const isLoginRequest = req.url.includes(ApiConstants.API_AUTH_LOGIN);
   const isRefreshRequest = req.url.includes(ApiConstants.API_AUTH_REFRESH_TOKEN);
@@ -27,12 +30,7 @@ export const AuthInterceptor = (req: HttpRequest<any>, next: HttpHandlerFn): Obs
         .refreshToken()
         .pipe(
           tap((response) => {
-            authService.saveAuthBundle({
-              token: response.token,
-              expiredAt: response.expiredAt,
-              refreshToken: response.refreshToken,
-              refreshTokenExpiredAt: response.refreshTokenExpiredAt,
-            });
+            authService.saveAuthBundle(response);
           }),
           finalize(() => {
             refreshInFlight$ = null;
@@ -48,7 +46,7 @@ export const AuthInterceptor = (req: HttpRequest<any>, next: HttpHandlerFn): Obs
     return next(req.clone({ headers: req.headers.delete('auth') }));
   }
 
-  const clonedReq = token ? req.clone({ setHeaders: { Authorization: token } }) : req;
+  const clonedReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(clonedReq).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -66,17 +64,20 @@ export const AuthInterceptor = (req: HttpRequest<any>, next: HttpHandlerFn): Obs
       }
 
       return refreshTokenSingleFlight().pipe(
-        switchMap((response: LoginResponse) => {
-          const retryReq = req.clone({
-            setHeaders: { Authorization: `${response.token}` },
-            context: req.context.set(REFRESH_RETRY_CONTEXT, true),
-          });
-          return next(retryReq);
-        }),
         catchError((refreshError: HttpErrorResponse) => {
           authService.forceLogout();
           return throwError(() => refreshError);
-        })
+        }),
+        switchMap((response: LoginResponse) => {
+          const retryReq = req.clone({
+            setHeaders: { Authorization: `Bearer ${response.token}` },
+            context: req.context.set(REFRESH_RETRY_CONTEXT, true),
+          });
+          return next(retryReq).pipe(catchError((retryError: HttpErrorResponse) => {
+            if (retryError.status === 401) authService.forceLogout();
+            return throwError(() => retryError);
+          }));
+        }),
       );
     })
   );

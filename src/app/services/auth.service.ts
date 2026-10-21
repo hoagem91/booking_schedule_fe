@@ -1,216 +1,156 @@
-import { environment } from "../../environments/environment";
-import { ApiConstants } from "../constants/api.constants";
-import { ApiResponse } from "../models/api-response.model";
-import { ChangePasswordRequest, LoginRequest, LoginResponse, RefreshTokenRequest } from "../models/auth.model";
-import { inject, Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { catchError, map, Observable, tap, throwError } from "rxjs";
-import { updateAuth, resetAuth, authStore } from "../store/auth.store";
-import { NzNotificationService } from "ng-zorro-antd/notification";
-import { resetUserProfile } from "../store/user-profile.store";
-import { resetWarehouseEmployee } from "../store/warehouse-employee.store";
-import { UserProfileService } from "./user-profile.serivce";
-import { Router } from "@angular/router";
-import { NzModalService } from "ng-zorro-antd/modal";
-import { DrawerManagerService } from "./drawer/drawer.service";
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { BookingApiResponse, LoginRequest, LoginResponse, RegisterRequest } from '../models/auth.model';
+import { ApiConstants } from '../constants/api-constants';
+import { apiResponseSucceeded } from '../models/api-response.model';
 
-@Injectable({
-  providedIn: "root"
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private notification = inject(NzNotificationService);
-  private router = inject(Router);
-  private modal = inject(NzModalService);
-  private drawerManager = inject(DrawerManagerService);
-  private userProfileService = inject(UserProfileService);
-  private readonly apiUrl = environment.api.hostSso;
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly storageKey = 'booking-schedule-auth';
+  private session: LoginResponse | null = null;
+  private loginArea: 'patient' | 'management' = 'patient';
+  readonly sessionGeneration = signal(0);
+  private readonly apiUrl = environment.api.baseUrl;
+  private readonly publicOptions = { headers: new HttpHeaders({ auth: 'false' }) };
 
-  constructor() {}
-
-  login(request: LoginRequest, companyCode: string, platform: string): Observable<ApiResponse<LoginResponse>> {
-    const options = {
-      headers: new HttpHeaders({
-        auth: 'false',
-        'company-code': companyCode,
-        // 'platform': platform
-      })
-    };
-
-    return this.http.post<ApiResponse<LoginResponse>>(
-      `${this.apiUrl}${ApiConstants.API_AUTH_LOGIN}`,
-      request,
-      options
-    ).pipe(
-      tap((response) => {
-        if (response && response.errorCode === '200') {
-          this.saveAuthBundle({
-            token: response.data.token,
-            expiredAt: response.data.expiredAt,
-            refreshToken: response.data.refreshToken,
-            refreshTokenExpiredAt: response.data.refreshTokenExpiredAt
-          });
-          this.userProfileService.fetchUserProfile(false);
-        } else {
-          throw new Error(response.message);
+  constructor() {
+    if (this.browser) {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(this.storageKey) ?? 'null');
+        if (this.validBundle(saved)) {
+          this.session = saved;
+          if (sessionStorage.getItem(`${this.storageKey}-area`) === 'management') this.loginArea = 'management';
         }
-      }),
-      catchError((error) => {
-        this.notification.error('<b>Lỗi đăng nhập</b>', error.message || 'Không thể đăng nhập');
-        return throwError(() => error);
-      })
+        else sessionStorage.removeItem(this.storageKey);
+      } catch { /* Session storage is optional. */ }
+    }
+  }
+
+  login(request: LoginRequest, area: 'patient' | 'management' = 'patient'): Observable<LoginResponse> {
+    return this.http.post<BookingApiResponse<LoginResponse>>(
+      `${this.apiUrl}${ApiConstants.API_AUTH_LOGIN}`, request, this.publicOptions,
+    ).pipe(
+      map(response => this.unwrap(response)),
+      tap(bundle => { this.setLoginArea(area); this.saveAuthBundle(bundle); }),
+      catchError(error => throwError(() => new Error(this.loginError(error)))),
     );
+  }
+
+  register(request: RegisterRequest): Observable<LoginResponse> {
+    return this.http.post<BookingApiResponse<LoginResponse>>(
+      `${this.apiUrl}${ApiConstants.API_AUTH_REGISTER}`, request, this.publicOptions,
+    ).pipe(
+      map(response => {
+        if (!apiResponseSucceeded(response)) throw new Error(this.registerErrorMessage(response?.code, response?.message));
+        return this.unwrap(response);
+      }),
+      tap(bundle => { this.setLoginArea('patient'); this.saveAuthBundle(bundle); }),
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse) {
+          if (error.status === 0) return throwError(() => new Error('Không thể kết nối máy chủ. Vui lòng thử lại.'));
+          if (error.status >= 500) return throwError(() => new Error('Máy chủ đang gặp sự cố. Vui lòng thử lại sau.'));
+          return throwError(() => new Error(this.registerErrorMessage(error.error?.code, error.error?.message)));
+        }
+        return throwError(() => error instanceof Error ? error : new Error('Không thể đăng ký. Vui lòng thử lại.'));
+      }),
+    );
+  }
+
+  private registerErrorMessage(code?: number, message?: string): string {
+    if (code === 1002) return 'Tên đăng nhập hoặc email đã được sử dụng.';
+    return message || 'Không thể đăng ký. Vui lòng kiểm tra thông tin và thử lại.';
   }
 
   refreshToken(): Observable<LoginResponse> {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      return throwError(() => new Error('Refresh token không tồn tại'));
-    }
-
-    const request: RefreshTokenRequest = { refreshToken };
-    return this.http.post<ApiResponse<LoginResponse>>(
-      `${this.apiUrl}${ApiConstants.API_AUTH_REFRESH_TOKEN}`,
-      request,
-      { headers: new HttpHeaders({ auth: 'false' }) }
-    ).pipe(
-      map((response) => {
-        if (response && response.errorCode === '200') {
-          return response.data;
-        }
-        throw new Error(response?.message || 'Làm mới token thất bại');
-      })
-    );
-  }
-
-  getToken(): string | null {
-    return authStore.getValue().token;
-  }
-
-  getRefreshToken(): string | null {
-    return authStore.getValue().refreshToken;
-  }
-
-  saveAuthBundle(bundle: {
-    token: string;
-    expiredAt: string;
-    refreshToken: string;
-    refreshTokenExpiredAt: string;
-  }): void {
-    updateAuth(
-      bundle.token,
-      bundle.expiredAt,
-      bundle.refreshToken,
-      bundle.refreshTokenExpiredAt
-    );
-  }
-
-  clearAll(): void {
-    this.modal.closeAll();
-    this.drawerManager.closeAll();
-    resetAuth();
-    resetUserProfile();
-    resetWarehouseEmployee();
-  }
-
-  logout(): void {
-    this.clearAll();
-    this.router.navigate(['/login']).then(() => {
-      this.notification.success('<b>Thành công</b>', 'Đăng xuất thành công');
-    });
-  }
-
-  forceLogout(): void {
-    this.clearAll();
-    this.router.navigate(['/login']);
-  }
-
-  isAuthenticated(): boolean {
-    const { token, expiredAt } = authStore.getValue();
-    if (!token || !expiredAt) return false;
-    return new Date(expiredAt).getTime() > Date.now();
-  }
-
-  get Token(): string | null {
-    return authStore.getValue().token;
-  }
-
-  public forgotPassword(email: string, notification = true): Observable<ApiResponse<null>> {
-    const url = `${this.apiUrl}${ApiConstants.API_AUTH_FORGOT_PASSWORD}`;
-    return this.http.post<ApiResponse<null>>(url, { email })
-      .pipe(
-        tap((response) => {
-          if(notification){
-            if(response.success && response.errorCode === '200') {
-              this.notification.success('<b>Thành công</b>', 'Đường dẫn đặt lại mật khẩu đã được gửi đến email của bạn, vui lòng kiểm tra email');
-            } else {
-              this.notification.error('<b>Lỗi</b>', response.message || 'Email không tồn tại');
-            }
-          }
-        }),
-        catchError((err) => {
-          if(notification) {
-            this.notification.error('<b>Lỗi</b>', err.error?.message || err.message);
-          }
-          return throwError(() => err);
-        })
-      );
-  }
-
-  public resetPassword(body: any, notification = true): Observable<ApiResponse<null>> {
-    const url = `${this.apiUrl}${ApiConstants.API_AUTH_RESET_PASSWORD}`;
-    return this.http.post<ApiResponse<null>>(url, body)
-      .pipe(
-        tap((response) => {
-          if(notification) {
-            if(response.success && response.errorCode === '200') {
-              this.notification.success('<b>Thành công</b>', response.message);
-            } else {
-              this.notification.error('<b>Lỗi</b>', response.message)
-            }
-          }
-        }),
-        catchError((err) => {
-          if(notification) {
-            this.notification.error('<b>Lỗi</b>', err.error?.message || err.message);
-          }
-          return throwError(() => err);
-        })
-      );
-  }
-
-  public changePassword(
-    body: ChangePasswordRequest,
-    notification = true
-  ): Observable<ApiResponse<null>> {
     const token = this.getToken();
-    if (!token) {
-      return throwError(() => new Error('Phiên đăng nhập không tồn tại'));
+    if (!token) return throwError(() => new Error('Phiên đăng nhập không tồn tại.'));
+    return this.http.post<BookingApiResponse<LoginResponse>>(
+      `${this.apiUrl}${ApiConstants.API_AUTH_REFRESH_TOKEN}`, { token }, this.publicOptions,
+    ).pipe(map(response => this.unwrap(response)));
+  }
+
+  private validBundle(bundle: LoginResponse | null): bundle is LoginResponse {
+    return !!bundle && bundle.authenticated === true && typeof bundle.token === 'string'
+      && !!bundle.token.trim() && Number.isFinite(Date.parse(bundle.expiryTime));
+  }
+
+  private unwrap(response: BookingApiResponse<LoginResponse>): LoginResponse {
+    if (!apiResponseSucceeded(response)) {
+      throw new Error(this.messageForCode(response?.code, response?.message));
     }
+    const bundle = response.result ?? null;
+    if (!this.validBundle(bundle) || Date.parse(bundle.expiryTime) <= Date.now()) {
+      throw new Error('Dữ liệu phiên đăng nhập không hợp lệ. Vui lòng thử lại.');
+    }
+    return bundle;
+  }
 
-    const url = `${this.apiUrl}${ApiConstants.API_USER_CHANGE_PASSWORD}`;
+  private messageForCode(code?: number, fallback?: string): string {
+    if (code === 1005 || code === 1006) return 'Tên đăng nhập hoặc mật khẩu không đúng.';
+    if (code === 1012) return 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.';
+    return fallback || 'Không thể đăng nhập. Vui lòng thử lại.';
+  }
 
-    return this.http.put<ApiResponse<null>>(url, body).pipe(
-      tap((response) => {
-        if (!notification) {
-          return;
-        }
+  private loginError(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) return 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối và thử lại.';
+      if (error.status >= 500) return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.';
+      return this.messageForCode(error.error?.code, error.error?.message);
+    }
+    return error instanceof Error ? error.message : 'Không thể đăng nhập. Vui lòng thử lại.';
+  }
 
-        if (response.success && response.errorCode === '200') {
-          this.notification.success('<b>Thành công</b>', response.message || 'Đổi mật khẩu thành công');
-        } else {
-          this.notification.error('<b>Lỗi</b>', response.message || 'Không thể đổi mật khẩu');
-        }
-      }),
-      catchError((err) => {
-        if (notification) {
-          this.notification.error(
-            '<b>Lỗi</b>',
-            err.error?.message || err.message || 'Không thể đổi mật khẩu'
-          );
-        }
-        return throwError(() => err);
-      })
-    );
+  saveAuthBundle(bundle: LoginResponse): void {
+    if (this.session?.userId !== bundle.userId) this.sessionGeneration.update(value => value + 1);
+    this.session = bundle;
+    if (this.browser) {
+      try { sessionStorage.setItem(this.storageKey, JSON.stringify(bundle)); } catch { /* Use in-memory session. */ }
+    }
+  }
+  getToken(): string | null { return this.session?.token ?? null; }
+  getUserId(): number | null { return this.session?.userId ?? null; }
+  setLoginArea(area: 'patient' | 'management'): void {
+    this.loginArea = area;
+    if (this.browser) {
+      try { sessionStorage.setItem(`${this.storageKey}-area`, area); } catch { /* Storage is optional. */ }
+    }
+  }
+  getRefreshToken(): string | null { return this.getToken(); }
+  get Token(): string | null { return this.getToken(); }
+  isAuthenticated(): boolean {
+    return this.validBundle(this.session) && Date.parse(this.session.expiryTime) > Date.now();
+  }
+  clearAll(): void {
+    this.session = null;
+    this.sessionGeneration.update(value => value + 1);
+    if (this.browser) {
+      try {
+        sessionStorage.removeItem(this.storageKey);
+        sessionStorage.removeItem(`${this.storageKey}-area`);
+      } catch { /* Already cleared in memory. */ }
+    }
+    this.loginArea = 'patient';
+  }
+  forceLogout(): void {
+    const loginUrl = this.router.url.startsWith('/management') || this.loginArea === 'management' ? '/management/login' : '/login';
+    this.clearAll();
+    void this.router.navigateByUrl(loginUrl);
+  }
+  logout(): Observable<void> {
+    const token = this.getToken();
+    if (!token) { this.forceLogout(); return new Observable(subscriber => subscriber.complete()); }
+    return this.http.post<BookingApiResponse<null>>(
+      `${this.apiUrl}${ApiConstants.API_AUTH_LOGOUT}`, { token }, this.publicOptions,
+    ).pipe(map(response => {
+      if (!apiResponseSucceeded(response)) throw new Error(response.message || 'Không thể đăng xuất.');
+      this.forceLogout();
+    }));
   }
 }

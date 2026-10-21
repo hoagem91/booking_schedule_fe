@@ -1,0 +1,214 @@
+<app-site-header />
+<main class="booking-shell">
+  <div class="breadcrumb"><a routerLink="/portal">Cổng thông tin</a><span
+    aria-hidden="true">/</span><span>Đặt lịch khám</span></div>
+  @if (booked(); as item) {
+    <app-booking-summary [booked]="item" />
+  } @else {
+    <header class="page-intro">
+      <div>
+        <h1>Đặt lịch khám</h1>
+        <p>Chọn dịch vụ và thời gian phù hợp với bạn.</p></div>
+      <a class="history-link" routerLink="/profile/appointments">Lịch hẹn của tôi <span aria-hidden="true">↗</span></a>
+    </header>
+    <nav class="stepper" aria-label="Các bước đặt lịch">
+      @for (label of steps; track $index) {
+        <button type="button" [class.active]="step() === $index + 1" [class.done]="step() > $index + 1"
+                [disabled]="$index + 1 >= step() || saving()"
+                [attr.aria-current]="step() === $index + 1 ? 'step' : null" (click)="backTo($index + 1)">
+          <span class="step-number">{{ step() > $index + 1 ? '✓' : '0' + ($index + 1) }}</span><span>{{ label }}</span>
+        </button>
+      }
+    </nav>
+    <div class="booking-layout">
+      <section class="booking-panel" [attr.aria-busy]="loading() || saving()" aria-labelledby="step-title">
+        <div class="panel-heading">
+          <h2 id="step-title">{{ steps[step() - 1] }}</h2>
+          <p>{{ step() === 1 ? 'Bắt đầu bằng chuyên khoa và dịch vụ bạn cần khám.' : step() === 2 ? 'Chọn ngày khám để xem bác sĩ và ca làm việc còn nhận lịch.' : step() === 3 ? 'Chọn một khung giờ còn chỗ trong ca khám.' : 'Kiểm tra thông tin trước khi gửi yêu cầu đặt lịch.' }}</p>
+        </div>
+        @if (notice()) {
+          <div class="notice" role="status">{{ notice() }} <a routerLink="/profile/appointments">Xem lịch hẹn của
+            tôi</a></div>
+        }
+        @if (error()) {
+          <div class="error-box" role="alert">{{ error() }} @if (step() < 4) {
+            <button type="button" (click)="retry()" [disabled]="loading()">Thử lại</button>
+          }</div>
+        }
+        @if (step() === 1) {
+          <!--    Step1-Chuyên khoa   -->
+          <label class="field-label" for="specialty">Chuyên khoa<span aria-hidden="true" class="field-require">*</span></label>
+          <nz-select class="specialty-select" nzId="specialty" [ngModel]="specialty()?.id ?? null"
+            (ngModelChange)="selectSpecialty($event)" [nzDisabled]="saving()"
+            nzShowSearch nzPlaceHolder="Tìm chuyên khoa hoặc triệu chứng…" [nzFilterOption]="filterSpecialty"
+            nzDropdownClassName="specialty-dropdown" [nzOptionHeightPx]="84" [nzOptionOverflowSize]="4"
+            nzNotFoundContent="Không tìm thấy chuyên khoa phù hợp" [nzSuffixIcon]="specialtyArrow">
+            @for (item of specialties(); track item.id) {
+              <nz-option [nzValue]="item.id" [nzLabel]="decodeText(item.name)" nzCustomContent>
+                <div class="specialty-option">
+                  <div class="specialty-option-heading"><strong>{{ decodeText(item.name) }}</strong>
+                    @if (specialty()?.id === item.id) { <span class="specialty-check" aria-hidden="true">✓</span> }
+                  </div>
+                  @if (item.description) {
+                    <span class="specialty-description" [title]="decodeText(item.description)">{{ decodeText(item.description) }}</span>
+                  }
+                </div>
+              </nz-option>
+            }
+          </nz-select>
+          <ng-template #specialtyArrow>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          </ng-template>
+          <div class="section-label">
+            <h3>Dịch vụ khám<span aria-hidden="true" class="field-require">*</span></h3>
+            <span>{{ services().length }} dịch vụ</span>
+          </div>
+          @if (!loading() && !specialty() && specialties().length) {
+            <div class="empty-state"><span aria-hidden="true">✚</span>
+              <h3>Bạn cần khám chuyên khoa nào?</h3>
+              <p>Chọn chuyên khoa để xem các dịch vụ phù hợp.</p></div>
+          }
+          @if (!loading() && !specialties().length && !error()) {
+            <div class="empty-state"><h3>Chưa có chuyên khoa nhận lịch</h3>
+              <p>Vui lòng quay lại sau hoặc liên hệ tổng đài để được hỗ trợ.</p></div>
+          }
+          @if (!loading() && specialty() && !services().length && !error()) {
+            <div class="empty-state"><h3>Chưa có dịch vụ</h3>
+              <p>Vui lòng chọn chuyên khoa khác hoặc liên hệ tổng đài.</p></div>
+          }
+          <div class="service-grid">
+            @for (item of services(); track item.id) {
+              <button type="button" class="choice service-card" [class.selected]="service()?.id === item.id"
+                      [attr.aria-pressed]="service()?.id === item.id" [disabled]="item.price === null || item.price < 0"
+                      (click)="selectService(item)">
+                <span class="choice-top"><span class="medical-symbol" aria-hidden="true">✚</span><span
+                  class="radio-mark" aria-hidden="true"></span></span>
+                <strong>{{ decodeText(item.name) }}</strong><span
+                class="description">{{ decodeText(item.description || 'Thăm khám và tư vấn cùng bác sĩ chuyên khoa.') }}</span>
+                <span
+                  class="service-bottom"><b>{{ item.price === null ? 'Chưa cập nhật giá' : (item.price | currency:'VND':'symbol':'1.0-0':'vi') }}</b><small>{{ item.durationMinutes ? item.durationMinutes + ' phút' : 'Theo dịch vụ' }}</small></span>
+              </button>
+            }
+          </div>
+        } @else if (step() === 2) {
+          <!--    Step2-Ngày khám    -->
+          <div class="flex justify-between items-baseline">
+            <h3 id="booking-date-label" class="date-heading">Chọn ngày khám</h3>
+            <div class="other-date">
+              <label for="booking-date">Chọn ngày khác</label>
+              <nz-date-picker nzId="booking-date" nzFormat="dd/MM/yyyy" nzPlaceHolder="Chọn ngày khám"
+                              [ngModel]="calendarDate()" (ngModelChange)="changeCalendarDate($event)"
+                              [nzDisabledDate]="disablePastDate" [nzAllowClear]="false" [nzInputReadOnly]="true"
+                              [nzDisabled]="saving()" />
+            </div>
+          </div>
+
+          <div class="quick-dates" role="group" aria-labelledby="booking-date-label">
+            @for (day of quickDates(); track day.value) {
+              <button
+                type="button"
+                class="date-card"
+                [class.selected]="date() === day.value"
+                [attr.aria-pressed]="date() === day.value"
+                [attr.aria-label]="(day.value | date:'dd/MM/yyyy') + ', ' + day.weekday"
+                [disabled]="saving()"
+                (click)="changeDate(day.value)"
+              >
+                <strong>{{ day.label }}</strong>
+                <span>{{ day.weekday }}</span>
+              </button>
+            }
+          </div>
+          <p class="selected-date" role="status">Ngày đã chọn: <strong>{{ date() | date:'dd/MM/yyyy' }}</strong></p>
+          <div class="section-label"><h3>Bác sĩ & ca khám</h3><span>{{ schedules().length }} ca khám</span></div>
+          @if (!loading() && !schedules().length && !error()) {
+            <div class="empty-state">
+              <span aria-hidden="true">▦</span>
+              <h3>Chưa có ca khám phù hợp</h3>
+              <p>Thử chọn ngày khác để tìm ca khám còn nhận lịch.</p>
+            </div>
+          }
+          <div class="doctor-list">
+            @for (item of schedules(); track item.id) {
+              <button type="button" class="choice doctor-card" [class.selected]="schedule()?.id === item.id"
+                      [attr.aria-pressed]="schedule()?.id === item.id" [disabled]="item.status === 'FULL'"
+                      (click)="selectSchedule(item)">
+                <span class="doctor-avatar" aria-hidden="true">{{ item.doctorName.slice(0, 1) }}</span><span
+                class="doctor-info"><strong>{{ item.doctorName }}</strong><span>{{ item.specialtyName }}</span><small>{{ item.roomName }}
+                · {{ item.startTime.slice(0, 5) }} – {{ item.endTime.slice(0, 5) }}</small></span>
+                <span class="availability">{{ item.status === 'FULL' ? 'Đã kín' : 'Nhận lịch' }}</span><span
+                class="radio-mark" aria-hidden="true"></span>
+              </button>
+            }
+          </div>
+        } @else if (step() === 3) {
+          <!--    Step3-Khung giờ    -->
+          <div class="selected-doctor"><span class="doctor-avatar"
+                                             aria-hidden="true">{{ schedule()?.doctorName?.slice(0, 1) }}</span>
+            <div><strong>{{ schedule()?.doctorName }}</strong>
+              <p>{{ date() | date:'dd/MM/yyyy' }} · {{ schedule()?.roomName }}</p></div>
+            <button type="button" class="text-button" (click)="backTo(2)">Thay đổi</button>
+          </div>
+          <div class="section-label"><h3>Khung giờ khám</h3><span>Còn chỗ / Tổng chỗ</span></div>
+          <div class="time-grid">
+            @for (item of slots(); track item.id) {
+              <button type="button" class="choice time-card" [class.selected]="slot()?.id === item.id"
+                      [attr.aria-pressed]="slot()?.id === item.id" [disabled]="!slotAvailable(item)"
+                      (click)="selectSlot(item)">
+                <strong>{{ item.startTime.slice(0, 5) }}
+                  – {{ item.endTime.slice(0, 5) }}</strong><small>{{ slotAvailable(item) ? (item.maxPatients - item.bookedCount) + ' / ' + item.maxPatients + ' chỗ' : (item.status === 'FULL' || item.bookedCount >= item.maxPatients ? 'Đã kín' : 'Không khả dụng') }}</small>
+              </button>
+            }
+          </div>
+          @if (!loading() && !slots().length && !error()) {
+            <div class="empty-state"><h3>Ca khám không còn giờ đặt</h3>
+              <p>Bạn có thể chọn một ca khám hoặc ngày khám khác.</p>
+              <button type="button" class="secondary" (click)="backTo(2)">Chọn ca khám khác</button>
+            </div>
+          }
+          <p class="hint">Khung giờ chỉ được giữ sau khi bạn xác nhận đặt lịch thành công.</p>
+        } @else {
+          <form id="booking-form" (ngSubmit)="submit()" #bookingForm="ngForm">
+            <div class="patient-card"><span class="medical-symbol" aria-hidden="true">✚</span>
+              <div><small>NGƯỜI ĐẾN KHÁM</small><strong>{{ profile()?.fullName || 'Tài khoản đang đăng nhập' }}</strong><span>{{ profile()?.phone || 'Đặt lịch bằng hồ sơ bệnh nhân của bạn' }}</span>
+              </div>
+            </div>
+            <label class="field-label" for="reason">Lý do khám <span class="optional">(không bắt buộc)</span></label>
+            <textarea id="reason" name="reason" [(ngModel)]="reason" maxlength="2000" rows="4"
+                      placeholder="Chia sẻ triệu chứng hoặc vấn đề sức khỏe bạn muốn trao đổi với bác sĩ…"
+                      [disabled]="saving()"></textarea>
+            <p class="character-count">{{ reason.length }} / 2.000</p>
+            <label class="field-label" for="booking-note">Ghi chú thêm <span
+              class="optional">(không bắt buộc)</span></label>
+            <textarea id="booking-note" name="note" [(ngModel)]="note" maxlength="2000" rows="2"
+                      placeholder="Thông tin khác cần lưu ý cho lịch hẹn" [disabled]="saving()"></textarea>
+            <div class="preparation"><strong>Trước khi đến khám</strong>
+              <p>Mang theo giấy tờ tùy thân và hồ sơ khám trước đây (nếu có). Theo dõi trạng thái xác nhận trong mục
+                Lịch hẹn của tôi.</p></div>
+          </form>
+        }
+        @if (loading()) {
+          <div class="loading-state" role="status"><span class="spinner" aria-hidden="true"></span>Đang tải thông tin…
+          </div>
+        }
+        <div class="panel-spacer"></div>
+        <footer class="panel-footer">
+          <button type="button" class="secondary" [disabled]="step() === 1 || saving()" (click)="backTo(step() - 1)">←
+            Quay lại
+          </button>
+          @if (step() < 4) {
+            <button type="button" class="primary" (click)="next()"
+                    [disabled]="loading() || (step() === 1 && !service()) || (step() === 2 && !schedule()) || (step() === 3 && !slot())">
+              Tiếp tục <span aria-hidden="true">→</span></button>
+          } @else {
+            <button type="submit" form="booking-form" class="primary"
+                    [disabled]="saving() || accepted()">{{ saving() ? 'Đang gửi yêu cầu…' : 'Xác nhận đặt lịch' }}
+            </button>
+          }
+        </footer>
+      </section>
+      <app-booking-summary class="booking-aside" [specialty]="specialty()" [service]="service()" [schedule]="schedule()"
+                           [slot]="slot()" [date]="date()" />
+    </div>
+  }
+</main>
