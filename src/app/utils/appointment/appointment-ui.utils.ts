@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ApiResponse, apiResponseSucceeded } from '../models/api-response.model';
-import { AppointmentStatus } from '../models/appointment.model';
+import { ApiResponse, apiResponseSucceeded } from '../../models/api-response.model';
+import { AppointmentStatus } from '../../models/appointment.model';
 
 export const appointmentStatusLabels: Record<AppointmentStatus, string> = {
   PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', IN_PROGRESS: 'Đang khám',

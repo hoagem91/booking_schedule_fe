@@ -3,7 +3,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppointmentHistoryItem } from '../../models/appointment.model';
 import { BookingSchedule, BookingService, BookingSpecialty, BookingTimeSlot } from '../../models/booking.model';
-import { decodeAppointmentText } from '../../utils/appointment-ui.utils';
+import { decodeAppointmentText } from '../../utils/appointment/appointment-ui.utils';
 
 @Component({
   selector: 'app-booking-summary', standalone: true,

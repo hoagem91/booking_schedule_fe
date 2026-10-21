@@ -503,12 +503,14 @@ h6,
   height: 28px;
   padding: 4px 8px;
   line-height: 18px;
+  border-radius: 8px;
 }
 
 .ant-btn.ant-btn-primary {
   height: 32px;
   padding: 4px 15px;
   min-height: 32px;
+  border-radius: 8px;
 }
 
 .ant-btn-primary,
@@ -970,4 +972,10 @@ h6,
   color: rgb(51, 65, 85);
   font-weight: 600;
   background-color: rgb(239, 246, 246);
+}
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-radius: 8px;
+}
+.ant-picker,.ant-input{
+  border-radius: 8px;
 }

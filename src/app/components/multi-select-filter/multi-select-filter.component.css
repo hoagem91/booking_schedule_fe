@@ -26,20 +26,20 @@
   overflow: hidden;
   line-height: 28px;
 }
-:host
-  ::ng-deep
-  .ant-select-single.ant-select:not(.ant-select-customize-input)
-  .ant-select-selector
-  .ant-select-selection-search-input {
+
+:host ::ng-deep .ant-select-single.ant-select:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search-input {
   height: 28px !important;
 }
+
 :host ::ng-deep .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
   border-color: #9abdaf;
 }
+
 :host ::ng-deep .ant-select-single.ant-select nz-select-arrow,
 :host ::ng-deep .ant-select-single.ant-select nz-select-clear {
   margin-top: -7px;
 }
+
 :host ::ng-deep .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
   border-color: #287b5e !important;
   box-shadow: none !important;
@@ -53,14 +53,13 @@
 :host ::ng-deep .ant-select-single.ant-select .ant-select-selection-placeholder {
   font-size: 13px;
 }
+
 :host ::ng-deep .ant-select-single.ant-select .ant-select-selector .ant-select-selection-item,
 :host ::ng-deep .ant-select-single.ant-select .ant-select-selector .ant-select-selection-wrap:after,
-:host
-  ::ng-deep
-  .ant-select-single.ant-select:not(.ant-select-customize-input)
-  .ant-select-selector:after {
+:host ::ng-deep .ant-select-single.ant-select:not(.ant-select-customize-input) .ant-select-selector:after {
   line-height: 26px;
 }
+
 :host ::ng-deep .ant-select-multiple.ant-select .ant-select-selection-item {
   height: 22px;
   margin-bottom: 3px;
@@ -82,10 +81,7 @@
 
 :host ::ng-deep .multi-select-filter--single .ant-select-selection-item,
 :host ::ng-deep .multi-select-filter--single .ant-select-selection-placeholder,
-:host
-  ::ng-deep
-  .ant-select-single.ant-select.ant-select-show-arrow
-  .ant-select-selection-placeholder {
+:host ::ng-deep .ant-select-single.ant-select.ant-select-show-arrow .ant-select-selection-placeholder {
   height: 26px;
   padding-right: 18px;
   font-size: 12px;

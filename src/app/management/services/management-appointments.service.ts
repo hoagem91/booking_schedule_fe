@@ -16,6 +16,19 @@ export class ManagementAppointmentsService extends BaseService{
     const endpoint = ApiConstants.API_APPOINTMENT_ADMIN_SEARCH;
     return this.post<AppointmentHistoryPage>(endpoint,body,params,false);
   }
+
+  getAppointmentDetail(id: number): Observable<ApiResponse<AppointmentHistoryItem>> {
+    const endpoint = `${ApiConstants.API_APPOINTMENT_ADMIN_DETAIL}/${id}`;
+    return this.get<AppointmentHistoryItem>(endpoint);
+  }
+
+  create(body: any): Observable<ApiResponse<AppointmentHistoryItem>> {
+    const endpoint= ApiConstants.API_APPOINTMENT_ADMIN_DETAIL;
+    return this.post<any>(endpoint,body);
+  }
+
+
+
   // get(id: number): Observable<AppointmentHistoryItem> {
   //   return this.http.get<BookingApiResponse<AppointmentHistoryItem>>(`${this.url}/${id}`).pipe(map(response => {
   //     if (response?.code !== 1000 || !response.result || response.result.id !== id) throw new Error('Không thể đọc thông tin lịch hẹn. Vui lòng thử lại.');

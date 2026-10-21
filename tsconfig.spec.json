@@ -9,6 +9,7 @@
     ]
   },
   "include": [
+    "src/app/components/setting-table/**/*.spec.ts",
     "src/app/components/base.component.spec.ts",
     "src/app/management/**/*.spec.ts",
     "src/**/*.d.ts",

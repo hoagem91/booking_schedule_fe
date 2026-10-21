@@ -1,4 +1,6 @@
 :host { display: inline-flex; }
+:host { align-items: center; gap: 8px; flex-wrap: wrap; }
+.table-settings-error { margin: 0; max-width: 300px; color: #956324; font-size: 11px; line-height: 1.6; }
 :host .table-settings-trigger.ant-btn { width: 28px; height: 28px; padding: 0; border: 1px solid #dce6e8; border-radius: 9px; background: #f6faf9; box-shadow: none; color: #175657; }
 :host .table-settings-trigger.ant-btn:hover,
 :host .table-settings-trigger.ant-btn:focus { border-color: #97c5bc; background: #e8f4f0; color: #175657; }

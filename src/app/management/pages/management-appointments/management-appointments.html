@@ -1,11 +1,32 @@
 <ng-template [appShowOnErrorCode]="errorCode()" [errorMessage]="errorMessage()">
-  <div class="mb-4" id="header" nz-form [formGroup]="searchForm">
-    <div>
-      <p class="eyebrow">ĐIỀU PHỐI KHÁM</p>
-      <h1>Quản lý lịch hẹn</h1>
-      <p class="subtitle">Tra cứu lịch khám và theo dõi thông tin từng lượt hẹn.</p>
+  <form class="appointments-toolbar" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+    <div class="appointments-toolbar__row">
+      <!-- Ô tìm kiếm -->
+      <div class="appointments-toolbar__search">
+        <nz-input-group [nzSuffix]="suffixIconSearch">
+          <input type="text" nz-input placeholder="Nhập từ khoá và ấn enter để tìm kiếm"
+                 formControlName="keyword" aria-label="Tìm lịch hẹn" />
+        </nz-input-group>
+        <ng-template #suffixIconSearch>
+          <button type="submit" class="appointments-search-button" aria-label="Tìm kiếm lịch hẹn">
+            <nz-icon nzType="search" aria-hidden="true" />
+          </button>
+        </ng-template>
+      </div>
+
+      <div class="appointments-toolbar__actions">
+        <button nz-button nzType="primary" type="button" (click)="onOpenDetail()">
+          <nz-icon nzType="plus" nzTheme="outline" />
+          Tạo lịch hẹn
+        </button>
+        <div class="appointments-toolbar__actions">
+          <app-share-button icon="reload" tooltip="Tải lại dữ liệu" (buttonClick)="loadData()" />
+          <app-setting-table [tableKey]="'appointments'" [tableColumnData]="tableColumns"
+                             (tableColumnDataOutput)="setDataTableColumns($event)" />
+        </div>
+      </div>
     </div>
-  </div>
+  </form>
   <app-share-table
     [expandConfig]="{ expandRow: false, expandMultiple: false }"
     [columns]="_visibleColumns"
@@ -45,17 +66,23 @@
               – {{ appointment.endTime?.slice(0, 5) || '—' }}</small>
           </div>
         }
+        @case ('status') {
+          <nz-tag class="appointment-status-tag"
+                  [nzColor]="AppointmentUtils.getAppointmentStatus(appointment.status)?.color">
+            {{ AppointmentUtils.getAppointmentStatus(appointment.status)?.text }}
+          </nz-tag>
+        }
       }
     </ng-template>
     <ng-template #actionsCell let-data>
-        <button (click)="onOpenDetail(data.id, false)" nz-button nzType="text" nzSize="small"
-                class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Sửa thông tin lịch hẹn">
-          <nz-icon nzType="edit" class="!text-lg" nzTheme="outline" />
-        </button>
-        <button (click)="onOpenDetail(data.id, true)" nz-button nzType="text" nzSize="small"
-                class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
-          <nz-icon nzType="eye" class="!text-lg" nzTheme="outline" />
-        </button>
+      <button (click)="onOpenDetail(data.id, true)" nz-button nzType="text" nzSize="small"
+              class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
+        <nz-icon nzType="eye" class="!text-lg" nzTheme="outline" />
+      </button>
+      <button (click)="onOpenDetail(data.id, false)" nz-button nzType="text" nzSize="small"
+              class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Sửa thông tin lịch hẹn">
+        <nz-icon nzType="edit" class="!text-lg" nzTheme="outline" />
+      </button>
     </ng-template>
   </app-share-table>
 </ng-template>

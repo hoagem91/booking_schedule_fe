@@ -18,9 +18,11 @@
   <p class="table-settings-hint">Chọn các cột bạn muốn hiển thị</p>
   <div class="table-settings-columns">
     @for (column of tableColumnData(); track column.key) {
-      <label class="table-settings-column" nz-checkbox [nzChecked]="column.visible !== false" (nzCheckedChange)="onToggleColumn(column, $event)">
+      <label class="table-settings-column" nz-checkbox [nzChecked]="column.visible !== false"
+        [nzDisabled]="column.visible !== false && visibleCount() <= 1" (nzCheckedChange)="onToggleColumn(column, $event)">
         <span [title]="column.title">{{ column.title }}</span>
       </label>
     }
   </div>
 </ng-template>
+@if (storageError()) { <p class="table-settings-error" role="status">{{ storageError() }}</p> }

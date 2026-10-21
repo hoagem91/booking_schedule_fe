@@ -307,7 +307,8 @@
         1 }}
       </td>
       @for (column of columns(); track column.key) {
-      <td [nzEllipsis]="column.ellipsis" [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
+      <td [nzAlign]="column.align ?? 'left'" [style.text-align]="column.align ?? 'left'"
+        [nzEllipsis]="column.ellipsis" [nzLeft]="column.fixed === 'left'" [nzRight]="column.fixed === 'right'"
         [style.width.px]="column.width"
         [class]="getColumnClass(column)" *ngxPermissionsOnly="column.permissions || []">
 

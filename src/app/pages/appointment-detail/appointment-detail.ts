@@ -7,7 +7,7 @@ import { finalize, Subscription } from 'rxjs';
 import { AppointmentService } from '../../services/appointment/appointment.service';
 import { AppointmentHistoryItem } from '../../models/appointment.model';
 import { appointmentErrorMessage, appointmentResponseSucceeded, appointmentStatusLabels,
-  decodeAppointmentText } from '../../utils/appointment-ui.utils';
+  decodeAppointmentText } from '../../utils/appointment/appointment-ui.utils';
 
 @Component({
   selector: 'app-appointment-detail', standalone: true,

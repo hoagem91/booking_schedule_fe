@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NZ_DRAWER_DATA, NzDrawerRef } from 'ng-zorro-antd/drawer';
@@ -11,9 +11,6 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { TableColumn } from '../../share-table/share-table.interface';
-import { TableSettingService } from '../../../services/indexeddb/table-setting.service';
-import { userProfile$ } from '../../../store/user-profile.store';
-import { take } from 'rxjs';
 import { cloneDeep } from 'lodash-es';
 
 export interface AdvancedSettingTableData {
@@ -45,10 +42,10 @@ export interface AdvancedSettingTableResult {
     NzPopconfirmModule
   ]
 })
-export class AdvancedSettingTableComponent {
+export class AdvancedSettingTableComponent implements OnInit {
   private drawerRef = inject(NzDrawerRef<AdvancedSettingTableResult>);
   private drawerData = inject<AdvancedSettingTableData>(NZ_DRAWER_DATA);
-  private tableSettingService = inject(TableSettingService);
+  error = '';
 
   columns: TableColumn[] = [];
   tableKey: string = '';
@@ -57,28 +54,33 @@ export class AdvancedSettingTableComponent {
   ngOnInit() {
     this.columns = cloneDeep(this.drawerData.columns);
     this.tableKey = this.drawerData.tableKey;
-    this.defaultColumns = this.drawerData.defaultColumns;
+    this.defaultColumns = cloneDeep(this.drawerData.defaultColumns);
+    this.columns = this.columns.map(column => ({ ...column, visible: column.visible !== false }));
   }
 
   onDrop(event: CdkDragDrop<TableColumn[]>) {
     moveItemInArray(this.columns, event.previousIndex, event.currentIndex);
   }
 
+  moveColumn(index: number, offset: number): void {
+    const target = index + offset;
+    if (target >= 0 && target < this.columns.length) moveItemInArray(this.columns, index, target);
+  }
+
   onSave() {
-    userProfile$.pipe(take(1)).subscribe(async userProfile => {
-      if (!userProfile) return;
-      if (!this.tableKey) return;
-      await this.tableSettingService.saveSetting(userProfile.id, this.tableKey, this.columns);
-      this.drawerRef.close({ columns: this.columns });
-    });
+    if (!this.columns.some(column => column.visible !== false)) {
+      this.error = 'Cần giữ ít nhất một cột hiển thị.';
+      return;
+    }
+    if (this.columns.some(column => column.width !== null && (!Number.isFinite(column.width)
+      || column.width < (column.minWidth ?? 80) || column.width > Math.max(2000, column.minWidth ?? 80)))) {
+      this.error = 'Chiều rộng cột phải nằm trong giới hạn cho phép.';
+      return;
+    }
+    this.drawerRef.close({ columns: cloneDeep(this.columns) });
   }
 
   onResetDefault() {
-    userProfile$.pipe(take(1)).subscribe(async userProfile => {
-      if (!userProfile) return;
-      if (!this.tableKey) return;
-      await this.tableSettingService.deleteSetting(userProfile.id, this.tableKey);
-      this.drawerRef.close({ reset: true });
-    });
+    this.drawerRef.close({ reset: true });
   }
 }

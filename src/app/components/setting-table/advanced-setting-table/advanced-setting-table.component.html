@@ -1,4 +1,6 @@
 <div class="flex flex-col h-full">
+  <p class="settings-help">Tùy chỉnh cách hiển thị bảng trên trình duyệt này. Cần giữ ít nhất một cột.</p>
+  @if (error) { <p class="settings-validation" role="alert">{{ error }}</p> }
   <!-- Column list -->
   <div class="flex-1 overflow-auto" cdkDropList (cdkDropListDropped)="onDrop($event)">
     @for (column of columns; track column.key; let i = $index) {
@@ -8,6 +10,7 @@
         <div cdkDragHandle class="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
           <nz-icon nzType="holder" nz-tooltip nzTooltipTitle="Kéo để sắp xếp" />
         </div>
+        <div class="reorder-buttons"><button type="button" nz-button nzSize="small" [disabled]="i === 0" (click)="moveColumn(i, -1)" [attr.aria-label]="'Di chuyển lên: ' + column.title">↑</button><button type="button" nz-button nzSize="small" [disabled]="i === columns.length - 1" (click)="moveColumn(i, 1)" [attr.aria-label]="'Di chuyển xuống: ' + column.title">↓</button></div>
 
         <!-- Column name -->
         <div class="flex-1 text-sm font-medium text-gray-700 truncate">
@@ -26,7 +29,10 @@
             class="flex-1"
             nzSize="small"
             [(ngModel)]="column.width"
-            [nzMin]="column.minWidth"
+            [nzMin]="column.minWidth ?? 80"
+            [nzMax]="2000"
+            [nzStep]="10"
+            [nzPrecision]="0"
           />
         </div>
 
@@ -51,13 +57,13 @@
 
   <!-- Footer -->
   <div class="flex justify-between items-center px-4 py-3 border-t border-gray-200 bg-gray-50">
-    <button nz-button nzType="default" nzDanger
+    <button type="button" nz-button nzType="default" nzDanger
       nz-popconfirm nzPopconfirmTitle="Bạn có chắc muốn cài lại mặc định?"
       (nzOnConfirm)="onResetDefault()">
       <nz-icon nzType="undo" />
       Cài lại mặc định
     </button>
-    <button nz-button nzType="primary" (click)="onSave()">
+    <button type="button" nz-button nzType="primary" (click)="onSave()">
       <nz-icon nzType="save" />
       Lưu
     </button>
