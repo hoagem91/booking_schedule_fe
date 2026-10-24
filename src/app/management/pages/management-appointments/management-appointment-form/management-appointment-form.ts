@@ -21,6 +21,7 @@ import { ManagementAppointmentsService, clinicToday } from '../../../services/ma
 import { AdminPatientService } from '../../../services/admin-patient.service';
 import { AdminAppointmentCreateRequest, AppointmentDoctorOption } from '../../../models/appointment-create.models';
 import { appointmentStatusLabels } from '../../../../utils/appointment/appointment-ui.utils';
+import { specialtyBusinessErrorMessage } from '../../../../utils/specialty/specialty-error.utils';
 
 export interface AppointmentFormDrawerData {
   id?: number;
@@ -234,7 +235,6 @@ export class ManagementAppointmentForm extends BaseFormComponent {
             1012: 'Tài khoản liên quan không còn hoạt động. Vui lòng kiểm tra lại hồ sơ.',
             4002: 'Bác sĩ không còn tồn tại. Vui lòng chọn lại.',
             5003: 'Dịch vụ không còn tồn tại. Vui lòng chọn lại.',
-            3004: 'Chuyên khoa không còn hoạt động.',
             8002: 'Thông tin đặt lịch hoặc ngày khám không hợp lệ.',
             7001: 'Khung giờ không còn tồn tại. Vui lòng chọn lại.',
             6004: 'Ca khám không còn tồn tại. Vui lòng chọn lại.',
@@ -247,7 +247,7 @@ export class ManagementAppointmentForm extends BaseFormComponent {
             1007: 'Tài khoản không còn quyền tạo lịch.',
             1006: 'Phiên đăng nhập đã hết hạn.'
           };
-          this.formError.set(messages[res.code] || 'Chưa thể xác định kết quả tạo lịch. Vui lòng kiểm tra danh sách trước khi thử lại.');
+          this.formError.set(specialtyBusinessErrorMessage(res) || messages[res.code] || 'Chưa thể xác định kết quả tạo lịch. Vui lòng kiểm tra danh sách trước khi thử lại.');
           if ([6004, 7001, 7003, 8003].includes(res.code)) this.loadSlots();
         }
       },

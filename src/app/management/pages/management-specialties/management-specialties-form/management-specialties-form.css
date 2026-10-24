@@ -1,0 +1,11 @@
+:host { display: block; }
+.form-shell { display: flex; flex-direction: column; gap: 16px; }
+.form-toolbar, .toolbar-title, .toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.form-toolbar { justify-content: space-between; }
+.title-marker { width: 6px; height: 20px; border-radius: 4px; background: #2563eb; }
+.toolbar-title h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.card-heading { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; color: #6b7280; font-size: 14px; font-weight: 600; }
+.field-hint { margin: 6px 0 0; line-height: 1.7; color: #6b7280; font-size: 12px; }
+.form-error { padding: 12px; color: #ac302b; background: #fff2ef; border-radius: 6px; }
+nz-select { width: 100%; }
+@media (max-width: 640px) { .toolbar-actions { width: 100%; justify-content: flex-end; } .toolbar-title h2 { font-size: 16px; } }

@@ -1,0 +1,75 @@
+<div class="form-shell">
+  <div class="form-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" [disabled]="isSaving()" (click)="handleCancel()"><nz-icon nzType="arrow-left" /> Quay lại</button>
+      <span class="title-marker"></span>
+      <h2>{{ isEditMode ? (isViewMode ? 'Chi tiết phòng khám' : 'Cập nhật phòng khám') : 'Thêm mới phòng khám' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      <button nz-button type="button" [disabled]="isSaving()" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
+      @if (!isViewMode) {
+        <button nz-button nzType="primary" type="button" [nzLoading]="isSaving()" [disabled]="!loaded() || isSaving()" (click)="handleOk()">
+          <nz-icon nzType="save" /> {{ isEditMode ? 'Cập nhật phòng khám' : 'Tạo phòng khám' }}
+        </button>
+      }
+    </div>
+  </div>
+  @if (formError()) {
+    <div class="form-error" role="alert">{{ formError() }}
+      @if (!loaded() && !isLoading()) { <button nz-button type="button" (click)="loadDataForForm()">Tải lại dữ liệu</button> }
+    </div>
+  }
+  <ng-template [appShowLoading]="isLoading()">
+    <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="handleOk()" [attr.aria-busy]="isSaving()">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <nz-card class="lg:col-span-2" [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading"><nz-icon nzType="file-text" /> Thông tin phòng khám</h4>
+          <nz-form-item>
+            <nz-form-label nzFor="room-code" nzRequired>Mã phòng</nz-form-label>
+            <nz-form-control nzErrorTip="Nhập mã không trắng, tối đa 50 ký tự">
+              <input nz-input id="room-code" formControlName="code" maxlength="50" placeholder="Ví dụ: P101" />
+              <p class="field-hint">Mã phòng bắt buộc, được chuẩn hóa viết hoa khi lưu và không được trùng mã đã có.</p>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label nzFor="room-name" nzRequired>Tên phòng</nz-form-label>
+            <nz-form-control nzErrorTip="Nhập tên không trắng, tối đa 255 ký tự">
+              <input nz-input id="room-name" formControlName="name" maxlength="255" placeholder="Ví dụ: Phòng khám Nội 101" />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label nzFor="room-location">Vị trí</nz-form-label>
+            <nz-form-control nzErrorTip="Vị trí tối đa 255 ký tự">
+              <input nz-input id="room-location" formControlName="location" maxlength="255" placeholder="Ví dụ: Tầng 1, khu A" />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item class="mb-0">
+            <nz-form-label nzFor="room-specialty">Chuyên khoa</nz-form-label>
+            <nz-form-control>
+              <nz-select nzId="room-specialty" formControlName="specialtyId" nzShowSearch>
+                <nz-option [nzValue]="0" nzLabel="Phòng dùng chung" />
+                @for (option of specialties(); track option.id) {
+                  <nz-option [nzValue]="option.id" [nzLabel]="option.name + (option.status === 'INACTIVE' ? ' (ngừng hoạt động)' : '')" [nzDisabled]="option.status !== 'ACTIVE'" />
+                }
+              </nz-select>
+              <p class="field-hint">Phòng dùng chung có thể phân công cho nhiều chuyên khoa. Khi đổi hoặc bỏ chuyên khoa, cần xử lý các lịch phân công chưa hủy từ hôm nay trở đi.</p>
+            </nz-form-control>
+          </nz-form-item>
+        </nz-card>
+        <nz-card [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading"><nz-icon nzType="info-circle" /> Trạng thái</h4>
+          <nz-form-item class="mb-0">
+            <nz-form-label nzFor="room-status" nzRequired>Trạng thái phòng</nz-form-label>
+            <nz-form-control nzErrorTip="Vui lòng chọn trạng thái hợp lệ">
+              <nz-select nzId="room-status" formControlName="status">
+                @for (option of statuses; track option.value) { <nz-option [nzValue]="option.value" [nzLabel]="option.label" /> }
+              </nz-select>
+              <p class="field-hint">Sẵn sàng không bảo đảm phòng rảnh ở một thời điểm cụ thể. Dùng tìm phòng rảnh để kiểm tra ngày giờ.</p>
+              <p class="field-hint">Đang sử dụng do quản trị cập nhật, không tự chuyển theo lịch. Bảo trì/ngừng hoạt động có thể bị chặn khi còn ca khám sắp tới; không tự hủy ca đã phân công.</p>
+            </nz-form-control>
+          </nz-form-item>
+        </nz-card>
+      </div>
+    </form>
+  </ng-template>
+</div>

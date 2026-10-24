@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiResponse, apiResponseSucceeded } from '../../models/api-response.model';
 import { AppointmentStatus } from '../../models/appointment.model';
+import { specialtyBusinessErrorMessage } from '../specialty/specialty-error.utils';
 
 export const appointmentStatusLabels: Record<AppointmentStatus, string> = {
   PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', IN_PROGRESS: 'Đang khám',
@@ -25,6 +26,8 @@ export function appointmentResponseSucceeded<T>(res: ApiResponse<T> | null | und
 }
 
 export function appointmentErrorMessage(error: unknown): string {
+  const specialtyMessage = specialtyBusinessErrorMessage(error);
+  if (specialtyMessage) return specialtyMessage;
   const fallback = 'Chưa thể thực hiện yêu cầu. Vui lòng thử lại.';
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) return 'Không thể kết nối máy chủ. Vui lòng thử lại.';

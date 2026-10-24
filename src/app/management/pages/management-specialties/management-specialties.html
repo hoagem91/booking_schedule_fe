@@ -1,0 +1,73 @@
+<ng-template [appShowOnErrorCode]="errorCode()" [errorMessage]="errorMessage()">
+  <form class="mb-4" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+    <div class="flex w-full justify-between items-center flex-wrap gap-2">
+      <!-- Ô tìm kiếm -->
+      <div class="flex flex-col flex-1 items-start min-w-[250px] gap-2">
+        <div class="w-full lg:w-[320px] transition-all duration-300">
+          <nz-input-group [nzSuffix]="suffixIconSearch">
+            <input type="text" nz-input placeholder="Nhập từ khoá và ấn enter để tìm kiếm"
+                   formControlName="keyword" aria-label="Tìm chuyên khoa" />
+          </nz-input-group>
+          <ng-template #suffixIconSearch>
+            <button type="submit" class="appointments-search-button" aria-label="Tìm kiếm chuyên khoa...">
+              <nz-icon nzType="search" aria-hidden="true" />
+            </button>
+          </ng-template>
+        </div>
+      </div>
+
+      <div class="flex items-end flex-wrap justify-end gap-1">
+        @if (hasRole('ADMIN') || hasRole('SUPER_ADMIN')) {
+          <button nz-button nzType="primary" type="button" (click)="onOpenDetail()">
+            <nz-icon nzType="plus" nzTheme="outline" />
+            Tạo chuyên khoa
+          </button>
+        }
+        <div class="appointments-toolbar__actions">
+          <app-share-button icon="reload" tooltip="Tải lại dữ liệu" (buttonClick)="loadData()" />
+          <app-setting-table [tableKey]="'specialty'" [tableColumnData]="tableColumns"
+                             (tableColumnDataOutput)="setDataTableColumns($event)" />
+        </div>
+      </div>
+    </div>
+  </form>
+  <app-share-table
+    [actionsTemplate]="actionsCell"
+    [expandConfig]="{ expandRow: false, expandMultiple: false }"
+    [columns]="_visibleColumns"
+    [dataSource]="dataSource"
+    [loading]="isLoadingDataSource()"
+    [total]="total"
+    [currentPage]="currentPage"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[10, 20, 50]"
+    [showTotal]="true"
+    paginationItemLabel="chuyên khoa"
+    [scrollY]="tableScrollY"
+    [scrollX]="tableScrollX"
+    (queryParamsChange)="onQueryParamsChange($event)"
+  >
+    <ng-template #customCell let-data let-column="column">
+      @if (column.key === 'status') {
+        <nz-tag [nzColor]="StatusUtils.getStatusText(data.status)?.color">
+          {{ StatusUtils.getStatusText(data.status)?.text }}
+        </nz-tag>
+      }
+    </ng-template>
+    <ng-template #actionsCell let-data>
+      <button type="button" aria-label="Xem chi tiết" (click)="onOpenDetail(data.id, true)" nz-button nzType="text" nzSize="small"
+              class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
+        <nz-icon nzType="eye" class="!text-lg" nzTheme="outline"/>
+      </button>
+      <button type="button" aria-label="Sửa thông tin chuyên khoa" (click)="onOpenDetail(data.id, false)" nz-button nzType="text" nzSize="small"
+              class="!text-blue-500 disabled:opacity-50 !ml-2" nz-tooltip nzTooltipTitle="Sửa thông tin chuyên khoa">
+        <nz-icon nzType="edit" class="!text-lg" nzTheme="outline"/>
+      </button>
+      <button type="button" aria-label="Xoá chuyên khoa" nz-button nzType="text" (click)="onDelete(data)" nzSize="small" nz-tooltip nzTooltipTitle="Xoá chuyên khoa"
+              class="!text-red-500 disabled:opacity-50 !ml-2">
+        <nz-icon nzType="delete" class="!text-lg" nzTheme="outline"/>
+      </button>
+
+    </ng-template>
+  </app-share-table>
+</ng-template>
