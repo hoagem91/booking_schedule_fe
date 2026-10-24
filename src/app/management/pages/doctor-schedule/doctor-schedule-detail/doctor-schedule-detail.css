@@ -1,0 +1,119 @@
+:host { display: block; }
+
+/* ===== Shell ===== */
+.detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+/* ===== Toolbar ===== */
+.detail-toolbar,
+.toolbar-title,
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.detail-toolbar { justify-content: space-between; }
+.toolbar-title  { gap: 12px; }
+
+.title-marker {
+  width: 6px;
+  height: 20px;
+  border-radius: 4px;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.toolbar-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ===== Body ===== */
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== Card heading ===== */
+.card-heading {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== Mã code inline ===== */
+.detail-code {
+  background: #f0f4f8;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  color: #1d4ed8;
+}
+
+/* ===== Trạng thái lỗi ===== */
+.detail-error {
+  padding: 14px 16px;
+  background: #fff2ef;
+  color: #ac302b;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Empty slot ===== */
+.detail-empty {
+  padding: 24px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* ===== Slot table ===== */
+.slot-table {
+  width: 100%;
+}
+
+/* Hàng slot đã có đặt chỗ */
+::ng-deep .slot-row--booked td {
+  background-color: #eff6ff !important;
+}
+::ng-deep .slot-row--booked:hover td {
+  background-color: #dbeafe !important;
+}
+
+/* ===== Tổng kết cuối bảng ===== */
+.slot-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .toolbar-title { align-items: flex-start; }
+  .toolbar-title h2 { font-size: 16px; }
+  .toolbar-actions { width: 100%; justify-content: flex-end; }
+}

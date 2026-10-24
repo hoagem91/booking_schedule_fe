@@ -95,6 +95,7 @@ export class ShareTableComponent {
   readonly expandChange = output<{ item: any; expanded: boolean }>();
 
   readonly customCellTemplate = contentChild<TemplateRef<any>>('customCell');
+  readonly actionsTemplate = input<TemplateRef<any> | null>(null);
   readonly actionsCellTemplate = contentChild<TemplateRef<any>>('actionsCell');
   readonly expandTemplate = contentChild<TemplateRef<any>>('expandRow');
 

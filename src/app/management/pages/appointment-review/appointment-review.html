@@ -1,0 +1,285 @@
+<div class="review-shell">
+
+  <!-- ========== PAGE HEADER ========== -->
+  <div class="review-header">
+    <div class="review-header__actions">
+      <button nz-button type="button" nz-tooltip nzTooltipTitle="Tải lại"
+              [disabled]="isLoadingSummary()" (click)="reloadAll()">
+        <nz-icon class="text-sm" nzType="reload" [nzSpin]="isLoadingSummary()" /> Tải lại
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== MASTER-DETAIL ========== -->
+  <div class="review-layout">
+
+    <!-- ====== CỘT TRÁI: Danh sách bác sĩ ====== -->
+    <aside class="review-left">
+
+      <!-- Toolbar cột trái -->
+      <div class="left-toolbar">
+        <nz-input-group [nzSuffix]="leftSearchSuffix" class="left-search">
+          <input nz-input placeholder="Tìm bác sĩ…"
+                 [ngModel]="leftKeyword()"
+                 (ngModelChange)="onLeftKeywordChange($event)" />
+        </nz-input-group>
+        <ng-template #leftSearchSuffix>
+          <nz-icon nzType="search" class="text-gray-400" />
+        </ng-template>
+
+        <nz-range-picker
+          class="left-date-picker"
+          nzFormat="dd/MM/yyyy"
+          [nzPlaceHolder]="['Từ ngày', 'Đến ngày']"
+          [(ngModel)]="leftDateRange"
+          (ngModelChange)="onLeftDateRangeChange($event)"
+        />
+      </div>
+
+      <!-- Lỗi summary -->
+      @if (summaryError()) {
+        <div class="panel-error">
+          <nz-icon nzType="warning" />
+          <span>{{ summaryError() }}</span>
+          <button nz-button nzSize="small" type="button" (click)="loadSummary()">Thử lại</button>
+        </div>
+      }
+
+      <!-- Loading skeleton -->
+      @if (isLoadingSummary() && !summaryDoctors().length) {
+        <div class="panel-loading">
+          <nz-spin nzSimple nzTip="Đang tải danh sách bác sĩ…" />
+        </div>
+      }
+
+      <!-- Doctor cards -->
+      <div class="doctor-list">
+        @for (doctor of summaryDoctors(); track doctor.doctorId) {
+          <button type="button"
+                  class="doctor-card"
+                  [class.doctor-card--active]="selectedDoctorId() === doctor.doctorId"
+                  (click)="selectDoctor(doctor.doctorId)">
+
+            <div class="doctor-card__header">
+              <div class="doctor-card__info">
+                <span class="doctor-card__name">{{ doctor.doctorName }}</span>
+                <code class="doctor-card__code">{{ doctor.doctorCode }}</code>
+              </div>
+              @if (badgeCount(doctor, 'PENDING') > 0) {
+                <div
+                  class="px-2 py-0.5 rounded-full flex items-center gap-1.5 bg-amber-100 border border-amber-300 flex-shrink-0"
+                  nz-tooltip="Có {{doctor.total}} lịch cần xác nhận">
+                  <span class="text-amber-700 text-xs font-bold">{{ doctor.total }}</span>
+                  <nz-icon nzType="check-circle" nzTheme="outline" class="text-amber-600 text-[14px]" />
+                </div>
+              }
+            </div>
+
+            <div class="doctor-card__badges">
+              @if (badgeCount(doctor, 'PENDING') > 0) {
+                <nz-tag nzColor="orange" class="badge-tag">
+                  Chờ XN: {{ badgeCount(doctor, 'PENDING') }}
+                </nz-tag>
+              }
+              @if (badgeCount(doctor, 'CONFIRMED') > 0) {
+                <nz-tag nzColor="blue" class="badge-tag">
+                  Đã XN: {{ badgeCount(doctor, 'CONFIRMED') }}
+                </nz-tag>
+              }
+              @if (badgeCount(doctor, 'IN_PROGRESS') > 0) {
+                <nz-tag nzColor="cyan" class="badge-tag">
+                  Đang khám: {{ badgeCount(doctor, 'IN_PROGRESS') }}
+                </nz-tag>
+              }
+              @if (badgeCount(doctor, 'COMPLETED') > 0) {
+                <nz-tag nzColor="green" class="badge-tag">
+                  Xong: {{ badgeCount(doctor, 'COMPLETED') }}
+                </nz-tag>
+              }
+            </div>
+          </button>
+        } @empty {
+          @if (!isLoadingSummary()) {
+            <div class="panel-empty">
+              <nz-empty nzNotFoundContent="Không có bác sĩ nào" />
+            </div>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- ====== CỘT PHẢI: Danh sách lịch hẹn ====== -->
+    <section class="review-right">
+
+      <!-- Chưa chọn bác sĩ -->
+      @if (!selectedDoctorId()) {
+        <div class="right-placeholder">
+          <nz-icon nzType="arrow-left" class="placeholder-icon" />
+          <p>Chọn một bác sĩ ở cột trái để xem lịch hẹn</p>
+        </div>
+      } @else {
+
+        <!-- Header cột phải -->
+        <div class="right-header">
+          <div class="right-header__doctor">
+            <nz-icon nzType="user" class="text-blue-500" />
+            <strong>{{ selectedDoctor()?.doctorName }}</strong>
+            <code class="right-header__code">{{ selectedDoctor()?.doctorCode }}</code>
+          </div>
+          <!-- Badge summary có thể click để filter -->
+          <div class="right-header__counts">
+            @for (opt of REVIEW_STATUS_OPTIONS; track opt.value) {
+              @if (opt.value && (selectedDoctor()?.statusCounts?.[opt.value] ?? 0) > 0) {
+                <nz-tag
+                  [nzColor]="statusColor(opt.value)"
+                  class="count-tag"
+                  [class.count-tag--active]="rightStatus() === opt.value"
+                  (click)="toggleRightStatus(opt.value)">
+                  {{ opt.label }}: {{ selectedDoctor()?.statusCounts?.[opt.value] }}
+                </nz-tag>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Toolbar lọc cột phải -->
+        <div class="right-toolbar">
+          <nz-input-group [nzSuffix]="rightSearchSuffix" class="right-search">
+            <input nz-input placeholder="Tìm mã lịch hẹn hoặc bệnh nhân…"
+                   [(ngModel)]="rightKeyword"
+                   (keyup.enter)="onRightSearch()" />
+          </nz-input-group>
+          <ng-template #rightSearchSuffix>
+            <button type="button" class="search-btn" (click)="onRightSearch()">
+              <nz-icon nzType="search" />
+            </button>
+          </ng-template>
+
+          <nz-select [ngModel]="rightStatus()"
+                     (ngModelChange)="onRightStatusChange($event)"
+                     nzPlaceHolder="Lọc trạng thái"
+                     nzAllowClear
+                     class="right-status-select">
+            @for (opt of REVIEW_STATUS_OPTIONS; track opt.value) {
+              @if (opt.value) {
+                <nz-option [nzValue]="opt.value" [nzLabel]="opt.label" />
+              }
+            }
+          </nz-select>
+
+          <button nz-button type="button" nz-tooltip nzTooltipTitle="Tải lại danh sách"
+                  [disabled]="isLoadingAppointments()" (click)="loadAppointments()">
+            <nz-icon nzType="reload" [nzSpin]="isLoadingAppointments()" />
+          </button>
+        </div>
+
+        <!-- Lỗi appointments -->
+        @if (appointmentsError()) {
+          <div class="panel-error">
+            <nz-icon nzType="warning" />
+            <span>{{ appointmentsError() }}</span>
+            <button nz-button nzSize="small" type="button" (click)="loadAppointments()">Thử lại</button>
+          </div>
+        }
+
+        <!-- Loading -->
+        @if (isLoadingAppointments() && !appointments.length) {
+          <div class="panel-loading">
+            <nz-spin nzSimple nzTip="Đang tải lịch hẹn…" />
+          </div>
+        }
+
+        <!-- Appointment cards -->
+        <div class="appointment-list" [class.is-loading]="isLoadingAppointments()">
+          @for (item of appointments; track item.id) {
+            <div class="appt-card">
+
+              <!-- Card header -->
+              <div class="appt-card__header">
+                <div class="appt-card__codes">
+                  <code class="appt-code">{{ item.appointmentCode }}</code>
+                  <nz-tag [nzColor]="statusColor(item.status)" class="appt-status">
+                    {{ statusLabel(item.status) }}
+                  </nz-tag>
+                </div>
+                <div class="appt-card__top-actions">
+                  <button nz-button nzType="text" nzSize="small" class="!text-blue-500"
+                          nz-tooltip nzTooltipTitle="Xem chi tiết"
+                          type="button" (click)="openDetail(item.id)">
+                    <nz-icon nzType="eye" class="!text-base" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card body -->
+              <div class="appt-card__body">
+                <div class="appt-info-row">
+                  <nz-icon nzType="user" class="appt-icon" />
+                  <span class="appt-label">Bệnh nhân:</span>
+                  <strong>{{ item.patientName }}</strong>
+                  <span class="appt-meta">{{ item.patientCode }}</span>
+                  @if (item.patientPhone) {
+                    <span class="appt-meta">· {{ item.patientPhone }}</span>
+                  }
+                </div>
+                <div class="appt-info-row">
+                  <nz-icon nzType="medicine-box" class="appt-icon" />
+                  <span class="appt-label">Dịch vụ:</span>
+                  <span>{{ item.serviceName }}</span>
+                </div>
+                <div class="appt-info-row">
+                  <nz-icon nzType="calendar" class="appt-icon" />
+                  <span class="appt-label">Ngày khám:</span>
+                  <strong>{{ item.appointmentDate }}</strong>
+                  <span class="appt-time">
+                    {{ item.startTime?.slice(0, 5) }} – {{ item.endTime?.slice(0, 5) }}
+                  </span>
+                </div>
+                @if (item.reason) {
+                  <div class="appt-info-row appt-reason-row">
+                    <nz-icon nzType="file-text" class="appt-icon" />
+                    <span class="appt-label">Lý do:</span>
+                    <span class="appt-reason-text">{{ item.reason }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Card footer: workflow actions -->
+              <div class="appt-card__footer">
+                <span class="appt-footer__meta">Đặt lúc: {{ item.createdAt | date: 'dd/MM/yyyy hh:mm:ss' }}</span>
+                <div class="appt-footer__actions">
+                  <app-appointment-actions
+                    [appointment]="item"
+                    (refreshRequested)="refreshAfterAction($event, item)"
+                  />
+                </div>
+              </div>
+
+            </div>
+          } @empty {
+            @if (!isLoadingAppointments()) {
+              <div class="panel-empty">
+                <nz-empty nzNotFoundContent="Không có lịch hẹn nào phù hợp với bộ lọc hiện tại" />
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Phân trang -->
+        @if (rightTotal() > pageSize) {
+          <div class="right-pagination">
+            <nz-pagination
+              [nzTotal]="rightTotal()"
+              [nzPageIndex]="rightPage()"
+              [nzPageSize]="pageSize"
+              [nzShowTotal]="totalTpl"
+              [nzShowSizeChanger]="false"
+              (nzPageIndexChange)="onRightPageChange($event)"
+            />
+            <ng-template #totalTpl let-total>{{ total }} lịch hẹn</ng-template>
+          </div>
+        }
+      }
+    </section>
+  </div>
+</div>

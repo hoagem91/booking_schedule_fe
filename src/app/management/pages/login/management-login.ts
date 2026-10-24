@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, switchMap } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { ManagementAccessService, managementError } from '../../services/management-access.service';
-import { hasManagementPermission, managementHome, safeManagementReturnUrl } from '../../management.models';
+import { hasManagementPermission, managementHome, safeManagementReturnUrl } from '../../models/management.models';
 
 @Component({
   standalone: true,

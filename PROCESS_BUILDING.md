@@ -414,3 +414,200 @@ Browser QA: chạy ng serve --host 127.0.0.1 --port 4310, rồi node docs/qa/tab
 - Đã đối chiếu AdminAppointmentController backend: GET /api/admin/appointments/{id}, POST /api/admin/appointments và POST /api/admin/appointments/search.
 - Kiểm tra thực thi constants sau transpile TypeScript: PASS cho URL chi tiết id=4, tạo mới và tìm kiếm. Không gọi API ghi dữ liệu thật.
 - Kết quả GET frontend: /booking-schedule/api/admin/appointments/4. Hàm create vốn dùng chung constant DETAIL cũng được sửa URL về /api/admin/appointments.
+
+## 14. Tích hợp thao tác xử lý lịch hẹn quản lý — 22/10/2026
+
+### 14.1. Phạm vi và nghiệp vụ đã triển khai
+
+- Theo yêu cầu, giữ màn danh sách và drawer chi tiết; thêm xác nhận, bắt đầu khám, hoàn thành, hủy, không đến qua 5 PATCH API backend hiện có.
+- Đã đọc AdminAppointmentController, AppointmentService.transition, AppointmentLifecycle.cancel, AppointmentActionRequest và SecurityConfig. Request body là {note?: string}, tối đa 2.000 ký tự. Ghi chú trống gửi {} để giữ ghi chú hiện có.
+- Backend hiện cho ADMIN/SUPER_ADMIN/STAFF dùng các endpoint quản lý; DOCTOR chưa có endpoint giới hạn lượt được phân công. Frontend dùng permission appointments:update-status khớp các vai trò hiện có, không tự mở quyền cho doctor/patient.
+- Luồng PENDING -> CONFIRMED -> IN_PROGRESS -> COMPLETED; chỉ PENDING/CONFIRMED được hủy hoặc đánh dấu NO_SHOW. Bắt đầu khám phải đến giờ bắt đầu; NO_SHOW phải qua giờ kết thúc. Frontend dùng UTC+7 để hiển thị điều kiện và kiểm tra lại trước khi gửi; backend là nơi quyết định cuối cùng.
+- Không thêm CHECKED_IN/đổi lịch giả vì API chưa hỗ trợ. in-progress hiển thị đúng tên Bắt đầu khám.
+- Hủy cần lý do không trắng theo chính sách giao diện; mọi ghi chú tối đa 2.000 ký tự. Modal có xác nhận riêng, chống gửi trùng, khóa đóng/Escape khi đang kiểm tra/gửi, thông báo lỗi ngay trong modal.
+- Đọc lại chi tiết trước PATCH, chặn khi trạng thái khác snapshot/không còn hợp lệ. Nếu backend trả xung đột, khóa gửi lại và yêu cầu tải lại dữ liệu. Không tự cập nhật trạng thái thành công khi API thất bại/thiếu result.
+- Thao tác thành công tải lại danh sách; ở drawer tải lại cả chi tiết và danh sách nền qua callback. Menu Xử lý trên từng dòng thay nút Sửa chưa có API cập nhật; giữ nút Xem chi tiết. Form tạo lịch hiện có không được thay đổi trong đợt này.
+- Sửa AppointmentEnumStatus.COMPLETED từ COMPLETE sang COMPLETED để thống nhất trạng thái backend và nhãn giao diện.
+
+### 14.2. Kết quả kiểm tra
+
+- Unit test appointment-actions.spec.ts: 17/17 PASS. Bao phủ luồng trạng thái, mốc giờ UTC+7, phân quyền, đúng 5 URL PATCH, body ghi chú, chống gửi trùng, lý do hủy, dữ liệu thay đổi, lỗi API, kết quả thiếu dữ liệu, đổi phiên/quyền và thử lại sau lỗi kết nối.
+- Build development: PASS (browser/server/prerender). Còn cảnh báo optional chaining dư trong template danh sách hiện có.
+- Browser QA docs/qa/appointment-workflow.js: PASS trên dev server mới tại 4313, không lỗi JavaScript và không request ngoài fixture. Kiểm tra đủ 5 thao tác, tự tải lại danh sách/chi tiết, khóa đóng khi gửi, lý do hủy đã trim, vô hiệu hóa thao tác chưa đến giờ, chặn PATCH khi trạng thái vừa thay đổi, đóng X vẫn tải lại và thử lại sau lỗi máy chủ.
+- 8 PATCH fixture được xác minh: xác nhận/bắt đầu/hoàn thành trên cùng lịch; hủy kèm note; không đến; hoàn thành trong drawer; xác nhận lỗi 500 rồi thử lại thành công. Không gọi PATCH trên dữ liệu backend thật.
+- Đã mở ảnh kiểm tra trực quan desktop drawer và modal hủy ở mobile 390px. Ảnh tại docs/screenshots/appointment-workflow/: confirm-desktop.png, cancel-mobile.png, stale-state.png, detail-completed.png.
+- Dropdown có role menu/menuitem và aria-disabled để công cụ hỗ trợ đọc được trạng thái thao tác.
+- Chạy lại unit test: node node_modules/@angular/cli/bin/ng.js test --watch=false --include "src/app/management/appointment-workflow/**/*.spec.ts". Chạy lại browser QA: node docs/qa/appointment-workflow.js; đặt WORKFLOW_QA_URL theo dev server và WORKFLOW_QA_NODE_MODULES theo thư mục node_modules chứa playwright nếu không cài trong project.
+- Giới hạn: đã đối chiếu source backend và kiểm tra bằng fixture, chưa xác minh bằng tài khoản/dữ liệu thật. Hoàn thành lượt khám không đồng nghĩa đã thu tiền; chưa xây dựng nghiệp vụ thanh toán hoặc màn bác sĩ trong phạm vi này.
+
+### 14.3. Các tệp chính
+
+- management/appointment-workflow/: policy trạng thái, đồng hồ điều kiện thời gian, component thao tác dùng chung, modal xác nhận và unit test.
+- management/services/management-appointments.service.ts: thêm transition gửi PATCH đúng endpoint.
+- management/management.models.ts: permission appointments:update-status.
+- management/pages/management-appointments/: tích hợp menu từng dòng và các thao tác ở drawer chi tiết, cập nhật trạng thái sau xử lý.
+- enum/appointment/appointment.enum.ts: đồng bộ COMPLETED với backend.
+
+## 15. Đối chiếu API quản lý lịch làm việc bác sĩ — 22/10/2026
+
+### 15.1. Nguồn kiểm tra và phạm vi
+
+- Đọc source backend tại ../examine: DoctorScheduleController, AdminTimeSlotController, TimeSlotController, PublicDoctorScheduleController; các DTO, mapper, DoctorScheduleService, TimeSlotService, TimeSlotPolicy, AppointmentLifecycle và SecurityConfig.
+- Đối chiếu frontend AppointmentService, booking.model.ts và api-constants.ts. Đây là rà soát hợp đồng và nghiệp vụ trong source, chưa gọi API thật/chưa sửa backend hoặc triển khai màn mới.
+- Tiền tố HTTP ứng dụng là /booking-schedule; các đường dẫn dưới đây tính từ /api, không thêm lặp doctor-schedules/time-slots khi nối URL.
+
+### 15.2. API đã có
+
+| Chức năng | API | Quyền hiện tại |
+| --- | --- | --- |
+| Tìm ca, phân trang | POST /api/admin/doctor-schedules/search?page=0&size=20&sort=workDate,asc | ADMIN, SUPER_ADMIN |
+| Chi tiết ca, bao gồm toàn bộ timeSlots | GET /api/admin/doctor-schedules/{id} | ADMIN, SUPER_ADMIN |
+| Tạo ca, tự sinh khung giờ | POST /api/admin/doctor-schedules | ADMIN, SUPER_ADMIN |
+| Sửa ca | PUT /api/admin/doctor-schedules/{id} | ADMIN, SUPER_ADMIN |
+| Đổi trạng thái ca | PATCH /api/admin/doctor-schedules/{id}/status | ADMIN, SUPER_ADMIN |
+| Xóa ca hoặc hủy và giữ lịch sử | DELETE /api/admin/doctor-schedules/{id} | ADMIN, SUPER_ADMIN |
+| Đóng/mở một khung giờ | PATCH /api/admin/time-slots/{id}/status | ADMIN, SUPER_ADMIN, STAFF |
+| Tìm ca còn đặt được | POST /api/public/doctor-schedules/search | Public |
+| Giờ còn đặt được trong ca | GET /api/public/time-slots?scheduleId={id} | Public |
+
+- Search quản lý nhận body {doctorId?, specialtyId?, fromDate?, toDate?, status?}; result là Page<DoctorScheduleResponse>. Search public trả List, không có phân trang và chỉ trả ca OPEN, bác sĩ/tài khoản/chuyên khoa hoạt động, ngày từ hôm nay, còn khung giờ khả dụng.
+- Tạo ca nhận {doctorId, roomId?, workDate, startTime, endTime, maxPatients?}; ngày yyyy-MM-dd, giờ LocalTime (nên gửi HH:mm:ss), maxPatients mặc định 20. Ca mới OPEN. Sửa nhận các trường tương ứng dạng tùy chọn.
+- Response ca có doctorId/doctorCode/doctorName/specialtyName, roomId/roomCode/roomName, workDate, startTime, endTime, maxPatients, status, timeSlots, createdAt, updatedAt. Response slot có id, scheduleId, startTime, endTime, maxPatients, bookedCount, status.
+- Picker bác sĩ: GET /api/admin/doctors?specialtyId=...&status=ACTIVE (ADMIN/SUPER_ADMIN). Phòng: GET /api/admin/rooms hoặc POST /api/admin/rooms/search (có STAFF đọc); lựa chọn public GET /api/public/rooms hoặc /api/public/specialties/{specialtyId}/rooms. Chuyên khoa hoạt động: GET /api/public/specialties; SecurityConfig hiện rơi vào authenticated, chưa permitAll cho đường dẫn này.
+
+### 15.3. Nghiệp vụ cần phản ánh đúng trên giao diện
+
+- Backend tự chia slot tối đa 30 phút, slot cuối có thể ngắn hơn; phân bổ tổng maxPatients của ca vào các slot. Chưa có trường slotDurationMinutes hoặc API sửa quota/giờ từng slot; không xây ô chọn thời lượng hoặc sức chứa từng slot khi chưa bổ sung backend.
+- Có kiểm tra trùng ca của bác sĩ và trùng phòng; kiểm tra ngày không quá khứ, giờ bắt đầu trước giờ kết thúc, sức chứa dương, bác sĩ/tài khoản hoạt động và phòng AVAILABLE. Khóa dữ liệu được xử lý trong transaction backend.
+- doctorId trong PUT chỉ xác nhận bác sĩ cũ, không đổi bác sĩ ca. roomId null hiện mang nghĩa giữ phòng cũ, chưa hỗ trợ bỏ gán phòng qua PUT.
+- Khi ca có lịch sử đặt (kể cả lịch đã hủy), không được đổi ngày/giờ hoặc giảm sức chứa; có thể đổi phòng/tăng sức chứa theo kiểm tra backend. Không suy ra ca chưa từng có lịch chỉ vì bookedCount hiện bằng 0.
+- Trạng thái ca: OPEN, FULL, CLOSED, CANCELLED. PATCH body {status}. CLOSED ngừng nhận đặt qua trạng thái các slot, không hủy các lịch hẹn hiện có. CANCELLED không thể mở lại.
+- Hủy ca tự hủy các lịch PENDING/CONFIRMED, giải phóng chỗ, điều chỉnh lượt dùng khuyến mãi và tạo bản ghi thông báo cho bệnh nhân. IN_PROGRESS/COMPLETED không bị tự hủy. Không có bằng chứng gửi email/SMS; hoàn tiền chưa được xử lý trong luồng này.
+- DELETE xóa thật khi chưa có lịch sử; nếu có lịch sử thì hủy ca và giữ dữ liệu. Giao diện phải giải thích tác động và ưu tiên thao tác Hủy ca rõ ràng, không diễn đạt mọi DELETE là xóa vĩnh viễn.
+- Đổi trạng thái slot nhận {status: AVAILABLE | CLOSED | UNAVAILABLE}; FULL không được đặt thủ công. CLOSED/UNAVAILABLE đều đặt manuallyClosed và response được đồng bộ thành CLOSED. Slot có bookedCount > 0 hoặc lịch PENDING/CONFIRMED/IN_PROGRESS không được đóng. Mở lại chỉ khi ca khả dụng, còn sức chứa và giờ bắt đầu vẫn ở tương lai.
+- Public time-slots đã lọc bỏ slot đóng/đầy/quá giờ: không dùng API này để hiển thị toàn bộ slot quản lý. Dùng timeSlots từ chi tiết ca quản lý; frontend cần model quản lý riêng thay vì dùng BookingSchedule hiện chỉ chứa một phần trường response.
+- Backend dùng LocalDate.now()/LocalDateTime.now() theo múi giờ JVM; chưa thấy cấu hình múi giờ ứng dụng rõ ràng trong resources. serverTimezone=UTC trong JDBC không chứng minh múi giờ JVM. Cần thống nhất múi giờ phòng khám khi triển khai.
+
+### 15.4. Khoảng trống và thứ tự triển khai
+
+1. Có thể xây ngay màn lịch làm việc cho ADMIN/SUPER_ADMIN: danh sách, lọc khoảng ngày/bác sĩ/chuyên khoa/trạng thái; drawer chi tiết có tất cả slot. Giao diện ngày/tuần dùng cùng API search, cần xử lý phân trang để không bỏ sót ca.
+2. Tiếp theo tạo/sửa ca, kiểm tra dữ liệu form và ánh xạ lỗi 6004–6011 (không tồn tại, giờ không hợp lệ, trùng bác sĩ/phòng, có lịch sử, ca đã hủy, sức chứa, sai bác sĩ). Picker chỉ chọn bác sĩ hoạt động/phòng khả dụng.
+3. Thêm đóng/mở slot và đóng/mở/hủy ca; xác nhận tác động khi hủy, tải lại dữ liệu sau thành công, hiển thị lỗi 7001–7004 rõ ràng.
+4. STAFF đang được PATCH slot nhưng không được tìm/đọc chi tiết ca hoặc danh sách bác sĩ quản lý. Nếu muốn staff dùng đầy đủ màn này, cần bổ sung quyền đọc giới hạn ở backend trước; không dùng API public để thay thế dữ liệu quản lý và không tự mở quyền frontend.
+5. Chưa có API xem trước tác động hủy ca, lấy lịch hẹn theo scheduleId/timeSlotId, đổi lịch hàng loạt, sao chép/lặp lịch, điều chỉnh thời lượng/quota từng slot, lịch bác sĩ của chính mình. AppointmentSearchRequest hiện chỉ có keyword, doctorId, patientId, status, fromDate, toDate; lọc bác sĩ/ngày chưa xác định chính xác lịch thuộc ca nào khi có nhiều ca cùng ngày. Nên bổ sung bộ lọc ca/slot và API preview trả số lượng cùng danh sách lịch bị ảnh hưởng trước khi xây phần xử lý tác động.
+6. Không cần API lịch tuần riêng để làm giao diện tuần cơ bản; chưa triển khai thanh toán/hoàn tiền hoặc màn DOCTOR trong phạm vi đối chiếu này.
+
+## 16. Kiểm tra icon chức năng trang lịch bác sĩ — 22/10/2026
+
+- Yêu cầu: các icon chức năng trong doctor-schedule.html không hiển thị.
+- Kiểm tra source: DoctorSchedule đã import NzIconDirective; phiên bản NG-ZORRO hiện tại hỗ trợ cả selector nz-icon và [nz-icon]. Eye/Edit đã có trong APP_ICONS; Delete cũng được NzIconService đăng ký sẵn qua bộ icon NG-ZORRO. Không xác định thiếu đăng ký icon là nguyên nhân.
+- Tái hiện trên dev server mới bằng một ca fixture: cả eye/edit/delete đều có SVG/path, kích thước 22x18px, nhìn thấy trên ảnh desktop; không lỗi JavaScript. Chưa tái hiện được hiện tượng mất icon với source hiện tại, chưa đủ bằng chứng kết luận nguyên nhân ở phiên trình duyệt người dùng.
+- Phát hiện độc lập: standalone DoctorSchedule thiếu NzTooltipModule dù template có nz-tooltip. Đã thêm import, chuẩn hóa nút xóa sang nz-tooltip + nzTooltipTitle và thêm aria-label/type button cho cả ba nút. Không thay nghiệp vụ xem/sửa/xóa.
+- Biên dịch dev server: PASS, còn các cảnh báo optional chaining dư có sẵn. Browser QA docs/qa/doctor-schedule-icons.js: PASS, xác minh SVG của ba icon, kích thước khác 0, tooltip sửa hiển thị khi hover và không pageerror. API được chặn bằng fixture, không gọi tạo/sửa/xóa backend thật.
+- Ảnh đã mở kiểm tra trực quan: docs/screenshots/doctor-schedule-icons/desktop.png. Khi giao diện tại máy người dùng khác source đã kiểm tra, khởi động lại đúng dev server dự án và Ctrl+F5 để kiểm tra lại; đây là bước loại trừ bản giao diện cũ, chưa phải kết luận nguyên nhân.
+
+## 17. Tái hiện lỗi mất ba nút chức năng trên server 4200 — 23/10/2026
+
+- Người dùng xác nhận chỉ các icon Xem/Sửa/Xóa trong bảng mất, toolbar vẫn hiện. NzIconModule đã có trong imports của standalone DoctorSchedule, đăng ký icon cũng hợp lệ; không cần import đồng thời NzIconDirective hoặc NzButtonComponent khi đã dùng các module tương ứng. Đã bỏ các import dư này.
+- Khác lần kiểm tra trước dùng server riêng, lần này chạy fixture trực tiếp trên http://localhost:4200/management/doctor-schedule. Tái hiện được: cột actions có render actions, nhưng actionsCellTemplate() của ShareTable trả undefined, ô chỉ có container, không có ba button/nz-icon. Không có lỗi JavaScript; icon sao chép và icon toolbar vẫn có SVG. Vì vậy mất nội dung template là nguyên nhân trực tiếp, không phải thiếu thư viện icon.
+- Thêm input actionsTemplate tùy chọn vào ShareTable và bind [actionsTemplate]="actionsCell" trên trang lịch bác sĩ. Renderer ưu tiên input, vẫn hỗ trợ contentChild actionsCell cho các trang đang dùng. Không thay nghiệp vụ các nút.
+- Xác minh server 4200 còn phục vụ template DoctorSchedule cũ: template runtime là phiên bản 18 declarations/17 bindings trong khi build mới có 20 declarations/18 bindings và binding actionsTemplate. Component ShareTable đã nhận input mới nhưng trang chưa nhận binding. Đây là bằng chứng code frontend đang bị cập nhật không đồng bộ trong phiên dev server.
+- Đã xác định tiến trình ng serve thuộc đúng workspace/cổng 4200, khởi động lại tại cùng cổng với --no-hmr để dùng tải lại trang khi sửa thay vì cập nhật nóng component trong phiên kiểm tra này. Không đổi package.json hoặc cấu hình build; server hiện vẫn chạy để người dùng tiếp tục sử dụng.
+- Sau sửa và restart: QA doctor-schedule-icons.js PASS ngay trên localhost:4200; cả content query và explicit input đều có template, ba icon eye/edit/delete có SVG/path và kích thước 22x18px, tooltip hoạt động, không pageerror. Ảnh desktop.png trong docs/screenshots/doctor-schedule-icons/ được cập nhật sau sửa.
+- Build development PASS; browser regression appointment-workflow.js PASS với đủ 5 thao tác và 8 PATCH fixture, xác nhận các trang dùng contentChild cũ vẫn hoạt động. Các kiểm tra không ghi dữ liệu backend thật.
+
+## 18. Form tạo lịch làm việc bác sĩ — 23/10/2026
+
+- Yêu cầu: dựa theo DoctorScheduleCreateRequest, xây form với cấu trúc thẻ và logic tương tự management-appointment-form.
+- Tạo DoctorScheduleForm kế thừa BaseFormComponent: form-shell, toolbar Quay lại/Hủy/Lưu, Reactive Forms, loading directive, grid 2/1 cột và nz-card/nz-form-item/nz-form-label/nz-form-control. Các nhóm gồm Thông tin bác sĩ, Phòng khám và sức chứa, Thời gian làm việc; mobile chuyển thành một cột và drawer vừa màn hình.
+- Nút Tạo lịch làm việc mở drawer form mới, chỉ hiển thị/cho thao tác với ADMIN hoặc SUPER_ADMIN theo backend. Sau POST thành công đóng drawer với success true để danh sách tự tải lại. Các luồng xem/sửa cũ chưa được triển khai lại trong phạm vi tạo mới này.
+- Bác sĩ lấy GET /api/admin/doctors?status=ACTIVE (DoctorResponse: id, doctorCode, fullName, specialtyName, status); phòng lấy GET /api/public/rooms và giữ các phòng AVAILABLE. Dropdown hỗ trợ tìm kiếm; roomId tùy chọn. Có lỗi tải lựa chọn và nút thử lại; không cho lưu khi dữ liệu chưa tải xong.
+- Model DoctorScheduleCreateRequest chỉ gồm doctorId, roomId?, workDate, startTime, endTime, maxPatients?. Service create gửi POST /api/admin/doctor-schedules, không thêm trùng đường dẫn. Ngày gửi yyyy-MM-dd theo ngày người dùng chọn (không dùng toISOString làm lệch ngày); giờ HH:mm:00; phòng trống bỏ roomId; sức chứa form mặc định 20.
+- Validation: bắt buộc bác sĩ/ngày/giờ/sức chứa; ngày từ hôm nay theo múi giờ phòng khám; giờ kết thúc sau giờ bắt đầu cùng ngày; số bệnh nhân nguyên dương trong giới hạn Integer Java; ID nguyên dương và phải có trong danh sách lựa chọn. Hiển thị nhắc backend tự chia slot tối đa 30 phút, không cho cấu hình thời lượng chưa có trong request.
+- Khi lưu khóa form/nút gửi/nút Hủy; drawer tạo mới không đóng bằng mask, Escape hoặc X. Chặn gửi trùng. Lỗi bác sĩ/phòng không khả dụng, trùng ca bác sĩ/phòng, ngày giờ và sức chứa hiển thị tại form, giữ nguyên dữ liệu để sửa. Không đóng khi API báo thành công nhưng không trả bản ghi đã tạo.
+- Unit test doctor-schedule-form.spec.ts: 8 trường hợp về định dạng ngày/giờ, trường bắt buộc/số nguyên, ngày quá khứ/giờ đảo/ngày không hợp lệ, payload bỏ phòng, phòng đã chọn, chống gửi/đóng khi chờ, lỗi trùng giữ dữ liệu, lỗi lookup và response thiếu result.
+- Browser QA docs/qa/doctor-schedule-create.js: PASS trên localhost:4200 với fixture. Xác minh form thiếu dữ liệu/giờ đảo không POST, POST đầu không roomId báo trùng ca và giữ dữ liệu, POST sau có roomId thành công, khóa Hủy/Escape khi chờ và danh sách được tải lại. Không pageerror hoặc API ngoài fixture, không tạo ca thật trên backend.
+- Đã mở kiểm tra ảnh desktop/mobile 390px tại docs/screenshots/doctor-schedule-create/. Payload quan sát: doctorId 1, workDate 2026-10-23, startTime 08:00:00, endTime 11:00:00, maxPatients 20; lần thứ hai thêm roomId 2.
+- Các tệp chính: doctor-schedule/doctor-schedule-form/*; doctor-schedule.ts/.html; admin-doctor-schedule.service.ts; doctor-schedule.models.ts; api-constants.ts. Không sửa backend hoặc form lịch hẹn hiện có.
+- Kết quả cuối: build development PASS; unit test 8/8 PASS. Chỉ còn các cảnh báo optional chaining dư đã có trong template danh sách. Chạy lại unit test bằng ng test --watch=false --include "src/app/management/pages/doctor-schedule/doctor-schedule-form/**/*.spec.ts"; browser bằng node docs/qa/doctor-schedule-create.js (WORKFLOW_QA_NODE_MODULES trỏ node_modules có playwright nếu cần).
+
+## 19. Dùng chung form tạo/cập nhật và patch chi tiết ca — 23/10/2026
+
+- Nhận id/isViewMode từ NZ_DRAWER_DATA, phân biệt chế độ tạo mới, cập nhật và xem. Có id thì GET /api/admin/doctor-schedules/{id} cùng dữ liệu lựa chọn; chỉ bật lưu khi tải thành công và id response khớp. Hàm patchDataForForm patchValue doctorId, roomId, workDate, startTime, endTime, maxPatients; ngày/giờ chuyển thành Date cho date/time picker.
+- Bác sĩ hoặc phòng hiện tại không còn trong danh sách lựa chọn vẫn có option để hiển thị giá trị cũ, không bị mất thông tin khi patch. Bác sĩ ca đã tạo bị khóa; phòng không khả dụng chỉ dùng hiển thị giá trị cũ, không được chọn mới.
+- Thêm DoctorScheduleUpdateRequest (các trường tùy chọn theo backend), service update(id, body) gọi PUT /api/admin/doctor-schedules/{id}; form onUpdate dùng đúng API này. Không dùng PATCH HTTP cho cập nhật: patchValue ở đây là gán dữ liệu vào Reactive Forms.
+- Payload update chỉ gửi trường thay đổi, không gửi doctorId/thuộc tính response; giữ nguyên các trường không thay đổi, bao gồm ngày quá khứ và giây của khung giờ gốc. Không có thay đổi thì thông báo và không gửi request. Không hỗ trợ gửi null để bỏ phòng vì backend hiện hiểu null là giữ phòng cũ.
+- Ca có bookedCount > 0: khóa ngày/giờ và đặt min sức chứa bằng giá trị gốc. Không thể suy ra toàn bộ lịch sử từ counter; nếu backend trả 6008 do lịch sử đặt đã hủy, form thông báo, trả lại ngày/giờ gốc và khóa các trường tương ứng. Backend tiếp tục kiểm tra xung đột và lịch sử khi lưu.
+- Duy trì khóa form, nút đóng và Escape khi đang lưu; thất bại bật lại form nhưng giữ các trường vốn bị khóa. Thành công chỉ đóng khi response có id đúng, trả success true để danh sách tải lại. Thêm lỗi 6004/6008/6011 và sửa tiêu đề drawer, nút Lưu theo chế độ.
+- Xem chi tiết dùng cùng form, chỉ tải detail, disable toàn bộ trường và ẩn nút lưu; không còn hiển thị form tạo trống khi bấm Xem/Sửa.
+- Kiểm tra cuối: build development PASS; unit test doctor-schedule-form.spec.ts 16/16 PASS (8 tạo + 8 cập nhật/xem/load lỗi). Browser QA doctor-schedule-update.js PASS: patch dữ liệu đầy đủ, read-only, PUT đúng URL, payload chỉ roomId/maxPatients, lỗi trùng phòng giữ dữ liệu, thử lại thành công và reload list, tăng sức chứa ca quá khứ có lượt đặt chỉ gửi maxPatients. Chạy lại doctor-schedule-create.js PASS để xác minh tạo mới vẫn hoạt động. Không pageerror hoặc API ngoài fixture; chưa gọi PUT trên dữ liệu thật.
+- Đã mở kiểm tra ảnh docs/screenshots/doctor-schedule-update/edit.png. Tệp thay đổi chính: doctor-schedule-form.ts/.html/.spec.ts; doctor-schedule.ts; admin-doctor-schedule.service.ts; doctor-schedule.models.ts; docs/qa/doctor-schedule-update.js.
+
+## 20. Hoàn thiện dữ liệu lựa chọn và tạo lịch hẹn quản lý — 24/10/2026
+
+### 20.1. Đối chiếu và phạm vi
+
+- Đọc AdminAppointmentController, AppointmentCreateRequest, PatientController/PatientResponse, DoctorResponse, PublicServiceController/ServicesService, các API public schedule/slot và SecurityConfig.
+- Form cũ có loadDataForPatient chưa thực hiện/ngOnInit chưa gọi, dropdown chỉ có option khi xem detail, nút lưu bị vô hiệu hóa, getDataPayLoad trả undefined, onUpdate gọi nhầm create. Đã hoàn thiện luồng tạo; giữ màn chi tiết và các thao tác trạng thái hiện có.
+- Backend chưa có API cập nhật các trường của lịch hẹn; mọi lần mở với id đều là xem chi tiết, không gọi create để giả cập nhật. Không sửa backend trong đợt này.
+
+### 20.2. Dữ liệu và quan hệ phụ thuộc
+
+- AdminPatientService.getAllPatients trả ApiResponse<PatientProfile[]> từ GET /patients/all. Chuẩn hóa constant về /patients/all thay vì //patients/all (joinUrl trước đó đã loại dấu thừa). Dropdown dùng Patient.id làm patientId, không dùng userId; nhãn gồm mã/tên/điện thoại để tìm kiếm trên danh sách đã tải. Thẻ thông tin bệnh nhân cập nhật theo lựa chọn.
+- GET /api/admin/doctors?status=ACTIVE tải bác sĩ; GET /api/public/services tải dịch vụ đang được public API cho phép đặt. Model bác sĩ có specialtyId; form lọc dịch vụ theo bác sĩ, cho dịch vụ chung specialtyId null nếu API trả về. Source getPublicServices hiện lọc chuyên khoa hoạt động, nên không tự bổ sung các dịch vụ backend không trả.
+- POST /api/public/doctor-schedules/search với doctorId và fromDate/toDate bằng ngày chọn; chỉ giữ ca đúng bác sĩ/ngày/OPEN. GET /api/public/time-slots?scheduleId=... cho tất cả ca tìm được; ghép, loại trùng ID, sắp xếp giờ và lọc slot đúng ca, AVAILABLE, còn chỗ, bắt đầu ở tương lai theo UTC+7. Không giới hạn chỉ ca đầu tiên trong ngày.
+- Đổi bác sĩ xóa dịch vụ và slot cũ; đổi ngày xóa slot cũ. Hủy subscription của request khung giờ trước để kết quả đến muộn không ghi đè dữ liệu mới. Có loading riêng, lỗi/retry khung giờ và thông báo không có giờ nhận đặt; hủy request khi đóng form.
+- Tải dữ liệu ban đầu có loading, kiểm tra success và kiểu danh sách, báo lỗi cùng nút tải lại. Không cho lưu khi lookup chưa thành công hoặc đang tải slot.
+
+### 20.3. Payload, lưu và giới hạn backend
+
+- Thêm AdminAppointmentCreateRequest; POST /api/admin/appointments gửi patientId, doctorId, serviceId, timeSlotId, appointmentDate yyyy-MM-dd, reason/note đã trim và chỉ gửi khi có nội dung. Không gửi các nhãn, giá, scheduleId hoặc trạng thái trong form. Không dùng toISOString để chuyển ngày tránh lệch ngày.
+- Validation ID nguyên dương, ngày hợp lệ từ hôm nay, reason/note tối đa 2.000 ký tự; kiểm tra membership bệnh nhân/bác sĩ/dịch vụ/slot và thời điểm slot lần nữa trước gửi. Backend quyết định cuối cùng về chỗ trống/trùng lịch/giá.
+- Bật nút thêm mới, chống gửi trùng, khóa form/nút đóng/Escape/mask trong lúc gửi. Thành công phải có result.id, sau đó đóng drawer với success true và tải lại danh sách. API lỗi giữ lựa chọn và nội dung; lỗi slot không tồn tại/hết chỗ/sai ca xóa lựa chọn slot, tải lại danh sách giờ, không tự gửi lại POST. Lỗi trùng lịch bệnh nhân hoặc dịch vụ sai chuyên khoa có thông báo riêng.
+- Giữ cách load/patch chi tiết lịch sử chỉ từ GET detail, không phụ thuộc lựa chọn đang khả dụng (slot cũ có thể đã qua giờ, khuyến mãi hết hạn). Giữ callback tải lại danh sách/chi tiết sau thao tác trạng thái.
+- Quyền hiện tại: ADMIN/SUPER_ADMIN đọc được /patients/** và /api/admin/doctors/**. STAFF có quyền appointment API nhưng chưa được hai API lựa chọn này; nút tạo chỉ mở cho ADMIN/SUPER_ADMIN, form kiểm tra lại quyền. Chưa mở quyền backend hoặc dùng API không được cấp quyền để lách giới hạn; muốn STAFF đặt thay cần bổ sung quyền đọc giới hạn ở backend.
+- Chưa tìm thấy controller liệt kê khuyến mãi trong backend, dù request có promotionId. Form tạo vô hiệu hóa lựa chọn này, giải thích tạo không áp khuyến mãi, không gửi ID tự nhập hoặc dữ liệu giả. Màn chi tiết vẫn hiển thị khuyến mãi lịch sử từ response. Cần API danh sách/điều kiện áp dụng trước khi bật chọn khuyến mãi mới.
+
+### 20.4. Kiểm tra
+
+- Build development PASS. Unit test management-appointment-form.spec.ts 12/12 PASS: patientId khác userId, lọc chuyên khoa, reset quan hệ phụ thuộc, ngày/ID/ghi chú không hợp lệ, chặn ID giả, lọc slot, hủy request cũ, lỗi lookup, chống gửi/đóng khi chờ, refresh sau conflict, không gửi promotionId chưa hỗ trợ, quyền STAFF và detail lịch sử read-only.
+- Browser QA docs/qa/management-appointment-create.js PASS trên localhost:4200: lỗi tải bệnh nhân rồi thử lại; tìm bằng điện thoại; lọc dịch vụ; lấy slot của hai ca; POST đúng ID/ngày/text trim; lỗi 7003 tải lại và không còn slot cũ; chọn lại rồi thành công, khóa Hủy/Escape khi đang lưu, reload danh sách. Không pageerror hoặc request ngoài fixture.
+- Regression docs/qa/appointment-workflow.js PASS với đủ 5 thao tác trạng thái/8 PATCH fixture, bao gồm hoàn thành từ drawer và cập nhật danh sách nền. Không gọi POST/PATCH trên dữ liệu thật.
+- Đã mở kiểm tra ảnh desktop và mobile 390px tại docs/screenshots/management-appointment-create/. Tệp chính: management-appointment-form.ts/.html/.css/.spec.ts, management-appointments.ts/.html, management-appointments.service.ts, admin-patient.service.ts, appointment-create.models.ts và api-constants.ts.
+
+## 21. Tập trung thay đổi trạng thái tại layout Xử lý lịch hẹn — 24/10/2026
+
+- Theo yêu cầu sau khi đối chiếu layout appointment-review đã có, tách chức năng tra cứu/tạo lịch khỏi nơi xử lý trạng thái. Giữ nguyên đường dẫn /management/appointments/review, đổi tên hiển thị menu, tiêu đề trang và breadcrumb thành Xử lý lịch hẹn.
+- Danh sách quản lý bỏ app-appointment-actions/nút đổi trạng thái trực tiếp, thay bằng nút Xử lý. Giữ nút xem chi tiết và tạo mới. Nút Xử lý kiểm tra permission appointments:update-status, điều hướng mang theo doctorId, date và appointmentCode.
+- AppointmentDetailDrawerData thêm showWorkflowActions, mặc định false. Drawer mở từ quản lý đặt false: hiển thị thông tin chỉ đọc cùng nút Xử lý lịch hẹn nếu có quyền; không dựng component thao tác trạng thái. Khi bấm nút dẫn, đóng drawer rồi điều hướng đúng bác sĩ/ngày/mã lịch.
+- Drawer mở từ appointment-review đặt showWorkflowActions true: giữ component workflow và callback tải lại detail, summary và danh sách sau thao tác. Hàm xử lý refresh của drawer cũng bỏ qua sự kiện khi cờ false.
+- Form tạo lịch không còn footer workflow và handler đổi trạng thái cũ; nghiệp vụ tạo, validation, lựa chọn bệnh nhân/bác sĩ/dịch vụ/slot không thay đổi.
+- Layout xử lý đọc queryParamMap, áp ngày vào cả bộ lọc summary và danh sách, chọn đúng bác sĩ rồi tìm theo mã lịch hẹn. Nếu bác sĩ đích không xuất hiện trong summary thì hiển thị thông báo, không âm thầm chọn bác sĩ khác. Giữ cách sử dụng mặc định khi mở từ menu không có tham số.
+- safeManagementReturnUrl chấp nhận route appointments/review để tiếp tục được đúng màn/bộ lọc sau đăng nhập. Không đổi quyền backend, service transition, policy trạng thái hoặc modal xác nhận dùng chung.
+- Build development PASS, còn cảnh báo template optional chaining đã có. Unit test 10/10 PASS cho trang xử lý và drawer chi tiết: giữ debounce/hủy request cũ, nhận đúng context từ URL, xử lý bác sĩ không có trong summary, bật workflow theo nơi mở và truyền dữ liệu điều hướng.
+- Browser QA docs/qa/appointment-workflow-handoff.js PASS trên localhost:4200: quản lý không có component workflow, drawer quản lý chỉ có nút dẫn; điều hướng đúng bác sĩ/ngày/mã, chỉ hiện đúng lịch; xác nhận tại card rồi bắt đầu/hoàn thành trong drawer xử lý, summary/danh sách được tải lại; nút Xử lý từng dòng cũng dẫn đúng lịch. 3 PATCH fixture, 5 lần summary, không pageerror/request ngoài fixture. Đây là bài kiểm tra thay thế giả định cũ rằng các thao tác được bấm trực tiếp trong bảng quản lý.
+- Regression docs/qa/management-appointment-create.js PASS sau thay đổi: tạo lịch vẫn hoạt động đầy đủ, lỗi lookup/hết chỗ và tải lại danh sách đúng. Không gọi API ghi dữ liệu thật.
+- Đã mở ảnh kiểm tra docs/screenshots/appointment-workflow-handoff/processed.png. Tệp chính: management-appointments.ts/.html; management-appointment-detail.ts/.html/.spec.ts; management-appointment-form.ts/.html; appointment-review.ts/.html/.spec.ts; management.routes.ts; models/management.models.ts; docs/qa/appointment-workflow-handoff.js.
+
+## 22. Hủy nhanh lịch hẹn từ danh sách quản lý — 24/10/2026
+
+- Theo yêu cầu mới, bổ sung ngoại lệ hủy nhanh ngay trên quản lý lịch hẹn; các thao tác xác nhận/bắt đầu/hoàn thành/không đến tiếp tục tập trung ở layout Xử lý lịch hẹn.
+- Hoàn thiện nút icon Hủy lịch hẹn người dùng đã thêm: chỉ hiển thị khi có permission appointments:update-status và policy cho phép cancel (PENDING/CONFIRMED). Có type button, aria-label theo mã lịch, khóa nút khi đã có hộp thoại mở. Lịch đang khám/hoàn thành/đã hủy/không đến không có nút hủy.
+- Thay đoạn onCancel sao chép từ luồng bệnh nhân, đang tham chiếu các biến không có trong component và cancelMyAppointment, bằng AppointmentActionDialog dùng chung với action cancel. Gọi đúng service quản lý PATCH /api/admin/appointments/{id}/cancel, không dùng endpoint bệnh nhân và không xóa bản ghi.
+- Giữ toàn bộ validation và cơ chế đã có: lý do bắt buộc không trắng/tối đa 2.000 ký tự, trim note, GET chi tiết kiểm tra trạng thái trước PATCH, kiểm tra phiên/quyền, khóa gửi trùng và khóa đóng khi chờ, thông báo lỗi trong modal. Nếu dữ liệu vừa đổi, không PATCH mà yêu cầu đóng/tải lại; nút X cũng chuyển kết quả refresh về danh sách.
+- Sau thành công hoặc kết quả yêu cầu refresh, tải lại danh sách với bộ lọc/phân trang hiện tại; đóng modal không thay đổi thì không tải lại. Khi rời trang, hủy modal và subscription theo DestroyRef.
+- Build development PASS. Unit test 21/21 PASS gồm 4 kiểm thử nút hủy nhanh và 17 kiểm thử policy/service/dialog dùng chung.
+- Browser QA docs/qa/management-appointment-cancel.js PASS với STAFF fixture: nhập thiếu lý do không PATCH; trạng thái đổi trước khi hủy không PATCH, đóng X tải lại đúng; lỗi máy chủ giữ modal để thử lại; PATCH gửi note đã trim; Escape bị chặn trong lúc chờ; hủy thành công cập nhật nhãn và ẩn nút. Kiểm tra hủy hai lịch, 3 PATCH fixture (một lần lỗi, hai lần thành công), 4 lần tìm kiếm, không pageerror/request ngoài fixture. Không thay đổi lịch hẹn thật.
+- Đã mở ảnh kiểm tra docs/screenshots/management-appointment-cancel/dialog.png. Tệp thay đổi: management-appointments.ts/.html; management-appointments-cancel.spec.ts; docs/qa/management-appointment-cancel.js. Không đổi API/policy chung hoặc workflow tại trang xử lý.
+
+## 23. Đăng ký icon tool cho nút Xử lý — 24/10/2026
+
+- Template dùng nzType tool, theme outline; NzIconModule đã import đúng nhưng APP_ICONS chưa có ToolOutline. Tool không nằm trong bộ icon mặc định của NG-ZORRO phiên bản đang cài.
+- Thêm ToolOutline vào import và APP_ICONS trong src/app/app-icons.ts; app.config.ts đã có provideNzIcons(APP_ICONS), không cần thêm module hoặc đổi template.
+- Chạy unit test src/app/app.spec.ts: 3/3 PASS; kiểm tra toàn bộ icon đăng ký (gồm tool) sinh SVG/path trực tiếp và không request assets bên ngoài.
+
+## 24. Đăng ký icon của các thao tác lịch hẹn — 24/10/2026
+
+- AppointmentActionsComponent đã import NzIconModule. ACTION_STYLE dùng play-circle cho in-progress, minus-circle cho no-show và check-square cho complete, nhưng APP_ICONS chưa đăng ký ba icon này.
+- Bổ sung PlayCircleOutline, MinusCircleOutline và CheckSquareOutline vào import và APP_ICONS ở src/app/app-icons.ts. Giữ nguyên tên icon, màu sắc, điều kiện trạng thái và luồng API.
+- Kiểm tra src/app/app.spec.ts: 3/3 PASS, gồm render SVG/path của mọi icon đã đăng ký và không tải file assets bên ngoài.

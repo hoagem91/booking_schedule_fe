@@ -1,26 +1,33 @@
 <div class="form-shell">
   <div class="form-toolbar">
     <div class="toolbar-title">
-      <button nz-button nzType="default" type="button" (click)="handleCancel()">
+      <button nz-button nzType="default" type="button" [disabled]="isSavingForm()" (click)="handleCancel()">
         <nz-icon nzType="arrow-left" nzTheme="outline" /> Quay lại
       </button>
       <span class="title-marker"></span>
       <h2>{{ isEditMode ? (isViewMode ? 'Chi tiết lịch hẹn' : 'Chỉnh sửa lịch hẹn') : 'Thêm mới lịch hẹn' }}{{ appointmentData ? ' - ' + appointmentData.appointmentCode : '' }}</h2>
     </div>
     <div class="toolbar-actions">
-      <button nz-button type="button" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
+      <button nz-button type="button" [disabled]="isSavingForm()" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
       @if (!isViewMode) {
-        <button nz-button nzType="primary" type="button" disabled title="Chức năng lưu đang được hoàn thiện">
+        <button nz-button nzType="primary" type="button" [nzLoading]="isSavingForm()" [disabled]="!lookupsReady() || loadingSlots() || isSavingForm()" (click)="handleOk()">
           <nz-icon nzType="save" nzTheme="outline" />{{ isEditMode ? 'Cập nhật' : 'Thêm mới lịch hẹn' }}
         </button>
       }
     </div>
   </div>
 
+  @if (formError()) { <div class="appointment-form-error" role="alert">{{ formError() }}
+    @if (!isEditMode && !lookupsReady() && !isLoadingDataForForm()) { <button nz-button type="button" (click)="loadDataForPatient()">Tải lại dữ liệu</button> }
+  </div> }
+
+  @if (appointmentData; as current) {
+    <p class="appointment-current-status" role="status">Trạng thái hiện tại: <strong>{{ statusLabel(current.status) }}</strong></p>
+  }
   <ng-template [appShowLoading]="isLoadingDataForForm()">
     <ng-template [appShowOnErrorCode]="errorCode()" [errorMessage]="errorMessage()">
       <form nz-form nzLayout="vertical" [formGroup]="saveForm" [class.view-mode]="isViewMode"
-        class="form-body flex-1 overflow-y-auto pr-1 flex flex-col gap-4" (submit)="$event.preventDefault()">
+        class="form-body flex-1 overflow-y-auto pr-1 flex flex-col gap-4" (ngSubmit)="handleOk()" [attr.aria-busy]="isSavingForm()">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div class="lg:col-span-2 flex flex-col gap-4">
             <nz-card [nzBodyStyle]="{ padding: '16px' }">
@@ -36,6 +43,9 @@
                     @if (appointmentData; as item) {
                       <nz-option [nzValue]="item.patientId" [nzLabel]="item.patientName || item.patientCode || 'Bệnh nhân'" />
                     }
+                    @for (patient of patients; track patient.id) {
+                      <nz-option [nzValue]="patient.id" [nzLabel]="patient.patientCode + ' · ' + patient.fullName + ' · ' + (patient.phone || 'Chưa có số điện thoại')" />
+                    }
                   </nz-select>
                   <div class="field-hint mt-1 text-xs text-gray-400">Chọn bệnh nhân đã có hồ sơ trên hệ thống.</div>
                 </nz-form-control>
@@ -46,6 +56,7 @@
                   <span>{{ item.patientCode }} · {{ item.patientPhone || 'Chưa có số điện thoại' }}</span>
                 </div>
               }
+              @if (selectedPatient; as patient) { <div class="patient-details"><strong>{{ patient.fullName }}</strong><span>{{ patient.patientCode }} · {{ patient.phone || 'Chưa có số điện thoại' }}</span></div> }
             </nz-card>
 
             <nz-card [nzBodyStyle]="{ padding: '16px' }">
@@ -59,6 +70,7 @@
                   <nz-select nzId="appointment-doctor" formControlName="doctorId" nzShowSearch nzAllowClear
                     nzPlaceHolder="Chọn bác sĩ khám" nzNotFoundContent="Chưa có dữ liệu bác sĩ">
                     @if (appointmentData; as item) { <nz-option [nzValue]="item.doctorId" [nzLabel]="item.doctorName" /> }
+                    @for (doctor of doctors; track doctor.id) { <nz-option [nzValue]="doctor.id" [nzLabel]="doctor.doctorCode + ' · ' + doctor.fullName + ' · ' + doctor.specialtyName" /> }
                   </nz-select>
                 </nz-form-control>
               </nz-form-item>
@@ -66,8 +78,9 @@
                 <nz-form-label class="!font-medium mt-2" nzFor="appointment-service" nzRequired>Dịch vụ khám</nz-form-label>
                 <nz-form-control nzErrorTip="Vui lòng chọn dịch vụ khám">
                   <nz-select nzId="appointment-service" formControlName="serviceId" nzShowSearch nzAllowClear
-                    nzPlaceHolder="Chọn dịch vụ khám" nzNotFoundContent="Chưa có dữ liệu dịch vụ">
+                    [nzDisabled]="!isViewMode && (!saveFormValueRaw.doctorId || isSavingForm())" nzPlaceHolder="Chọn dịch vụ khám" nzNotFoundContent="Chọn bác sĩ để xem dịch vụ phù hợp">
                     @if (appointmentData; as item) { <nz-option [nzValue]="item.serviceId" [nzLabel]="item.serviceName" /> }
+                    @for (service of availableServices; track service.id) { <nz-option [nzValue]="service.id" [nzLabel]="service.name" /> }
                   </nz-select>
                 </nz-form-control>
               </nz-form-item>
@@ -108,14 +121,21 @@
               <nz-form-item class="mb-0">
                 <nz-form-label class="!font-medium mt-2" nzFor="appointment-slot" nzRequired>Khung giờ khám</nz-form-label>
                 <nz-form-control nzErrorTip="Vui lòng chọn khung giờ khám">
-                  <nz-select nzId="appointment-slot" formControlName="timeSlotId" nzAllowClear
+                  <nz-select nzId="appointment-slot" formControlName="timeSlotId" nzAllowClear [nzLoading]="loadingSlots()"
+                    [nzDisabled]="!isViewMode && (loadingSlots() || !slots.length || isSavingForm())"
                     nzPlaceHolder="Chọn khung giờ còn trống" nzNotFoundContent="Chưa có dữ liệu khung giờ">
                     @if (appointmentData; as item) { <nz-option [nzValue]="item.timeSlotId" [nzLabel]="item.startTime.slice(0, 5) + ' – ' + item.endTime.slice(0, 5)" /> }
+                    @for (slot of slots; track slot.id) { <nz-option [nzValue]="slot.id" [nzLabel]="slot.startTime.slice(0, 5) + ' – ' + slot.endTime.slice(0, 5) + ' · Còn ' + (slot.maxPatients - slot.bookedCount) + ' chỗ'" /> }
                   </nz-select>
                   <div class="field-hint mt-1 text-xs text-gray-400">
                     <nz-icon nzType="info-circle" nzTheme="outline" />
                     Khung giờ tương ứng với bác sĩ và ngày khám đã chọn.
                   </div>
+                  @if (slotError()) { <p class="appointment-form-error" role="alert">{{ slotError() }}</p> }
+                  @if (!isViewMode && saveFormValueRaw.doctorId && !loadingSlots()) {
+                    @if (!slots.length && !slotError()) { <p class="field-hint">Không có khung giờ còn nhận đặt cho bác sĩ và ngày đã chọn.</p> }
+                    <button nz-button type="button" nzSize="small" [disabled]="isSavingForm()" (click)="loadSlots()">Tải lại khung giờ</button>
+                  }
                 </nz-form-control>
               </nz-form-item>
             </nz-card>
@@ -136,7 +156,7 @@
                   </nz-select>
                   <div class="field-hint mt-1 text-xs text-gray-400">
                     <nz-icon nzType="info-circle" nzTheme="outline" />
-                    Có thể bỏ trống nếu bệnh nhân không sử dụng khuyến mãi.
+                    {{ isViewMode ? 'Khuyến mãi đã áp dụng cho lịch hẹn.' : 'Chưa có danh sách khuyến mãi khả dụng. Lịch hẹn mới được tạo không áp dụng khuyến mãi.' }}
                   </div>
                 </nz-form-control>
               </nz-form-item>
@@ -146,5 +166,4 @@
       </form>
     </ng-template>
   </ng-template>
-  @if (!isViewMode) { <p class="preview-note">Chức năng lưu chưa được bật trong bản xem trước.</p> }
 </div>

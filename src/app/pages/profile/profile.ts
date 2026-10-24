@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { SiteHeader } from '../../components/site-header/site-header';
-import { PatientService } from '../../services/patient.service';
+import { PatientService } from '../../services/patient/patient.service';
 import { Gender } from '../../models/auth.model';
 
 @Component({

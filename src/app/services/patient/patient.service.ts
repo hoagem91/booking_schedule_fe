@@ -1,12 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, finalize, map, Observable, of, shareReplay, tap, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { ApiConstants } from '../constants/api-constants';
-import { BookingApiResponse } from '../models/auth.model';
-import { apiResponseSucceeded } from '../models/api-response.model';
-import { PatientProfile, PatientUpdateRequest } from '../models/patient.model';
-import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
+import { ApiConstants } from '../../constants/api-constants';
+import { BookingApiResponse } from '../../models/auth.model';
+import { apiResponseSucceeded } from '../../models/api-response.model';
+import { PatientProfile, PatientUpdateRequest } from '../../models/patient.model';
+import { AuthService } from '../auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class PatientService {

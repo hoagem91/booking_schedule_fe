@@ -5,7 +5,7 @@ import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, finalize } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { ManagementAccessService, managementError } from '../services/management-access.service';
-import { managementNavigation } from '../management.models';
+import { managementNavigation } from '../models/management.models';
 
 @Component({
   standalone: true,

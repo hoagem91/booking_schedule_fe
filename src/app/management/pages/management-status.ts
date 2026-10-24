@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { safeManagementReturnUrl } from '../management.models';
+import { safeManagementReturnUrl } from '../models/management.models';
 import { ManagementAccessService } from '../services/management-access.service';
 
 @Component({

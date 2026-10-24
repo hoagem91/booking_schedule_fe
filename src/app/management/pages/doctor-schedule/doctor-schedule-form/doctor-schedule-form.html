@@ -1,0 +1,126 @@
+<div class="form-shell">
+  <div class="form-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" [disabled]="isSavingForm()" (click)="handleCancel()">
+        <nz-icon nzType="arrow-left" />
+        Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>{{ isEditMode ? (isViewMode ? 'Chi tiết lịch làm việc' : 'Cập nhật lịch làm việc') : 'Thêm mới lịch làm việc' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      <button nz-button type="button" [disabled]="isSavingForm()" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
+      @if (!isViewMode) {
+      <button nz-button nzType="primary" type="button" [nzLoading]="isSavingForm()"
+              [disabled]="!optionsReady() || isSavingForm()" (click)="handleOk()">
+        <nz-icon nzType="save" />
+        {{ isEditMode ? 'Cập nhật lịch làm việc' : 'Tạo lịch làm việc' }}
+      </button>
+      }
+    </div>
+  </div>
+  @if (formError()) {
+    <div class="form-error" role="alert">{{ formError() }}
+      @if (!optionsReady() && !isLoadingDataForForm()) {
+        <button nz-button type="button" (click)="loadOptions()">Tải lại dữ liệu</button>
+      }
+    </div>
+  }
+  @if (hasBookingHistory() && !isViewMode) { <p class="field-hint" role="status">Ca đã có lượt đặt. Chỉ được đổi phòng hoặc tăng sức chứa; bác sĩ, ngày và giờ được giữ nguyên.</p> }
+  <ng-template [appShowLoading]="isLoadingDataForForm()">
+    <form nz-form nzLayout="vertical" [formGroup]="saveForm"
+          class="form-body flex-1 overflow-y-auto pr-1 flex flex-col gap-4" (ngSubmit)="handleOk()"
+          [attr.aria-busy]="isSavingForm()">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 flex flex-col gap-4">
+          <nz-card [nzBodyStyle]="{ padding: '16px' }">
+            <h4
+              class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <nz-icon nzType="user" class="text-blue-500" />
+              Thông tin bác sĩ
+            </h4>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzFor="schedule-doctor" nzRequired>Bác sĩ</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn bác sĩ đang hoạt động">
+                <nz-select nzId="schedule-doctor" formControlName="doctorId" nzShowSearch nzAllowClear
+                           nzPlaceHolder="Chọn bác sĩ" nzNotFoundContent="Không có bác sĩ đang hoạt động">
+                  @for (doctor of doctors; track doctor.id) {
+                    <nz-option [nzValue]="doctor.id"
+                               [nzLabel]="doctor.doctorCode + ' · ' + doctor.fullName + ' · ' + doctor.specialtyName" />
+                  }
+                </nz-select>
+                <div class="field-hint">{{ isEditMode ? 'Bác sĩ của ca đã tạo không thể thay đổi.' : 'Chọn bác sĩ để phân ca làm việc. Hệ thống sẽ kiểm tra trùng ca khi lưu.' }}</div>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-card>
+          <nz-card [nzBodyStyle]="{ padding: '16px' }">
+            <h4
+              class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <nz-icon nzType="file-text" class="text-blue-500" />
+              Phòng khám và sức chứa
+            </h4>
+            <nz-form-item>
+              <nz-form-label nzFor="schedule-room">Phòng khám</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn phòng khám hợp lệ">
+                <nz-select nzId="schedule-room" formControlName="roomId" nzShowSearch [nzAllowClear]="!scheduleData?.roomId"
+                           nzPlaceHolder="Chọn phòng khám (không bắt buộc)"
+                           nzNotFoundContent="Không có phòng khám khả dụng">
+                  @for (room of rooms; track room.id) {
+                    <nz-option [nzValue]="room.id" [nzLabel]="room.code + ' · ' + room.name" [nzDisabled]="room.status !== 'AVAILABLE'" />
+                  }
+                </nz-select>
+                <div class="field-hint">{{ scheduleData?.roomId ? 'Giữ phòng hiện tại hoặc chọn phòng khả dụng khác. Chưa hỗ trợ bỏ phân phòng.' : 'Có thể để trống nếu chưa phân phòng. Chỉ hiển thị phòng đang khả dụng.' }}</div>
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzFor="schedule-capacity" nzRequired>Số bệnh nhân tối đa trong ca</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng nhập số nguyên dương; ca có lịch sử không được giảm sức chứa">
+                <nz-input-number nzId="schedule-capacity" formControlName="maxPatients" [nzMin]="hasBookingHistory() ? scheduleData!.maxPatients : 1" [nzMax]="2147483647"
+                                 [nzStep]="1" />
+                <div class="field-hint">Mặc định 20 bệnh nhân. Tổng sức chứa được phân bổ vào các khung giờ của ca.
+                </div>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-card>
+        </div>
+        <div class="lg:col-span-1 flex flex-col gap-4">
+          <nz-card [nzBodyStyle]="{ padding: '16px' }">
+            <h4
+              class="card-heading text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <nz-icon nzType="calendar" class="text-blue-500" />
+              Thời gian làm việc
+            </h4>
+            <nz-form-item>
+              <nz-form-label nzFor="schedule-date" nzRequired>Ngày làm việc</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn ngày từ hôm nay trở đi">
+                <nz-date-picker nzId="schedule-date" formControlName="workDate" nzFormat="dd/MM/yyyy"
+                                nzPlaceHolder="Chọn ngày làm việc" [nzDisabledDate]="disabledWorkDate" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label nzFor="schedule-start" nzRequired>Giờ bắt đầu</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn giờ bắt đầu">
+                <nz-time-picker nzId="schedule-start" formControlName="startTime" nzFormat="HH:mm"
+                                nzPlaceHolder="Chọn giờ bắt đầu" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzFor="schedule-end" nzRequired>Giờ kết thúc</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn giờ kết thúc">
+                <nz-time-picker nzId="schedule-end" formControlName="endTime" nzFormat="HH:mm"
+                                nzPlaceHolder="Chọn giờ kết thúc" />
+              </nz-form-control>
+            </nz-form-item>
+            @if (saveForm.hasError('timeRange') && (saveForm.touched || saveForm.dirty)) {
+              <p class="time-error" role="alert">Giờ kết thúc phải sau giờ bắt đầu trong cùng ngày.</p>
+            }
+            <p class="field-hint">
+              <nz-icon nzType="info-circle" />
+              Hệ thống tự chia khung giờ tối đa 30 phút sau khi tạo ca. Khung cuối có thể ngắn hơn.
+            </p>
+          </nz-card>
+        </div>
+      </div>
+    </form>
+  </ng-template>
+</div>

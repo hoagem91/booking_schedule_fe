@@ -1,0 +1,155 @@
+@import '../../../../styles/shared-detail.css';
+
+:host { display: block; height: 100%; }
+
+/* ===== Shell ===== */
+.detail-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  color: #1f2937;
+}
+
+/* ===== Toolbar ===== */
+.detail-toolbar,
+.toolbar-title,
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.detail-toolbar { justify-content: space-between; flex-shrink: 0; gap: 16px; }
+.toolbar-title  { min-width: 0; gap: 12px; }
+.toolbar-actions { flex-shrink: 0; margin-left: auto; }
+.toolbar-title button { flex-shrink: 0; }
+
+.title-marker {
+  width: 6px;
+  height: 20px;
+  border-radius: 4px;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.toolbar-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* ===== Body ===== */
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 0 auto;
+}
+
+/* ===== Lỗi ===== */
+.detail-error {
+  padding: 14px 16px;
+  background: #fff2ef;
+  color: #ac302b;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== Header lịch hẹn ===== */
+.appointment-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #e3e8ef;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+  flex-shrink: 0;
+}
+
+.appointment-header__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 24px;
+}
+
+.appointment-header__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.appointment-header__info h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.appointment-header__info p {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.appointment-header__status { flex-shrink: 0; }
+
+.status-tag {
+  font-size: 13px;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ===== Card heading ===== */
+.card-heading {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== Inline code ===== */
+.detail-code {
+  background: #f0f4f8;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 12px;
+  color: #1d4ed8;
+}
+
+/* ===== Workflow footer ===== */
+.appointment-workflow-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #dfe7df;
+  padding-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .toolbar-title { align-items: flex-start; }
+  .toolbar-title h2 { font-size: 16px; }
+  .toolbar-actions { width: 100%; justify-content: flex-end; }
+
+  .appointment-header { flex-wrap: wrap; }
+  .appointment-header__status { width: 100%; }
+}

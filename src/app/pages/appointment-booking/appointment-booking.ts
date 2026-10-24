@@ -9,7 +9,7 @@ import { NzSelectItemInterface, NzSelectModule } from 'ng-zorro-antd/select';
 import { SiteHeader } from '../../components/site-header/site-header';
 import { BookingSummary } from './booking-summary';
 import { AppointmentService } from '../../services/appointment/appointment.service';
-import { PatientService } from '../../services/patient.service';
+import { PatientService } from '../../services/patient/patient.service';
 import { AppointmentHistoryItem } from '../../models/appointment.model';
 import { BookingSchedule, BookingService, BookingSpecialty, BookingTimeSlot } from '../../models/booking.model';
 import { appointmentErrorMessage, appointmentResponseSucceeded, decodeAppointmentText,

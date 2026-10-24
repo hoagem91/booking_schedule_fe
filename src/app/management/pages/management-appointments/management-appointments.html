@@ -15,10 +15,12 @@
       </div>
 
       <div class="appointments-toolbar__actions">
+        @if (hasRole('ADMIN') || hasRole('SUPER_ADMIN')) {
         <button nz-button nzType="primary" type="button" (click)="onOpenDetail()">
           <nz-icon nzType="plus" nzTheme="outline" />
           Tạo lịch hẹn
         </button>
+        }
         <div class="appointments-toolbar__actions">
           <app-share-button icon="reload" tooltip="Tải lại dữ liệu" (buttonClick)="loadData()" />
           <app-setting-table [tableKey]="'appointments'" [tableColumnData]="tableColumns"
@@ -79,10 +81,36 @@
               class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
         <nz-icon nzType="eye" class="!text-lg" nzTheme="outline" />
       </button>
-      <button (click)="onOpenDetail(data.id, false)" nz-button nzType="text" nzSize="small"
-              class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Sửa thông tin lịch hẹn">
-        <nz-icon nzType="edit" class="!text-lg" nzTheme="outline" />
+      @if (hasPermission('appointments:update-status')) {
+        <button
+          nz-button
+          type="button"
+          nzType="text"
+          nzSize="small"
+          class="!text-orange-500 disabled:opacity-50"
+          nz-tooltip
+          nzTooltipTitle="Xử lý lịch hẹn"
+          (click)="openWorkflow(data)"
+        >
+          <nz-icon nzType="tool" class="!text-lg" nzTheme="outline" />
+        </button>
+      }
+      @if (canCancel(data)) {
+      <button
+        nz-button
+        nzType="text"
+        nzSize="small"
+        class="!text-red-500 disabled:opacity-50"
+        nz-tooltip
+        nzTooltipTitle="Hủy lịch hẹn"
+        type="button"
+        [attr.aria-label]="'Hủy lịch hẹn ' + data.appointmentCode"
+        [disabled]="cancelDialogOpen()"
+        (click)="onCancel(data)"
+      >
+        <nz-icon nzType="close-circle" class="!text-lg" nzTheme="outline" />
       </button>
+      }
     </ng-template>
   </app-share-table>
 </ng-template>

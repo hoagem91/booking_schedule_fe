@@ -6,4 +6,8 @@ export class AppointmentUtils{
     const found = AppointmentConstants.ListAppointmentStatus.find(item => item.value === value);
     return found ? found : { text: '', color: '' };
   }
+  public static getAppointmentStatusText(value: string): { text: string, color: string } {
+    const found = AppointmentConstants.ListAppointmentStatus.find(item => item.value === value);
+    return found ? found : { text: '', color: '' };
+  }
 }
