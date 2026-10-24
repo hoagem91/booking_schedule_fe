@@ -5,7 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { BookingApiResponse } from '../../models/auth.model';
 import { apiResponseSucceeded } from '../../models/api-response.model';
 import { environment } from '../../../environments/environment';
-import { hasManagementPermission, internalRoles, ManagementPermission, ManagementUser, roleLabels } from '../management.models';
+import { hasManagementPermission, internalRoles, ManagementPermission, ManagementUser, roleLabels } from '../models/management.models';
 
 @Injectable({ providedIn: 'root' })
 export class ManagementAccessService {

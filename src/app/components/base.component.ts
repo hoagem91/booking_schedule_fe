@@ -2,7 +2,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { AfterViewInit, DestroyRef, Directive, inject, OnDestroy, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { InternalRole, ManagementPermission } from '../management/management.models';
+import { InternalRole, ManagementPermission } from '../management/models/management.models';
 import { ManagementAccessService } from '../management/services/management-access.service';
 
 /** Shared UI helpers; authentication and loading profiles belong to services/route guards. */

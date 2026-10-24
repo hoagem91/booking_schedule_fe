@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { PatientService } from '../../../services/patient.service';
+import { PatientService } from '../../../services/patient/patient.service';
 import { PatientProfile, PatientUpdateRequest } from '../../../models/patient.model';
 import { Gender } from '../../../models/auth.model';
 

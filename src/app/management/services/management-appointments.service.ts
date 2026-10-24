@@ -8,10 +8,27 @@ import { ParamSearch } from '../../models/search.model';
 import { ApiResponse } from '../../models/api-response.model';
 import { ApiConstants } from '../../constants/api-constants';
 import { BaseService } from '../../services/base/base.service';
+import { AppointmentAction } from '../appointment-workflow/appointment-actions.policy';
+import { AdminAppointmentCreateRequest, AppointmentDoctorOption } from '../models/appointment-create.models';
+import { BookingSchedule, BookingService, BookingTimeSlot } from '../../models/booking.model';
+import { AppointmentSummaryRequest, AppointmentSummaryResult } from '../models/appointment-review.models';
 
 
 @Injectable({ providedIn: 'root' })
 export class ManagementAppointmentsService extends BaseService{
+  getDoctors(): Observable<ApiResponse<AppointmentDoctorOption[]>> {
+    return this.get<AppointmentDoctorOption[]>(ApiConstants.API_ADMIN_DOCTORS, { status: 'ACTIVE' }, false);
+  }
+  getServices(): Observable<ApiResponse<BookingService[]>> {
+    return this.get<BookingService[]>(ApiConstants.API_PUBLIC_SERVICES, undefined, false);
+  }
+  getSchedules(doctorId: number, date: string): Observable<ApiResponse<BookingSchedule[]>> {
+    return this.post<BookingSchedule[]>(ApiConstants.API_PUBLIC_SCHEDULES,
+      { doctorId, fromDate: date, toDate: date }, undefined, false);
+  }
+  getSlots(scheduleId: number): Observable<ApiResponse<BookingTimeSlot[]>> {
+    return this.get<BookingTimeSlot[]>(ApiConstants.API_PUBLIC_TIME_SLOTS, { scheduleId }, false);
+  }
   search(params:ParamSearch,body: any): Observable<ApiResponse<AppointmentHistoryPage>> {
     const endpoint = ApiConstants.API_APPOINTMENT_ADMIN_SEARCH;
     return this.post<AppointmentHistoryPage>(endpoint,body,params,false);
@@ -22,19 +39,20 @@ export class ManagementAppointmentsService extends BaseService{
     return this.get<AppointmentHistoryItem>(endpoint);
   }
 
-  create(body: any): Observable<ApiResponse<AppointmentHistoryItem>> {
-    const endpoint= ApiConstants.API_APPOINTMENT_ADMIN_DETAIL;
-    return this.post<any>(endpoint,body);
+  getSummary(body: AppointmentSummaryRequest): Observable<ApiResponse<AppointmentSummaryResult>> {
+    return this.post<AppointmentSummaryResult>(ApiConstants.API_APPOINTMENT_ADMIN_SUMMARY, body, undefined, false);
   }
 
+  create(body: AdminAppointmentCreateRequest): Observable<ApiResponse<AppointmentHistoryItem>> {
+    const endpoint= ApiConstants.API_APPOINTMENT_ADMIN_DETAIL;
+    return this.post<AppointmentHistoryItem>(endpoint,body,undefined,false);
+  }
 
-
-  // get(id: number): Observable<AppointmentHistoryItem> {
-  //   return this.http.get<BookingApiResponse<AppointmentHistoryItem>>(`${this.url}/${id}`).pipe(map(response => {
-  //     if (response?.code !== 1000 || !response.result || response.result.id !== id) throw new Error('Không thể đọc thông tin lịch hẹn. Vui lòng thử lại.');
-  //     return response.result;
-  //   }));
-  // }
+  transition(id: number, action: AppointmentAction, note?: string): Observable<ApiResponse<AppointmentHistoryItem>> {
+    const url = this.joinUrl(this.apiUrl, ApiConstants.API_APPOINTMENT_ADMIN_DETAIL, String(id), action);
+    return this.http.patch<ApiResponse<AppointmentHistoryItem>>(url, note ? { note } : {})
+      .pipe(this.handleResponse(false));
+  }
 }
 
 export function clinicToday(): string {

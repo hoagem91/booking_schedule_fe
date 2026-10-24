@@ -1,0 +1,21 @@
+:host { display: block; }
+.form-shell { display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
+.form-toolbar, .toolbar-title, .toolbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.form-toolbar { justify-content: space-between; }
+.toolbar-title { gap: 12px; }
+.title-marker { width: 6px; height: 20px; border-radius: 4px; background: #2563eb; flex-shrink: 0; }
+.toolbar-title h2 { margin: 0; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+.form-body { min-height: 0; }
+.form-body nz-form-item { margin-bottom: 16px; }
+.form-body nz-form-item:last-of-type { margin-bottom: 0; }
+.card-heading { margin-top: 0; }
+nz-select, nz-date-picker, nz-time-picker, nz-input-number { width: 100%; }
+.field-hint { margin-top: 6px; line-height: 1.7; color: #6b7280; font-size: 12px; }
+.form-error { padding: 12px; background: #fff2ef; color: #ac302b; border-radius: 6px; }
+.form-error button { margin-left: 8px; }
+.time-error { color: #ac302b; margin-top: 8px; }
+@media (max-width: 640px) {
+  .toolbar-title { align-items: flex-start; }
+  .toolbar-title h2 { font-size: 16px; }
+  .toolbar-actions { width: 100%; justify-content: flex-end; }
+}

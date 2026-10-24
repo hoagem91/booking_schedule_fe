@@ -3,7 +3,7 @@ import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ManagementAccessService } from './services/management-access.service';
-import { hasManagementPermission, ManagementPermission } from './management.models';
+import { hasManagementPermission, ManagementPermission } from './models/management.models';
 
 export const managementGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);

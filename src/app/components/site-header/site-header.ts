@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { PatientService } from '../../services/patient.service';
+import { PatientService } from '../../services/patient/patient.service';
 
 @Component({
   selector: 'app-site-header',

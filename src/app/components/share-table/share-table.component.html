@@ -345,8 +345,8 @@
         }
 
         <!-- Actions Template -->
-        @if (column.render === 'actions' && actionsCellTemplate()) {
-        <ng-container *ngTemplateOutlet="actionsCellTemplate(); context: { $implicit: data, column: column, index: i }">
+        @if (column.render === 'actions' && (actionsTemplate() || actionsCellTemplate())) {
+        <ng-container *ngTemplateOutlet="actionsTemplate() || actionsCellTemplate(); context: { $implicit: data, column: column, index: i }">
         </ng-container>
         }
       </td>

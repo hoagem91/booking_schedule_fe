@@ -1,0 +1,219 @@
+<div class="detail-shell">
+  <!-- ========== TOOLBAR ========== -->
+  <div class="detail-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" (click)="handleClose()">
+        <nz-icon nzType="arrow-left" />
+        Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>Chi tiết lịch làm việc{{ scheduleData ? ' #' + scheduleData.id : '' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      @if (loadFailed() && !isLoading()) {
+        <button nz-button type="button" (click)="loadDetail()">
+          <nz-icon nzType="reload" />
+          Tải lại
+        </button>
+      }
+      <button nz-button type="button" (click)="handleClose()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- ========== CONTENT ========== -->
+  <ng-template [appShowLoading]="isLoading()">
+
+    <!-- Lỗi tải dữ liệu -->
+    @if (loadFailed()) {
+      <div class="detail-error" role="alert">
+        <nz-icon nzType="warning" class="mr-2" />
+        {{ errorMessage() || 'Không thể tải dữ liệu. Vui lòng thử lại.' }}
+      </div>
+    }
+
+    @if (scheduleData; as data) {
+      <div class="detail-body">
+
+        <!-- ===== ROW 1: Thông tin chính (2/3) + Thời gian (1/3) ===== -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+          <!-- Cột trái: Bác sĩ + Phòng khám & Sức chứa -->
+          <div class="lg:col-span-2 flex flex-col gap-4">
+
+            <!-- Card: Bác sĩ -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="user" class="text-blue-500" />
+                Thông tin bác sĩ
+              </h4>
+              <nz-descriptions [nzColumn]="{lg: 0,md: 0,xl: 0,xxl: 0, xs: 1, sm: 2 }" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Mã bác sĩ">
+                  <code class="detail-code">{{ data.doctorCode }}</code>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Tên bác sĩ">
+                  <strong>{{ data.doctorName }}</strong>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Chuyên khoa" [nzSpan]="2">
+                  {{ data.specialtyName || '—' }}
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+            <!-- Card: Phòng khám & Sức chứa -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="home" class="text-blue-500" />
+                Phòng khám &amp; Sức chứa
+              </h4>
+              <nz-descriptions [nzColumn]="{lg: 0,md: 0,xl: 0,xxl: 0, xs: 1, sm: 2 }" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Mã phòng">
+                  @if (data.roomCode) {
+                    <code class="detail-code">{{ data.roomCode }}</code>
+                  } @else {
+                    <span class="text-gray-400">Chưa phân phòng</span>
+                  }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Tên phòng">
+                  {{ data.roomName || '—' }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Sức chứa ca">
+                  <strong>{{ data.maxPatients }}</strong> bệnh nhân
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Tổng đã đặt">
+                  @if (totalSlotCapacity > 0) {
+                    <nz-tag
+                      [nzColor]="totalBooked >= totalSlotCapacity ? 'red' : 'blue'"
+                      class="!m-0"
+                    >
+                      {{ totalBooked || 0 }} / {{ totalSlotCapacity }} slot
+                    </nz-tag>
+                  } @else {
+                    <nz-tag nzColor="default" class="!m-0">
+                      Chưa có slot
+                    </nz-tag>
+                  }
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+          </div>
+
+          <!-- Cột phải: Thời gian + Trạng thái -->
+          <div class="lg:col-span-1 flex flex-col gap-4">
+
+            <!-- Card: Thời gian làm việc -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="calendar" class="text-blue-500" />
+                Thời gian làm việc
+              </h4>
+              <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Ngày làm việc">
+                  <strong>{{ data.workDate }}</strong>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Giờ bắt đầu">
+                  {{ data.startTime?.slice(0, 5) }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Giờ kết thúc">
+                  {{ data.endTime?.slice(0, 5) }}
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+            <!-- Card: Trạng thái ca -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="info-circle" class="text-blue-500" />
+                Trạng thái &amp; Thời gian hệ thống
+              </h4>
+              <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Trạng thái">
+                  <nz-tag [nzColor]="DoctorScheduleUtils.getDoctorScheduleStatusText(data.status)?.color">
+                    {{ DoctorScheduleUtils.getDoctorScheduleStatusText(data.status)?.text || data.status }}
+                  </nz-tag>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Ngày tạo">
+                  <span class="text-xs text-gray-500">{{ data.createdAt | date:'dd/MM/yyyy' }}</span>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Cập nhật lần cuối">
+                  <span class="text-xs text-gray-500">{{ data.updatedAt | date: 'dd/MM/yyyy' }}</span>
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+          </div>
+        </div>
+
+        <!-- ===== ROW 2: Bảng các khung giờ (Time Slots) ===== -->
+        <nz-card [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading">
+            <nz-icon nzType="clock-circle" class="text-blue-500" />
+            Danh sách khung giờ ({{ data.timeSlots?.length ?? 0 }} slot)
+          </h4>
+
+          @if (!data.timeSlots || data.timeSlots.length === 0) {
+            <div class="detail-empty">Chưa có khung giờ nào được tạo cho ca này.</div>
+          } @else {
+            <nz-table
+              [nzData]="data.timeSlots"
+              [nzShowPagination]="false"
+              [nzFrontPagination]="false"
+              nzSize="middle"
+              [nzScroll]="{ x: '720px' }"
+              class="slot-table"
+            >
+              <thead>
+                <tr>
+                  <th nzWidth="50px" nzAlign="center">#</th>
+                  @for (col of slotColumns; track col.key) {
+                    <th [nzWidth]="col.width + 'px'" [nzAlign]="col.align">{{ col.title }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (slot of data.timeSlots; track slot.id; let i = $index) {
+                  <tr [class.slot-row--booked]="slot.bookedCount > 0">
+                    <td nzAlign="center" class="text-gray-400 text-xs">{{ i + 1 }}</td>
+                    <td nzAlign="center">{{ slot.startTime?.slice(0, 5) }}</td>
+                    <td nzAlign="center">{{ slot.endTime?.slice(0, 5) }}</td>
+                    <td nzAlign="center">{{ slot.maxPatients }}</td>
+                    <td nzAlign="center">
+                      @if (slot.bookedCount > 0) {
+                        <strong class="text-blue-600">{{ slot.bookedCount }}</strong>
+                      } @else {
+                        <span class="text-gray-400">0</span>
+                      }
+                    </td>
+                    <td nzAlign="center">
+                      <span
+                        [class.text-green-600]="slotAvailable(slot) > 0"
+                        [class.text-red-500]="slotAvailable(slot) === 0"
+                        class="font-medium"
+                      >{{ slotAvailable(slot) }}</span>
+                    </td>
+                    <td nzAlign="center">
+                      <nz-tag [nzColor]="getSlotStatus(slot.status).color">
+                        {{ getSlotStatus(slot.status).text }}
+                      </nz-tag>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </nz-table>
+
+            <!-- Tổng kết cuối bảng -->
+            <div class="slot-summary">
+              <span>Tổng cộng: <strong>{{ data.timeSlots.length }}</strong> khung giờ</span>
+              <nz-divider nzType="vertical" />
+              <span>Đã đặt: <strong class="text-blue-600">{{ totalBooked }}</strong></span>
+              <nz-divider nzType="vertical" />
+              <span>Còn trống: <strong class="text-green-600">{{ totalSlotCapacity - totalBooked }}</strong></span>
+            </div>
+          }
+        </nz-card>
+
+      </div>
+    }
+
+  </ng-template>
+</div>

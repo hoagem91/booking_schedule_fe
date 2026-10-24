@@ -1,9 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { finalize, Subscription, takeUntil } from 'rxjs';
+import { finalize, Subscription, take, takeUntil } from 'rxjs';
 import { AppointmentHistoryItem, AppointmentStatus } from '../../../models/appointment.model';
-import { appointmentStatusLabels } from '../../../utils/appointment/appointment-ui.utils';
+import {
+  appointmentStatusLabels
+} from '../../../utils/appointment/appointment-ui.utils';
 import {
   ManagementAppointmentsService,
   clinicToday,
@@ -19,13 +21,19 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
-import { ManagementAppointmentForm } from './management-appointment-detail/management-appointment-form';
+import { ManagementAppointmentForm } from './management-appointment-form/management-appointment-form';
+import { ManagementAppointmentDetail } from './management-appointment-detail/management-appointment-detail';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { AppointmentUtils } from '../../../utils/appointment/appointment.utils';
 import { ShareButton } from '../../../components/share-button/share-button';
 import { SettingTableComponent } from '../../../components/setting-table/setting-table.component';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { Router } from '@angular/router';
+import { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppointmentActionDialog, AppointmentActionDialogData } from '../../appointment-workflow/appointment-action-dialog';
+import { AppointmentActionResult, appointmentActions } from '../../appointment-workflow/appointment-actions.policy';
 
 @Component({
   standalone: true,
@@ -36,11 +44,19 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 })
 export class ManagementAppointments extends BaseListComponent<AppointmentHistoryItem> {
   private readonly api = inject(ManagementAppointmentsService);
+  private readonly router = inject(Router);
   protected drawerService = inject(NzDrawerService);
+  protected nzModalService = inject(NzModalService);
   private request?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
+  private cancelModal: NzModalRef<AppointmentActionDialog, AppointmentActionResult> | null = null;
+  protected readonly cancelDialogOpen = signal(false);
+
+  protected readonly AppointmentUtils = AppointmentUtils;
 
   constructor() {
     super();
+    this.destroyRef.onDestroy(() => this.cancelModal?.destroy());
     this.searchForm = this.fb.group({
       keyword: [null],
       status: [null],
@@ -280,8 +296,8 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Chức năng',
       key: 'actions',
       align: 'center',
-      width: 130,
-      minWidth: 110,
+      width: 110,
+      minWidth: 90,
       fixed: 'right',
       visible: true,
       render: 'actions'
@@ -310,24 +326,66 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
         }
       });
   }
+  protected canCancel(data: AppointmentHistoryItem): boolean {
+    return this.hasPermission('appointments:update-status') && appointmentActions(data).some(option => option.action === 'cancel');
+  }
 
+  protected onCancel(data: AppointmentHistoryItem): void {
+    if (this.cancelDialogOpen() || !this.canCancel(data)) return;
+    this.cancelDialogOpen.set(true);
+    this.cancelModal = this.nzModalService.create<AppointmentActionDialog, AppointmentActionDialogData, AppointmentActionResult>({
+      nzTitle: 'Hủy lịch hẹn', nzContent: AppointmentActionDialog, nzFooter: null,
+      nzWidth: 480, nzMaskClosable: false,
+      nzData: { appointment: { ...data }, action: 'cancel' },
+      nzOnCancel: () => { this.cancelModal?.getContentComponent()?.close(); return false; },
+    });
+    this.cancelModal.afterClose.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      this.cancelModal = null; this.cancelDialogOpen.set(false);
+      if (result?.refresh) this.loadData();
+    });
+  }
   protected onOpenDetail(id?: number, isViewMode: boolean = false): void {
     let title = 'Thêm mới lịch hẹn';
     if (id) {
       title = isViewMode ? 'Chi tiết lịch hẹn' : 'Chỉnh sửa lịch hẹn';
     }
 
+    // isViewMode=true && id → ManagementAppointmentDetail (view-only, gọi 1 API GET)
+    if (isViewMode && id) {
+      this.drawerService.create({
+        nzTitle: title,
+        nzContent: ManagementAppointmentDetail,
+        nzWidth: 'min(1200px, 100vw)',
+        nzMaskClosable: true,
+        nzClosable: true,
+        nzKeyboard: true,
+        nzPlacement: 'right',
+        nzData: { id, showWorkflowActions: false },
+        nzBodyStyle: { padding: '24px', background: '#f8fafc', overflow: 'auto' },
+      });
+      return;
+    }
+
+    // isViewMode=false hoặc tạo mới → ManagementAppointmentForm
     this.drawerService.create({
       nzTitle: title,
       nzContent: ManagementAppointmentForm,
-      nzWidth: '85vw',
+      nzWidth: 'min(1200px, 100vw)',
+      nzMaskClosable: false,
+      nzClosable: !!id,
+      nzKeyboard: !!id,
       nzPlacement: 'right',
-      nzData: { id, isViewMode },
+      nzData: { id, isViewMode, onStatusChanged: () => this.loadData() },
       nzBodyStyle: { padding: '24px', background: '#f8fafc', overflow: 'auto' },
     }).afterClose.subscribe((result) => {
       if (result?.success) this.loadData();
     });
   }
 
-  protected readonly AppointmentUtils = AppointmentUtils;
+  protected openWorkflow(data: AppointmentHistoryItem): void {
+    if (!this.hasPermission('appointments:update-status')) return;
+    void this.router.navigate(['/management/appointments/review'], { queryParams: {
+      doctorId: data.doctorId, date: data.appointmentDate, appointmentCode: data.appointmentCode,
+    } });
+  }
 }

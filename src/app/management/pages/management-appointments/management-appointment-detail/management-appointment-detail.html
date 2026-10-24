@@ -1,0 +1,227 @@
+<div class="detail-shell">
+
+  <!-- ========== TOOLBAR ========== -->
+  <div class="detail-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" (click)="handleClose()">
+        <nz-icon nzType="arrow-left" nzTheme="outline" /> Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>Chi tiết lịch hẹn{{ appointmentData ? ' – ' + appointmentData.appointmentCode : '' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      @if (loadFailed() && !isLoading()) {
+        <button nz-button type="button" (click)="loadDetail()">
+          <nz-icon nzType="reload" /> Tải lại
+        </button>
+      }
+      <button nz-button type="button" (click)="handleClose()">Đóng</button>
+    </div>
+  </div>
+
+  <!-- ========== BODY ========== -->
+  <ng-template [appShowLoading]="isLoading()">
+
+    <!-- Lỗi load -->
+    @if (loadFailed()) {
+      <div class="detail-error" role="alert">
+        <nz-icon nzType="warning" class="mr-2" />
+        {{ errorMessage() || 'Không thể tải dữ liệu lịch hẹn. Vui lòng thử lại.' }}
+      </div>
+    }
+
+    @if (appointmentData; as data) {
+      <div class="detail-body">
+
+        <!-- ===== HEADER: mã lịch hẹn + trạng thái ===== -->
+        <div class="appointment-header">
+          <div class="appointment-header__icon">
+            <nz-icon nzType="calendar" nzTheme="outline" />
+          </div>
+          <div class="appointment-header__info">
+            <h3>{{ data.appointmentCode }}</h3>
+            <p>Ngày đặt: {{ data.createdAt }}</p>
+          </div>
+          <div class="appointment-header__status">
+            <nz-tag
+              [nzColor]="AppointmentUtils.getAppointmentStatusText(data.status)?.color"
+              class="status-tag"
+            >{{ statusLabel(data.status) }}</nz-tag>
+          </div>
+        </div>
+
+        <!-- ===== GRID 2 CỘT ===== -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+          <!-- Cột trái (2/3) -->
+          <div class="lg:col-span-2 flex flex-col gap-4">
+
+            <!-- Card: Bệnh nhân -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="user" class="text-blue-500" />
+                Thông tin bệnh nhân
+              </h4>
+              <nz-descriptions [nzColumn]="{lg: 0,md: 0,xl: 0,xxl: 0, xs: 1, sm: 2 }" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Tên bệnh nhân">
+                  <strong>{{ data.patientName || '—' }}</strong>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Mã bệnh nhân">
+                  <code class="detail-code">{{ data.patientCode || '—' }}</code>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Số điện thoại" [nzSpan]="2">
+                  {{ data.patientPhone || 'Chưa cập nhật' }}
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+            <!-- Card: Thông tin khám -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="medicine-box" class="text-blue-500" />
+                Thông tin khám bệnh
+              </h4>
+              <nz-descriptions [nzColumn]="{lg: 0,md: 0,xl: 0,xxl: 0, xs: 1, sm: 2 }" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Bác sĩ">
+                  <strong>{{ data.doctorName || '—' }}</strong>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Mã bác sĩ">
+                  <code class="detail-code">{{ data.doctorCode || '—' }}</code>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Dịch vụ khám" [nzSpan]="2">
+                  {{ data.serviceName || '—' }}
+                </nz-descriptions-item>
+                @if (data.reason) {
+                  <nz-descriptions-item nzTitle="Lý do khám" [nzSpan]="2">
+                    <span class="whitespace-pre-line">{{ data.reason }}</span>
+                  </nz-descriptions-item>
+                }
+                @if (data.note) {
+                  <nz-descriptions-item nzTitle="Ghi chú" [nzSpan]="2">
+                    <span class="whitespace-pre-line text-gray-600">{{ data.note }}</span>
+                  </nz-descriptions-item>
+                }
+              </nz-descriptions>
+            </nz-card>
+
+          </div>
+
+          <!-- Cột phải (1/3) -->
+          <div class="lg:col-span-1 flex flex-col gap-4">
+
+            <!-- Card: Thời gian khám -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="clock-circle" class="text-blue-500" />
+                Thời gian khám
+              </h4>
+              <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Ngày khám">
+                  <strong>{{ data.appointmentDate }}</strong>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Giờ bắt đầu">
+                  {{ data.startTime?.slice(0, 5) || '—' }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Giờ kết thúc">
+                  {{ data.endTime?.slice(0, 5) || '—' }}
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+            <!-- Card: Thanh toán -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="dollar" class="text-blue-500" />
+                Thanh toán
+              </h4>
+              <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Giá dịch vụ">
+                  @if (data.servicePrice != null) {
+                    <strong>{{ data.servicePrice | number:'1.0-0' }} ₫</strong>
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Thành tiền">
+                  @if (data.finalAmount != null) {
+                    <strong class="text-green-700">{{ data.finalAmount | number:'1.0-0' }} ₫</strong>
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </nz-descriptions-item>
+                @if (hasPromotion) {
+                  <nz-descriptions-item nzTitle="Khuyến mãi">
+                    <nz-tag nzColor="gold">{{ data.promotionCode || 'KM' }}</nz-tag>
+                    @if (data.promotionName) {
+                      <span class="text-xs text-gray-500 ml-1">{{ data.promotionName }}</span>
+                    }
+                  </nz-descriptions-item>
+                  @if (data.discountType) {
+                    <nz-descriptions-item nzTitle="Loại giảm">
+                      {{ data.discountType === 'PERCENT' ? 'Theo %' : 'Theo số tiền' }}
+                    </nz-descriptions-item>
+                  }
+                  @if (data.discountValue != null) {
+                    <nz-descriptions-item nzTitle="Giá trị giảm">
+                      {{ data.discountType === 'PERCENT'
+                         ? data.discountValue + '%'
+                         : (data.discountValue | number:'1.0-0') + ' ₫' }}
+                    </nz-descriptions-item>
+                  }
+                  @if (data.maxDiscount != null) {
+                    <nz-descriptions-item nzTitle="Giảm tối đa">
+                      {{ data.maxDiscount | number:'1.0-0' }} ₫
+                    </nz-descriptions-item>
+                  }
+                }
+              </nz-descriptions>
+            </nz-card>
+
+            <!-- Card: Trạng thái hệ thống -->
+            <nz-card [nzBodyStyle]="{ padding: '16px' }">
+              <h4 class="card-heading">
+                <nz-icon nzType="info-circle" class="text-blue-500" />
+                Thời gian hệ thống
+              </h4>
+              <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                <nz-descriptions-item nzTitle="Trạng thái">
+                  <nz-tag [nzColor]="AppointmentUtils.getAppointmentStatusText(data.status)?.color">
+                    {{ statusLabel(data.status) }}
+                  </nz-tag>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Đủ điều kiện đánh giá">
+                  @if (data.reviewEligible) {
+                    <nz-tag nzColor="green">Có</nz-tag>
+                  } @else {
+                    <nz-tag nzColor="default">Chưa đủ</nz-tag>
+                  }
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Ngày đặt">
+                  <span class="text-xs text-gray-500">{{ data.createdAt | date:'dd/MM/yyyy' }}</span>
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Cập nhật lần cuối">
+                  <span class="text-xs text-gray-500">{{ data.updatedAt | date:'dd/MM/yyyy'  }}</span>
+                </nz-descriptions-item>
+              </nz-descriptions>
+            </nz-card>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== FOOTER: Workflow actions ===== -->
+      <footer class="appointment-workflow-footer">
+        @if (showWorkflowActions) {
+        <app-appointment-actions
+          [appointment]="data"
+          (refreshRequested)="refreshAfterAction($event)"
+        />
+        } @else if (hasPermission('appointments:update-status')) {
+          <button nz-button nzType="primary" type="button" (click)="openWorkflow()">Xử lý lịch hẹn</button>
+        }
+      </footer>
+    }
+
+  </ng-template>
+</div>
