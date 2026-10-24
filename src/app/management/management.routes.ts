@@ -3,6 +3,7 @@ import { Router, Routes } from '@angular/router';
 import { ManagementAccessService } from './services/management-access.service';
 import { managementHome } from './models/management.models';
 import { managementChildGuard, managementGuard } from './management.guard';
+import { ManagementSpecialties } from './pages/management-specialties/management-specialties';
 
 export const managementRoutes: Routes = [
   { path: 'login', title: 'Đăng nhập nội bộ | Booking Schedule', loadComponent: () => import('./pages/login/management-login').then(m => m.ManagementLogin) },
@@ -18,6 +19,9 @@ export const managementRoutes: Routes = [
       // { path: 'appointments/:id', title: 'Chi tiết lịch hẹn | Booking Schedule', data: { heading: 'Chi tiết lịch hẹn', permission: 'appointments:read' }, loadComponent: () => import('./pages/management-appointments/management-appointment-form/management-appointment-form').then(m => m.ManagementAppointmentForm) },
       { path: 'doctor-schedule', title: 'Lịch làm việc của bác sĩ| Booking Schedule', data: { heading: 'Lịch làm việc của bác sĩ'}, loadComponent: () => import('./pages/doctor-schedule/doctor-schedule').then(m => m.DoctorSchedule) },
       { path: 'account', title: 'Tài khoản của tôi | Booking Schedule', data: { heading: 'Tài khoản của tôi' }, loadComponent: () => import('./pages/management-account').then(m => m.ManagementAccount) },
+      { path: 'specialty', title: 'Quản lí chuyên khoa | Booking Schedule', data: { heading: 'Quản lí chuyên khoa' }, loadComponent: () => import('./pages/management-specialties/management-specialties').then(m => m.ManagementSpecialties) },
+      { path: 'services', title: 'Quản lý dịch vụ | Booking Schedule', data: { heading: 'Quản lý dịch vụ', permission: 'services:read' }, loadComponent: () => import('./pages/management-services/management-services').then(m => m.ManagementServices) },
+      { path: 'rooms', title: 'Quản lý phòng khám | Booking Schedule', data: { heading: 'Quản lý phòng khám', permission: 'rooms:read' }, loadComponent: () => import('./pages/management-rooms/management-rooms').then(m => m.ManagementRooms) },
       { path: '**', redirectTo: '/404' },
     ],
   },

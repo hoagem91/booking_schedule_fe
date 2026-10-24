@@ -1,0 +1,106 @@
+<form class="services-toolbar" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+  <div class="services-filters">
+    <nz-input-group [nzSuffix]="searchIcon">
+      <input nz-input formControlName="keyword" aria-label="Tìm dịch vụ" placeholder="Tìm theo mã hoặc tên dịch vụ" />
+    </nz-input-group>
+    <ng-template #searchIcon>
+      <button type="submit" nz-button nzType="text" aria-label="Tìm kiếm dịch vụ">
+        <nz-icon nzType="search" />
+      </button>
+    </ng-template>
+    <nz-select formControlName="specialtyId" nzAllowClear nzShowSearch nzPlaceHolder="Tất cả chuyên khoa"
+               aria-label="Lọc chuyên khoa" [nzLoading]="isLoadingSpecialties()">
+      @for (item of specialties(); track item.id) {
+        <nz-option [nzValue]="item.id"
+                   [nzLabel]="item.name + (item.status === 'INACTIVE' ? ' (ngừng hoạt động)' : '')" />
+      }
+    </nz-select>
+    <nz-select formControlName="status" nzAllowClear nzPlaceHolder="Tất cả trạng thái" aria-label="Lọc trạng thái">
+      <nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" />
+      <nz-option nzValue="INACTIVE" nzLabel="Ngừng hoạt động" />
+    </nz-select>
+  </div>
+  <div class="services-actions">
+    @if (canWrite) {
+      <button nz-button nzType="primary" type="button" [disabled]="!!pendingAction()" (click)="onOpenDetail()">
+        <nz-icon nzType="plus" />
+        Tạo dịch vụ
+      </button>
+    }
+    <button nz-button type="button" aria-label="Tải lại dịch vụ" (click)="loadData()">
+      <nz-icon nzType="reload" />
+    </button>
+    <app-setting-table tableKey="management-services" [tableColumnData]="tableColumns"
+                       (tableColumnDataOutput)="setDataTableColumns($event)" />
+  </div>
+</form>
+@if (specialtyError()) {
+  <div class="services-error" role="alert">{{ specialtyError() }}
+    <button nz-button type="button" (click)="loadSpecialties()">Tải lại chuyên khoa</button>
+  </div>
+}
+@if (listError()) {
+  <div class="services-error" role="alert">{{ listError() }}
+    <button nz-button type="button" (click)="loadData()">Thử lại</button>
+  </div>
+}
+<app-share-table [actionsTemplate]="actionsCell" [expandConfig]="{ expandRow: false, expandMultiple: false }"
+                 [columns]="_visibleColumns" [dataSource]="dataSource" [loading]="isLoadingDataSource()" [total]="total"
+                 [currentPage]="currentPage" [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50]" [showTotal]="true"
+                 paginationItemLabel="dịch vụ" [scrollY]="tableScrollY" [scrollX]="tableScrollX"
+                 (queryParamsChange)="onQueryParamsChange($event)">
+  <ng-template #customCell let-data let-column="column">
+    @switch (column.key) {
+      @case ('specialtyName') {
+        {{ data.specialtyId === null ? 'Dịch vụ dùng chung' : (data.specialtyName || 'Chưa có tên chuyên khoa') }}
+      }
+      @case ('price') {
+        {{ data.price | number:'1.0-2' }}
+      }
+      @case ('durationMinutes') {
+        {{ data.durationMinutes }} phút
+      }
+      @case ('status') {
+        <nz-tag
+          [nzColor]="data.status === 'ACTIVE' ? 'green' : 'red'">{{ data.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+        </nz-tag>
+      }
+    }
+  </ng-template>
+  <ng-template #actionsCell let-data>
+    <button nz-button nzType="text" nzSize="small" type="button" aria-label="Xem chi tiết dịch vụ" nz-tooltip
+            nzTooltipTitle="Xem chi tiết" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id, true)">
+      <nz-icon nzType="eye" />
+    </button>
+    @if (canWrite) {
+      <button nz-button nzType="text" nzSize="small" type="button" aria-label="Sửa dịch vụ" nz-tooltip
+              nzTooltipTitle="Sửa dịch vụ" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id)">
+        <nz-icon nzType="edit" />
+      </button>
+      <button nz-button nzType="text" nzSize="small" type="button"
+              [attr.aria-label]="data.status === 'ACTIVE' ? 'Ngừng hoạt động dịch vụ' : 'Bật dịch vụ'" nz-tooltip
+              [nzTooltipTitle]="data.status === 'ACTIVE' ? 'Ngừng hoạt động' : 'Bật dịch vụ'"
+              [disabled]="!!pendingAction()" (click)="onAction(data, 'status')">
+        <nz-icon nzType="poweroff" />
+      </button>
+      <button nz-button nzType="text" nzSize="small" nzDanger type="button" aria-label="Xóa dịch vụ" nz-tooltip
+              nzTooltipTitle="Xóa dịch vụ" [disabled]="!!pendingAction()" (click)="onAction(data, 'delete')">
+        <nz-icon nzType="delete" />
+      </button>
+    }
+  </ng-template>
+</app-share-table>
+<ng-template #confirmContent>
+  @if (pendingAction(); as action) {
+    <p><strong>{{ action.item.code }} — {{ action.item.name }}</strong></p>
+    @if (action.kind === 'delete') {
+      <p>Dịch vụ chưa có lịch hẹn sẽ được xóa. Nếu đã có lịch hẹn, dịch vụ sẽ ngừng hoạt động để giữ lịch sử và giá đã
+        đặt.</p>
+    } @else {
+      <p>{{ action.status === 'ACTIVE' ? 'Bật dịch vụ để nhận đặt lịch mới. Chuyên khoa được gán phải đang hoạt động.' : 'Ngừng nhận đặt lịch mới. Lịch hẹn đã đặt và giá lịch sử được giữ nguyên.' }}</p>
+    }
+  }
+  @if (actionError()) {
+    <div class="services-error" role="alert">{{ actionError() }}</div>
+  }
+</ng-template>

@@ -1,0 +1,61 @@
+<div class="form-shell">
+  <div class="form-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" [disabled]="isSavingForm()" (click)="handleCancel()"><nz-icon nzType="arrow-left" /> Quay lại</button>
+      <span class="title-marker"></span>
+      <h2>{{ isEditMode ? (isViewMode ? 'Chi tiết chuyên khoa' : 'Cập nhật chuyên khoa') : 'Thêm mới chuyên khoa' }}</h2>
+    </div>
+    <div class="toolbar-actions">
+      <button nz-button type="button" [disabled]="isSavingForm()" (click)="handleCancel()">{{ isViewMode ? 'Đóng' : 'Hủy' }}</button>
+      @if (!isViewMode) {
+        <button nz-button nzType="primary" type="button" [nzLoading]="isSavingForm()" [disabled]="!loaded() || isSavingForm()" (click)="handleOk()">
+          <nz-icon nzType="save" /> {{ isEditMode ? 'Cập nhật chuyên khoa' : 'Tạo chuyên khoa' }}
+        </button>
+      }
+    </div>
+  </div>
+  @if (formError()) { <div class="form-error" role="alert">{{ formError() }}
+    @if (!loaded() && !isLoadingDataForForm()) { <button nz-button type="button" (click)="loadDataForForm()">Tải lại dữ liệu</button> }
+  </div> }
+  <ng-template [appShowLoading]="isLoadingDataForForm()">
+    <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="handleOk()" [attr.aria-busy]="isSavingForm()">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <nz-card class="lg:col-span-2" [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading"><nz-icon nzType="file-text" /> Thông tin chuyên khoa</h4>
+          <nz-form-item>
+            <nz-form-label nzFor="specialty-code" [nzRequired]="isEditMode">Mã chuyên khoa</nz-form-label>
+            <nz-form-control nzErrorTip="Mã tối đa 50 ký tự; khi cập nhật không được để trắng">
+              <input nz-input id="specialty-code" formControlName="code" maxlength="50" placeholder="Để trống để hệ thống tự sinh" />
+              <p class="field-hint">{{ isEditMode ? 'Mã hiện tại được giữ nguyên nếu bạn không sửa trường này.' : 'Không bắt buộc. Hệ thống tự sinh mã từ tên nếu để trống; mã nhập tay được chuẩn hóa viết hoa khi lưu.' }}</p>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label nzFor="specialty-name" nzRequired>Tên chuyên khoa</nz-form-label>
+            <nz-form-control nzErrorTip="Vui lòng nhập tên không trắng, tối đa 255 ký tự">
+              <input nz-input id="specialty-name" formControlName="name" maxlength="255" placeholder="Ví dụ: Nội khoa" />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item class="mb-0">
+            <nz-form-label nzFor="specialty-description">Mô tả</nz-form-label>
+            <nz-form-control>
+              <textarea nz-input id="specialty-description" formControlName="description" [nzAutosize]="{ minRows: 4, maxRows: 10 }" placeholder="Mô tả phạm vi khám và điều trị"></textarea>
+            </nz-form-control>
+          </nz-form-item>
+        </nz-card>
+        <nz-card [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading"><nz-icon nzType="info-circle" /> Trạng thái</h4>
+          <nz-form-item class="mb-0">
+            <nz-form-label nzFor="specialty-status" nzRequired>Trạng thái hoạt động</nz-form-label>
+            <nz-form-control nzErrorTip="Vui lòng chọn trạng thái hợp lệ">
+              <nz-select nzId="specialty-status" formControlName="status">
+                <nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" />
+                <nz-option nzValue="INACTIVE" nzLabel="Ngừng hoạt động" />
+              </nz-select>
+              <p class="field-hint">{{ isEditMode ? 'Chỉ ngừng hoạt động khi chuyên khoa không còn ca khám đang mở hoặc đã đủ chỗ từ hôm nay trở đi.' : 'Chuyên khoa mới mặc định đang hoạt động.' }}</p>
+            </nz-form-control>
+          </nz-form-item>
+        </nz-card>
+      </div>
+    </form>
+  </ng-template>
+</div>

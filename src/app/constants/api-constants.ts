@@ -34,4 +34,14 @@ export class ApiConstants{
   // patient
   private static PATIENT_ADMIN(path: string): string {return this.API(`patients/${path}`)}
   public static PATIENT_ADMIN_GET = this.PATIENT_ADMIN('all');
+
+  // specialities
+  private static SPECIALITY_ADMIN(path = ''):string {return this.API_ADMIN(path ? `specialties/${path}` : 'specialties')}
+  public static readonly SPECIALTY_ADMIN_SEARCH = this.SPECIALITY_ADMIN('search');
+  public static readonly SPECIALTY_ADMIN_COMMON = this.SPECIALITY_ADMIN();
+  public static readonly SERVICE_ADMIN_COMMON = this.API_ADMIN('services');
+  public static readonly SERVICE_ADMIN_SEARCH = this.API_ADMIN('services/search');
+  public static readonly ROOM_ADMIN_COMMON = this.API_ADMIN('rooms');
+  public static readonly ROOM_ADMIN_SEARCH = this.API_ADMIN('rooms/search');
+  public static readonly ROOM_ADMIN_AVAILABILITY = this.API_ADMIN('rooms/availability/search');
 }

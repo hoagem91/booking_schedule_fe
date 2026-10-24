@@ -1,0 +1,16 @@
+:host { display: block; }
+.room-modes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.room-period { width: 100%; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.room-period label { display: flex; flex-direction: column; gap: 6px; }
+.room-hint { margin: 8px 0; color: #6b7280; line-height: 1.7; font-size: 12px; }
+.room-action-status { width: 100%; margin: 8px 0; }
+.rooms-toolbar > .room-hint { flex-basis: 100%; margin: 0; }
+.rooms-toolbar, .rooms-filters, .rooms-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rooms-toolbar { justify-content: space-between; margin-bottom: 16px; }
+.rooms-filters { flex: 1; }
+.rooms-filters nz-input-group { width: 300px; }
+.rooms-filters nz-select { width: 210px; }
+.rooms-error { margin-bottom: 12px; padding: 12px; background: #fff2ef; color: #ac302b; border-radius: 6px; }
+@media (max-width: 640px) { .rooms-filters, .rooms-filters nz-input-group, .rooms-filters nz-select { width: 100%; } .rooms-actions { margin-left: auto; } }
+@media (max-width: 640px) { .room-period label { flex: 1; min-width: 140px; } .room-period button { width: 100%; } }
+

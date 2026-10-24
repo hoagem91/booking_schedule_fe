@@ -1,0 +1,69 @@
+<div class="room-modes" aria-label="Chế độ tra cứu phòng">
+  <button nz-button type="button" [nzType]="mode() === 'catalog' ? 'primary' : 'default'" [attr.aria-pressed]="mode() === 'catalog'" (click)="setSearchMode('catalog')">Danh mục phòng khám</button>
+  <button nz-button type="button" [nzType]="mode() === 'availability' ? 'primary' : 'default'" [attr.aria-pressed]="mode() === 'availability'" (click)="setSearchMode('availability')">Tìm phòng rảnh</button>
+</div>
+<form class="rooms-toolbar" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+  <div class="rooms-filters">
+    <nz-input-group [nzSuffix]="searchIcon">
+      <input nz-input formControlName="keyword" aria-label="Tìm phòng khám" placeholder="Tìm theo mã, tên hoặc vị trí phòng" />
+    </nz-input-group>
+    <ng-template #searchIcon><button type="submit" nz-button nzType="text" aria-label="Tìm kiếm phòng khám"><nz-icon nzType="search" /></button></ng-template>
+    <nz-select formControlName="specialtyScope" nzAllowClear nzShowSearch nzPlaceHolder="Tất cả chuyên khoa" aria-label="Lọc chuyên khoa" [nzLoading]="isLoadingSpecialties()">
+      <nz-option [nzValue]="0" nzLabel="Chỉ phòng dùng chung" />
+      @for (item of filterSpecialties; track item.id) { <nz-option [nzValue]="item.id" [nzLabel]="item.name + (item.status === 'INACTIVE' ? ' (ngừng hoạt động)' : '')" /> }
+    </nz-select>
+    <nz-select formControlName="status" nzAllowClear [nzPlaceHolder]="mode() === 'availability' ? 'Chỉ phòng sẵn sàng' : 'Tất cả trạng thái'" aria-label="Lọc trạng thái">
+      @for (item of statuses; track item.value) { <nz-option [nzValue]="item.value" [nzLabel]="item.label" /> }
+    </nz-select>
+  </div>
+  <div class="rooms-actions">
+    @if (canWrite) { <button nz-button nzType="primary" type="button" [disabled]="!!pendingAction()" (click)="onOpenDetail()"><nz-icon nzType="plus" /> Tạo phòng khám</button> }
+    <button nz-button type="button" aria-label="Tải lại phòng khám" (click)="loadData()"><nz-icon nzType="reload" /></button>
+    <app-setting-table tableKey="management-rooms" [tableColumnData]="tableColumns" (tableColumnDataOutput)="setDataTableColumns($event)" />
+  </div>
+  @if (mode() === 'availability') {
+    <div class="room-period">
+      <label>Ngày khám<input nz-input type="date" aria-label="Ngày tìm phòng" formControlName="workDate" [min]="today" /></label>
+      <label>Giờ bắt đầu<input nz-input type="time" aria-label="Giờ bắt đầu" formControlName="startTime" step="1" /></label>
+      <label>Giờ kết thúc<input nz-input type="time" aria-label="Giờ kết thúc" formControlName="endTime" step="1" /></label>
+      <button nz-button nzType="primary" type="submit" [nzLoading]="isLoadingDataSource()">Tra cứu phòng rảnh</button>
+    </div>
+    <p class="room-hint">Chỉ tìm phòng sẵn sàng, dùng chung hoặc thuộc chuyên khoa đang hoạt động. Kết quả không giữ chỗ; khi lưu phân công, hệ thống sẽ kiểm tra lại.</p>
+    @if (appliedAvailability(); as period) { <p class="room-hint">Kết quả tra cứu ngày {{ period.workDate }}, từ {{ period.startTime }} đến {{ period.endTime }}.</p> }
+  }
+</form>
+@if (specialtyError()) { <div class="rooms-error" role="alert">{{ specialtyError() }} <button nz-button type="button" (click)="loadSpecialties()">Tải lại chuyên khoa</button></div> }
+@if (listError()) { <div class="rooms-error" role="alert">{{ listError() }} <button nz-button type="button" (click)="loadData()">Thử lại</button></div> }
+<app-share-table [actionsTemplate]="actionsCell" [expandConfig]="{ expandRow: false, expandMultiple: false }"
+  [columns]="_visibleColumns" [dataSource]="dataSource" [loading]="isLoadingDataSource()" [total]="total"
+  [currentPage]="currentPage" [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50]" [showTotal]="true"
+  paginationItemLabel="phòng khám" [scrollY]="tableScrollY" [scrollX]="tableScrollX" (queryParamsChange)="onQueryParamsChange($event)">
+  <ng-template #customCell let-data let-column="column">
+    @switch (column.key) {
+      @case ('specialtyName') { {{ data.specialtyId === null ? 'Phòng dùng chung' : (data.specialtyName || 'Chưa có tên chuyên khoa') }} }
+      @case ('status') { <nz-tag [nzColor]="statusInfo(data.status)?.color">{{ statusInfo(data.status)?.label || data.status }}</nz-tag> }
+    }
+  </ng-template>
+  <ng-template #actionsCell let-data>
+    <button nz-button nzType="text" nzSize="small" type="button" aria-label="Xem chi tiết phòng khám" nz-tooltip nzTooltipTitle="Xem chi tiết" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id, true)"><nz-icon nzType="eye" /></button>
+    @if (canWrite) {
+      <button nz-button nzType="text" nzSize="small" type="button" aria-label="Sửa phòng khám" nz-tooltip nzTooltipTitle="Sửa phòng khám" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id)"><nz-icon nzType="edit" /></button>
+      <button nz-button nzType="text" nzSize="small" type="button" aria-label="Đổi trạng thái phòng khám" nz-tooltip nzTooltipTitle="Đổi trạng thái" [disabled]="!!pendingAction()" (click)="onAction(data, 'status')"><nz-icon nzType="poweroff" /></button>
+      <button nz-button nzType="text" nzSize="small" nzDanger type="button" aria-label="Xóa phòng khám" nz-tooltip nzTooltipTitle="Xóa phòng khám" [disabled]="!!pendingAction()" (click)="onAction(data, 'delete')"><nz-icon nzType="delete" /></button>
+    }
+  </ng-template>
+</app-share-table>
+<ng-template #confirmContent>
+  @if (pendingAction(); as action) {
+    <p><strong>{{ action.item.code }} — {{ action.item.name }}</strong></p>
+    @if (action.kind === 'delete') { <p>Phòng chưa từng phân công sẽ được xóa. Phòng có lịch sử phân công sẽ ngừng hoạt động để giữ lịch sử. Cần xử lý các ca khám sắp tới trước khi xóa.</p> }
+    @else {
+      <label for="room-action-status">Trạng thái mới</label>
+      <nz-select nzId="room-action-status" class="room-action-status" [ngModel]="targetStatus()" (ngModelChange)="targetStatus.set($event)" [nzDisabled]="isActing()">
+        @for (item of statuses; track item.value) { <nz-option [nzValue]="item.value" [nzLabel]="item.label" /> }
+      </nz-select>
+      <p class="room-hint">Bảo trì hoặc ngừng hoạt động bị chặn nếu còn ca khám sắp tới. Đang sử dụng không tự chuyển theo lịch; thay đổi trạng thái không tự hủy ca đã phân công.</p>
+    }
+  }
+  @if (actionError()) { <div class="rooms-error" role="alert">{{ actionError() }}</div> }
+</ng-template>
