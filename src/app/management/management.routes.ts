@@ -9,7 +9,7 @@ export const managementRoutes: Routes = [
   { path: 'login', title: 'Đăng nhập nội bộ | Booking Schedule', loadComponent: () => import('./pages/login/management-login').then(m => m.ManagementLogin) },
   { path: 'access-error', title: 'Xác minh tài khoản | Booking Schedule', data: { kind: 'recovery' }, loadComponent: () => import('./pages/management-status').then(m => m.ManagementStatus) },
   {
-    path: '', canActivate: [managementGuard], canActivateChild: [managementChildGuard],
+    path: '', data: { managementShell: true }, canActivate: [managementGuard], canActivateChild: [managementChildGuard],
     loadComponent: () => import('./layout/management-layout').then(m => m.ManagementLayout),
     children: [
       { path: '', pathMatch: 'full', canActivate: [() => inject(Router).parseUrl(managementHome(inject(ManagementAccessService).user()))], loadComponent: () => import('./pages/management-workspace').then(m => m.ManagementWorkspace) },
@@ -22,6 +22,8 @@ export const managementRoutes: Routes = [
       { path: 'specialty', title: 'Quản lí chuyên khoa | Booking Schedule', data: { heading: 'Quản lí chuyên khoa' }, loadComponent: () => import('./pages/management-specialties/management-specialties').then(m => m.ManagementSpecialties) },
       { path: 'services', title: 'Quản lý dịch vụ | Booking Schedule', data: { heading: 'Quản lý dịch vụ', permission: 'services:read' }, loadComponent: () => import('./pages/management-services/management-services').then(m => m.ManagementServices) },
       { path: 'rooms', title: 'Quản lý phòng khám | Booking Schedule', data: { heading: 'Quản lý phòng khám', permission: 'rooms:read' }, loadComponent: () => import('./pages/management-rooms/management-rooms').then(m => m.ManagementRooms) },
+      { path: 'users', title: 'Quản lý tài khoản | Booking Schedule', data: { heading: 'Quản lý tài khoản', permission: 'users:read' }, loadComponent: () => import('./pages/management-users/management-users').then(m => m.ManagementUsers) },
+      { path: 'patients', title: 'Hồ sơ bệnh nhân | Booking Schedule', data: { heading: 'Hồ sơ bệnh nhân', permission: 'patients:read' }, loadComponent: () => import('./pages/management-patients/management-patients').then(m => m.ManagementPatients) },
       { path: '**', redirectTo: '/404' },
     ],
   },

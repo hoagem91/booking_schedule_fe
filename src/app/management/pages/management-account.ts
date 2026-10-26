@@ -1,8 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { ManagementAccessService } from '../services/management-access.service';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzDrawerService } from 'ng-zorro-antd/drawer';
+import { UserEditor } from './management-users/user-editor/user-editor';
 
 @Component({
-  standalone: true, styleUrl: './management-ui.css',
+  standalone: true, imports: [NzButtonModule], styleUrl: './management-ui.css',
   template: `
     <div class="page-header">
       <div><p class="eyebrow">TÀI KHOẢN NỘI BỘ</p>
@@ -45,6 +48,7 @@ import { ManagementAccessService } from '../services/management-access.service';
         </div>
       </section>
     }
+    <button nz-button nzType="primary" type="button" (click)="changePassword()">Đổi mật khẩu cá nhân</button>
     <aside class="notice">Liên hệ quản trị viên khi cần điều chỉnh thông tin tài khoản, thay đổi quyền hoặc hỗ trợ khôi
       phục mật khẩu.
     </aside>
@@ -52,4 +56,14 @@ import { ManagementAccessService } from '../services/management-access.service';
 })
 export class ManagementAccount {
   readonly access = inject(ManagementAccessService);
+  private readonly drawer = inject(NzDrawerService);
+  private passwordOpen = false;
+  changePassword(): void {
+    if (this.passwordOpen) return;
+    this.passwordOpen = true;
+    this.drawer.create({ nzTitle: 'Đổi mật khẩu cá nhân', nzContent: UserEditor, nzData: { mode: 'self-password' },
+      nzWidth: 'min(1000px, 100vw)', nzMaskClosable: false, nzClosable: false, nzKeyboard: false,
+      nzBodyStyle: { padding: '24px', background: '#f8fafc' },
+    }).afterClose.subscribe(() => { this.passwordOpen = false; });
+  }
 }
