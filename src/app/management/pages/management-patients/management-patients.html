@@ -1,0 +1,32 @@
+<form class="patients-toolbar" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+  <div class="patients-filters">
+    <nz-input-group [nzSuffix]="searchIcon"><input nz-input formControlName="keyword" aria-label="Tìm bệnh nhân" placeholder="Mã bệnh nhân, họ tên, tài khoản, email, điện thoại" /></nz-input-group>
+    <ng-template #searchIcon><button type="submit" nz-button nzType="text" aria-label="Tìm kiếm bệnh nhân"><nz-icon nzType="search" /></button></ng-template>
+    <nz-select formControlName="gender" nzAllowClear nzPlaceHolder="Tất cả giới tính" aria-label="Lọc giới tính">@for (option of genders; track option.value) { <nz-option [nzValue]="option.value" [nzLabel]="option.label" /> }</nz-select>
+    <nz-select formControlName="userStatus" nzAllowClear nzPlaceHolder="Tất cả tài khoản" aria-label="Lọc trạng thái tài khoản"><nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" /><nz-option nzValue="INACTIVE" nzLabel="Đã khóa" /></nz-select>
+  </div>
+  <div class="patients-actions">@if (isAdmin) { <button nz-button nzType="primary" type="button" [disabled]="drawerOpen()" (click)="openForm()"><nz-icon nzType="plus" /> Tạo hồ sơ bệnh nhân</button> }
+    <button nz-button type="button" aria-label="Tải lại bệnh nhân" (click)="loadData()"><nz-icon nzType="reload" /></button>
+    <app-setting-table tableKey="management-patients" [tableColumnData]="tableColumns" (tableColumnDataOutput)="setDataTableColumns($event)" />
+  </div>
+  <div class="patients-date-filters"><label>Sinh từ ngày<input nz-input type="date" formControlName="dateOfBirthFrom" aria-label="Ngày sinh từ" [max]="today" /></label><label>Sinh đến ngày<input nz-input type="date" formControlName="dateOfBirthTo" aria-label="Ngày sinh đến" [max]="today" /></label><button nz-button type="submit">Lọc hồ sơ</button></div>
+</form>
+@if (listError()) { <div class="patients-error" role="alert">{{ listError() }} <button nz-button type="button" (click)="loadData()">Thử lại</button></div> }
+<app-share-table [actionsTemplate]="actionsCell" [expandConfig]="{ expandRow: false, expandMultiple: false }" [columns]="_visibleColumns"
+  [dataSource]="dataSource" [loading]="isLoadingDataSource()" [total]="total" [currentPage]="currentPage" [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50]"
+  [showTotal]="true" paginationItemLabel="bệnh nhân" [scrollY]="tableScrollY" [scrollX]="tableScrollX" (queryParamsChange)="onQueryParamsChange($event)">
+  <ng-template #customCell let-data let-column="column">
+    @switch (column.key) {
+      @case ('gender') { {{ genderLabel(data.gender) }} }
+      @case ('userStatus') { <nz-tag [nzColor]="data.userStatus === 'ACTIVE' ? 'green' : 'red'">{{ data.userStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}</nz-tag> }
+    }
+  </ng-template>
+  <ng-template #actionsCell let-data>
+    <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="view" aria-label="Xem hồ sơ bệnh nhân" nz-tooltip nzTooltipTitle="Xem hồ sơ" [disabled]="drawerOpen()" (click)="openForm(data, true)"><nz-icon nzType="eye" /></button>
+    @if (canEdit(data)) { <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="edit" aria-label="Sửa hồ sơ bệnh nhân" nz-tooltip nzTooltipTitle="Sửa hồ sơ" [disabled]="drawerOpen()" (click)="openForm(data)"><nz-icon nzType="edit" /></button> }
+    <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="appointments" aria-label="Lịch hẹn của bệnh nhân" nz-tooltip nzTooltipTitle="Lịch sử lịch hẹn" [disabled]="drawerOpen()" (click)="openActivity(data, 'appointments')"><nz-icon nzType="calendar" /></button>
+    <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="audit" aria-label="Nhật ký hồ sơ bệnh nhân" nz-tooltip nzTooltipTitle="Nhật ký hồ sơ" [disabled]="drawerOpen()" (click)="openActivity(data, 'audit')"><nz-icon nzType="clock-circle" /></button>
+    <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="account" aria-label="Xem tài khoản liên kết" nz-tooltip nzTooltipTitle="Tài khoản liên kết" [disabled]="drawerOpen()" (click)="openAccount(data, 'view')"><nz-icon nzType="user" /></button>
+    @if (canChangeAccount(data)) { <button nz-button nzType="text" nzSize="small" type="button" class="patient-action" data-action="status" [attr.data-status]="data.userStatus" aria-label="Khóa / mở tài khoản bệnh nhân" nz-tooltip nzTooltipTitle="Khóa / mở toàn bộ tài khoản liên kết" [disabled]="drawerOpen()" (click)="openAccount(data, 'status')"><nz-icon nzType="poweroff" /></button> }
+  </ng-template>
+</app-share-table>

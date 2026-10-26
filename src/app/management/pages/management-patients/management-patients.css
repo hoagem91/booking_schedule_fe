@@ -1,0 +1,19 @@
+:host { display: block; }
+.patients-toolbar, .patients-filters, .patients-actions, .patients-date-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.patients-toolbar { justify-content: space-between; margin-bottom: 16px; }
+.patients-filters { flex: 1; }
+.patients-filters nz-input-group { width: 340px; }
+.patients-filters nz-select { width: 190px; }
+.patients-date-filters { width: 100%; align-items: flex-end; }
+.patients-date-filters label { display: grid; gap: 4px; font-size: 12px; }
+.patients-error { margin-bottom: 12px; padding: 12px; color: #ac302b; background: #fff2ef; border-radius: 6px; }
+.patient-action[data-action="view"] { --action-color: #2563eb; }
+.patient-action[data-action="edit"] { --action-color: #0891b2; }
+.patient-action[data-action="appointments"] { --action-color: #15803d; }
+.patient-action[data-action="audit"] { --action-color: #475569; }
+.patient-action[data-action="account"] { --action-color: #7c3aed; }
+.patient-action[data-action="status"] { --action-color: #d97706; }
+.patient-action[data-action="status"][data-status="INACTIVE"] { --action-color: #16a34a; }
+.patient-action.ant-btn, .patient-action.ant-btn:not(:disabled):hover { color: var(--action-color); }
+.patient-action.ant-btn:disabled { color: #bfbfbf; opacity: .65; }
+@media (max-width: 640px) { .patients-filters, .patients-filters nz-input-group, .patients-filters nz-select { width: 100%; } .patients-actions { margin-left: auto; } .patients-date-filters label { flex: 1; min-width: 140px; } }
