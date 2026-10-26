@@ -1,0 +1,195 @@
+<div class="form-shell">
+  <div class="form-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" [disabled]="saving()" (click)="handleCancel()">
+        <nz-icon nzType="arrow-left" />
+        Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>{{ title }}</h2></div>
+    <div class="toolbar-actions">
+      <button nz-button type="button" [disabled]="saving()"
+              (click)="handleCancel()">{{ mode === 'view' ? 'Đóng' : 'Hủy' }}
+      </button>
+      @if (mode !== 'view') {
+        <button nz-button nzType="primary" type="button" [nzDanger]="mode === 'deactivate'" [nzLoading]="saving()"
+                [disabled]="!loaded() || !canSave || saving()" (click)="handleOk()">
+          <nz-icon nzType="save" />
+          {{ mode === 'create' ? 'Tạo tài khoản' : 'Lưu thay đổi' }}
+        </button>
+      }
+    </div>
+  </div>
+  @if (formError()) {
+    <div class="form-error" role="alert">{{ formError() }} @if (!loaded() && !loading()) {
+      <button nz-button type="button" (click)="load()">Tải lại dữ liệu</button>
+    }</div>
+  }
+  <ng-template [appShowLoading]="loading()">
+    <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="handleOk()" [attr.aria-busy]="saving()">
+      @if (target(); as user) {
+        @if (user.capabilities?.self) {
+          <p class="field-hint">Đây là tài khoản của bạn. Không thể tự khóa hoặc đặt lại mật khẩu bằng chức năng quản
+            trị. <a routerLink="/management/account" (click)="handleCancel()">Đổi mật khẩu cá nhân</a></p>
+        }
+        @if (user.capabilities?.lastActiveSuperAdmin) {
+          <p class="field-hint">SUPER_ADMIN đang hoạt động cuối cùng: phải giữ vai trò này và trạng thái hoạt động.</p>
+        }
+      }
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <nz-card class="lg:col-span-2" [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading">
+            <nz-icon nzType="user" />
+            {{ profileMode ? 'Thông tin tài khoản' : title }}
+          </h4>
+          @if (profileMode) {
+            <nz-form-item>
+              <nz-form-label nzFor="user-username" nzRequired>
+                Tên đăng nhập
+                <button type="button" nz-tooltip
+                        nzTooltipTitle="Tên đăng nhập không thể đổi sau khi tạo."
+                        aria-label="Chú ý tên đăng nhập!"
+                        class="ml-1 inline-flex items-center border-0 bg-transparent p-0 text-gray-400 cursor-help hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
+                  <span nz-icon nzType="exclamation-circle" nzTheme="outline" aria-hidden="true"></span>
+                </button>
+              </nz-form-label>
+              <nz-form-control nzErrorTip="Tên đăng nhập gồm 4–100 chữ ASCII, số, dấu chấm hoặc gạch dưới">
+                <input nz-input id="user-username" formControlName="username" maxlength="100" autocomplete="off" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-fullname" nzRequired>Họ và tên</nz-form-label>
+              <nz-form-control nzErrorTip="Nhập họ tên không trắng, tối đa 100 ký tự">
+                <input nz-input id="user-fullname"
+                       formControlName="fullName"
+                       maxlength="100" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-email" nzRequired>Email</nz-form-label>
+              <nz-form-control nzErrorTip="Nhập email đúng định dạng">
+                <input nz-input id="user-email"
+                       formControlName="email" type="email"
+                       autocomplete="off" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-phone">Điện thoại
+                <button type="button" nz-tooltip
+                        nzTooltipTitle="Không bắt buộc khi tạo. Chưa hỗ trợ xóa số đã lưu, chỉ có thể thay số mới."
+                        aria-label="Hướng dẫn nhập điện thoại"
+                        class="ml-1 inline-flex items-center border-0 bg-transparent p-0 text-gray-400 cursor-help hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
+                  <span nz-icon nzType="exclamation-circle" nzTheme="outline" aria-hidden="true"></span>
+                </button>
+              </nz-form-label>
+              <nz-form-control nzErrorTip="Số điện thoại gồm 0 hoặc +84 và 9 chữ số">
+                <input nz-input id="user-phone"
+                       formControlName="phone"
+                       type="tel" />
+              </nz-form-control>
+            </nz-form-item>
+          }
+          @if (mode === 'create' || mode === 'roles') {
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-roles" nzRequired>
+                Vai trò
+                <button type="button" nz-tooltip
+                        nzTooltipTitle="Vai trò gắn với hồ sơ Bác sĩ/Bệnh nhân được giữ bắt buộc. Chỉ quản trị hệ thống được
+                        cấp SUPER_ADMIN. Thay đổi vai trò sẽ kết thúc các phiên đăng nhập cũ của tài khoản."
+                        aria-label="Thông tin về vai trò"
+                        class="ml-1 inline-flex items-center border-0 bg-transparent p-0 text-gray-400 cursor-help hover:text-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500">
+                  <span nz-icon nzType="exclamation-circle" nzTheme="outline" aria-hidden="true"></span>
+                </button>
+              </nz-form-label>
+              <nz-form-control nzErrorTip="Chọn ít nhất một vai trò">
+                <nz-select nzId="user-roles" formControlName="roles" nzMode="multiple"
+                           nzPlaceHolder="Chọn vai trò">@for (option of roleOptions; track option.id) {
+                  <nz-option [nzValue]="option.name" [nzLabel]="labels[option.name]"
+                             [nzDisabled]="pinnedRole(option.name)" />
+                }</nz-select>
+              </nz-form-control>
+            </nz-form-item>
+            @if (mode === 'create') {
+              <p class="field-hint">Tại đây tạo tài khoản nội bộ. Bác sĩ được cấp qua luồng tạo hồ sơ bác sĩ; bệnh nhân
+                dùng đăng ký bệnh nhân.</p>
+            }
+          }
+          @if (patientContext && mode === 'status') {
+            <p class="field-hint">Bạn đang thay đổi trạng thái toàn bộ tài khoản liên kết, bao gồm các vai trò khác của người dùng. Đây không phải xóa hồ sơ bệnh nhân; các lịch hẹn và lịch sử vẫn được giữ nguyên.</p>
+          }
+          @if (mode === 'status') {
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-status" nzRequired>Trạng thái</nz-form-label>
+              <nz-form-control>
+                <nz-select nzId="user-status" formControlName="status">
+                  <nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" />
+                  <nz-option nzValue="INACTIVE" nzLabel="Đã khóa" />
+                </nz-select>
+              </nz-form-control>
+            </nz-form-item>
+            <p class="field-hint">Khóa/mở tài khoản sẽ kết thúc các phiên đăng nhập cũ. Hồ sơ và các lịch
+              hẹn đã có được giữ nguyên.</p>
+          }
+          @if (mode === 'deactivate') {
+            <p>Tài khoản sẽ bị vô hiệu hóa và kết thúc các phiên đăng nhập. Hồ sơ, vai trò, lịch hẹn và lịch sử được giữ
+              nguyên. Có thể mở lại bằng chức năng Khóa / mở tài khoản.</p>
+          }
+          @if (passwordMode) {
+            @if (mode === 'self-password') {
+              <nz-form-item>
+                <nz-form-label class="mt-2" nzFor="user-current-password" nzRequired>Mật khẩu hiện tại</nz-form-label>
+                <nz-form-control nzErrorTip="Nhập mật khẩu hiện tại">
+                  <input nz-input type="password"
+                         id="user-current-password"
+                         formControlName="currentPassword"
+                         autocomplete="current-password" />
+                </nz-form-control>
+              </nz-form-item>
+            }
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-new-password"
+                             nzRequired>{{ mode === 'create' ? 'Mật khẩu' : 'Mật khẩu mới' }}
+              </nz-form-label>
+              <nz-form-control nzErrorTip="Mật khẩu dài 6–100 ký tự và không chỉ chứa khoảng trắng">
+                <input nz-input
+                       type="password"
+                       id="user-new-password"
+                       formControlName="newPassword"
+                       autocomplete="new-password"
+                       maxlength="100" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label class="mt-2" nzFor="user-confirm-password" nzRequired>Xác nhận mật khẩu</nz-form-label>
+              <nz-form-control nzErrorTip="Nhập lại mật khẩu">
+                <input nz-input type="password" id="user-confirm-password"
+                       formControlName="confirmPassword"
+                       autocomplete="new-password" maxlength="100" />
+              </nz-form-control>
+            </nz-form-item>
+            <p class="field-hint">Giữ nguyên dấu cách trong mật
+              khẩu. {{ mode === 'self-password' ? 'Đổi thành công sẽ đưa bạn về đăng nhập.' : mode === 'password' ? 'Đặt lại mật khẩu sẽ kết thúc các phiên đăng nhập của tài khoản này.' : '' }}</p>
+          }
+        </nz-card>
+        <nz-card [nzBodyStyle]="{ padding: '16px' }">
+          <h4 class="card-heading">
+            <nz-icon nzType="info-circle" />
+            Thông tin liên quan
+          </h4>
+          @if (target(); as user) {
+            <p>Trạng thái: {{ user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}</p>
+            <p>Vai trò:
+              @for (role of user.roles; track role.id) {
+                <span>{{ labels[role.name] || role.name }} </span>
+              }
+            </p>
+            <p>Hồ sơ bác sĩ: {{ user.doctorId ? '#' + user.doctorId : 'Chưa có' }}</p><p>Hồ sơ bệnh
+              nhân: {{ user.patientId ? '#' + user.patientId : 'Chưa có' }}</p>
+          } @else {
+            <p>{{ mode === 'create' ? 'Tài khoản mới mặc định đang hoạt động.' : 'Mật khẩu hiện tại bắt buộc khi đổi mật khẩu cá nhân.' }}</p>
+          }
+        </nz-card>
+      </div>
+    </form>
+  </ng-template>
+</div>

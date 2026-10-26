@@ -44,4 +44,9 @@ export class ApiConstants{
   public static readonly ROOM_ADMIN_COMMON = this.API_ADMIN('rooms');
   public static readonly ROOM_ADMIN_SEARCH = this.API_ADMIN('rooms/search');
   public static readonly ROOM_ADMIN_AVAILABILITY = this.API_ADMIN('rooms/availability/search');
+  public static readonly USER_ADMIN_COMMON = this.API_ADMIN('users');
+  public static readonly USER_ADMIN_SEARCH = this.API_ADMIN('users/search');
+  public static readonly ROLE_ADMIN_COMMON = this.API_ADMIN('roles');
+  public static readonly PATIENT_ADMIN_COMMON = this.API_ADMIN('patients');
+  public static readonly PATIENT_ADMIN_SEARCH = this.API_ADMIN('patients/search');
 }

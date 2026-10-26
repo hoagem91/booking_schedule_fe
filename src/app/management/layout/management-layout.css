@@ -89,6 +89,15 @@ a, button {
   gap: 7px
 }
 
+.primary-navigation {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sidebar .brand, .sidebar .nav-caption, .mobile-nav .brand, .mobile-nav .nav-caption, .mobile-heading {
+  flex-shrink: 0;
+}
+
 .sidebar nav a, .mobile-nav nav a {
   display: flex;
   align-items: center;
@@ -117,10 +126,17 @@ a, button {
 
 .sidebar-bottom {
   display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.sidebar-presence {
+  display: flex;
   gap: 9px;
   align-items: center;
-  margin-top: auto;
-  padding: 18px 12px 0;
+  padding: 12px 14px 0;
   font-size: 10px;
   color: #a1bfaf
 }
@@ -141,11 +157,11 @@ a, button {
 }
 
 .topbar {
-  min-height: 82px;
+  min-height: 56px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 32px;
+  padding: 8px 16px;
   background: #fff;
   border-bottom: 1px solid #e3eae5;
   gap: 18px
@@ -214,7 +230,7 @@ a, button {
 }
 
 main {
-  padding: 25px 32px 38px;
+  padding: 18px 32px;
   flex: 1;
   min-width: 0;
   outline: none
@@ -231,6 +247,28 @@ main {
 
 .breadcrumb a:hover {
   color: #176e5d
+}
+
+.route-content {
+  position: relative;
+  min-height: 180px;
+}
+
+.content-navigation-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background: rgb(244 247 245 / 88%);
+  color: #41644e;
+  font-size: 14px;
+}
+
+.content-navigation-loading nz-icon {
+  font-size: 20px;
 }
 
 .breadcrumb [aria-current] {
@@ -277,16 +315,17 @@ main {
   display: none
 }
 
-.collapsed .sidebar nav {
+.collapsed .sidebar .primary-navigation {
   margin-top: 48px
 }
 
 .collapsed .sidebar nav a {
-  padding-inline: 14px
+  padding-inline: 19px
 }
 
-.collapsed .sidebar-bottom {
-  justify-content: center
+.collapsed .sidebar .sidebar-presence {
+  justify-content: center;
+  padding-inline: 0;
 }
 
 .mobile-toggle {
@@ -308,6 +347,11 @@ main {
   background: #132e2780
 }
 
+.mobile-nav[open] {
+  display: flex;
+  flex-direction: column;
+}
+
 .mobile-heading {
   display: flex;
   justify-content: space-between;
@@ -324,7 +368,7 @@ main {
 }
 
 .mobile-nav .sidebar-bottom {
-  margin-top: 40px
+  margin-top: auto
 }
 
 .logout-error {

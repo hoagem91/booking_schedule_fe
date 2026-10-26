@@ -1,0 +1,95 @@
+:host {
+  display: block;
+}
+
+.users-toolbar, .users-filters, .users-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.users-toolbar {
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.users-filters {
+  flex: 1;
+  height: 32px;
+}
+
+.users-filters nz-input-group {
+  width: 300px;
+  height: 100%;
+}
+
+.users-filters nz-select {
+  width: 210px;
+}
+
+.users-error {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #fff2ef;
+  color: #ac302b;
+  border-radius: 6px;
+}
+
+.user-action[data-action="view"] {
+  --action-color: #2563eb;
+}
+
+.user-action[data-action="edit"] {
+  --action-color: #0891b2;
+}
+
+.user-action[data-action="status"] {
+  --action-color: #d97706;
+}
+
+.user-action[data-action="status"][data-status="ACTIVE"] {
+  --action-color: #16a34a;
+}
+
+.user-action[data-action="roles"] {
+  --action-color: #7c3aed;
+}
+
+.user-action[data-action="password"] {
+  --action-color: #c026d3;
+}
+
+.user-action[data-action="deactivate"] {
+  --action-color: #dc2626;
+}
+
+.user-action[data-action="audit"] {
+  --action-color: #475569;
+}
+
+.user-action.ant-btn {
+  color: var(--action-color);
+}
+
+.user-action.ant-btn:not(:disabled):hover,
+.user-action.ant-btn:not(:disabled):focus-visible {
+  color: var(--action-color);
+  background-color: #f1f5f9;
+}
+
+.user-action.ant-btn:disabled {
+  color: #bfbfbf;
+  opacity: .65;
+}
+
+@media (max-width: 640px) {
+  .users-filters, .users-filters nz-input-group, .users-filters nz-select {
+    width: 100%;
+  }
+
+  .users-actions {
+    margin-left: auto;
+  }
+}
+

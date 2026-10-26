@@ -16,14 +16,14 @@
         </div>
       </div>
 
-      <div class="flex items-end flex-wrap justify-end gap-1">
+      <div class="flex items-end flex-wrap justify-end gap-2">
         @if (hasRole('ADMIN') || hasRole('SUPER_ADMIN')) {
           <button nz-button nzType="primary" type="button" (click)="onOpenDetail()">
             <nz-icon nzType="plus" nzTheme="outline" />
             Tạo chuyên khoa
           </button>
         }
-        <div class="appointments-toolbar__actions">
+        <div class="flex items-center flex-wrap gap-2">
           <app-share-button icon="reload" tooltip="Tải lại dữ liệu" (buttonClick)="loadData()" />
           <app-setting-table [tableKey]="'specialty'" [tableColumnData]="tableColumns"
                              (tableColumnDataOutput)="setDataTableColumns($event)" />

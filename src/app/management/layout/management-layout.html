@@ -22,16 +22,33 @@
       </svg>
       <span class="brand-copy">Booking Schedule<small>QUẢN LÝ KHÁM</small></span></a>
     <p class="nav-caption">KHÔNG GIAN LÀM VIỆC</p>
-    <nav aria-label="Điều hướng quản lý">
+    <nav class="primary-navigation" aria-label="Điều hướng quản lý">
       @for (item of menu(); track item.path) {
         <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [title]="item.label"
            (click)="closeNav()">
-          <span class="nav-symbol" aria-hidden="true">{{ item.symbol }}</span><span
-          class="nav-label">{{ item.label }}</span>
+          <nz-icon
+            [nzType]="item.symbol"
+            nzTheme="outline"
+            class="!text-lg"
+          />
+          <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot" aria-hidden="true"></span><span class="nav-label">Cùng phối hợp chăm sóc</span>
+    <div class="sidebar-bottom">
+      @if (accountMenu(); as item) {
+        <nav class="account-navigation" aria-label="Điều hướng tài khoản">
+          <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page" [title]="item.label"
+             (click)="closeNav()">
+            <nz-icon [nzType]="item.symbol" nzTheme="outline" class="!text-lg" />
+            <span class="nav-label">{{ item.label }}</span>
+          </a>
+        </nav>
+      }
+      <div class="sidebar-presence">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="nav-label">Cùng phối hợp chăm sóc</span>
+      </div>
     </div>
   </ng-template>
   <aside class="sidebar">
@@ -71,7 +88,17 @@
       }
       <nav class="breadcrumb" aria-label="Đường dẫn"><a routerLink="/management">Quản lý</a><span
         aria-hidden="true">/</span><span aria-current="page">{{ pageTitle() }}</span></nav>
-      <router-outlet />
+      <section class="route-content" [attr.aria-busy]="navigating()">
+        <div class="route-body" [attr.inert]="navigating() ? '' : null">
+          <router-outlet />
+        </div>
+        @if (navigating()) {
+          <div class="content-navigation-loading" role="status" aria-live="polite">
+            <nz-icon nzType="loading" nzSpin aria-hidden="true" />
+            <span>Đang tải nội dung…</span>
+          </div>
+        }
+      </section>
     </main>
     <footer class="workspace-footer"><span>Booking Schedule</span><span>Chủ động lịch khám · Kết nối chăm sóc</span>
     </footer>

@@ -68,12 +68,12 @@
     }
   </ng-template>
   <ng-template #actionsCell let-data>
-    <button nz-button nzType="text" nzSize="small" type="button" aria-label="Xem chi tiết dịch vụ" nz-tooltip
+    <button class="!text-blue-500 text-sm" nz-button nzType="text" nzSize="small" type="button" aria-label="Xem chi tiết dịch vụ" nz-tooltip
             nzTooltipTitle="Xem chi tiết" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id, true)">
       <nz-icon nzType="eye" />
     </button>
     @if (canWrite) {
-      <button nz-button nzType="text" nzSize="small" type="button" aria-label="Sửa dịch vụ" nz-tooltip
+      <button class="!text-blue-500 text-sm" nz-button nzType="text" nzSize="small" type="button" aria-label="Sửa dịch vụ" nz-tooltip
               nzTooltipTitle="Sửa dịch vụ" [disabled]="!!pendingAction()" (click)="onOpenDetail(data.id)">
         <nz-icon nzType="edit" />
       </button>
@@ -81,7 +81,13 @@
               [attr.aria-label]="data.status === 'ACTIVE' ? 'Ngừng hoạt động dịch vụ' : 'Bật dịch vụ'" nz-tooltip
               [nzTooltipTitle]="data.status === 'ACTIVE' ? 'Ngừng hoạt động' : 'Bật dịch vụ'"
               [disabled]="!!pendingAction()" (click)="onAction(data, 'status')">
-        <nz-icon nzType="poweroff" />
+        <nz-icon
+          nzType="poweroff"
+          nzTheme="outline"
+          [class.!text-green-500]="data.status === 'ACTIVE'"
+          [class.!text-red-600]="data.status !== 'ACTIVE'"
+          class="!text-sm"
+        />
       </button>
       <button nz-button nzType="text" nzSize="small" nzDanger type="button" aria-label="Xóa dịch vụ" nz-tooltip
               nzTooltipTitle="Xóa dịch vụ" [disabled]="!!pendingAction()" (click)="onAction(data, 'delete')">

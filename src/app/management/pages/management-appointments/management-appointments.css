@@ -1,12 +1,50 @@
 @import '../../../styles/shared-list.css';
 
-.appointments-toolbar { min-width: 0; margin-bottom: 16px; }
-.appointments-toolbar__row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.appointments-toolbar__search { flex: 1 1 250px; min-width: 0; max-width: 480px; }
-.appointments-toolbar__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.appointments-search-button { padding: 0 3px; border: 0; background: transparent; color: #175657; cursor: pointer; }
-.appointments-search-button:focus-visible { outline: 2px solid #175657; outline-offset: 3px; }
-@media (max-width: 600px) { .appointments-toolbar__search { flex-basis: 100%; max-width: none; } }
+.appointments-toolbar {
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.appointments-toolbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.appointments-toolbar__search {
+  flex: 1 1 250px;
+  min-width: 0;
+  max-width: 480px;
+}
+
+.appointments-toolbar__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.appointments-search-button {
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: #175657;
+  cursor: pointer;
+}
+
+.appointments-search-button:focus-visible {
+  outline: 2px solid #175657;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .appointments-toolbar__search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
 
 .filters {
   display: grid;
@@ -15,7 +53,10 @@
   padding: 22px 24px;
 }
 
-.filter.keyword { grid-column: span 2; }
+.filter.keyword {
+  grid-column: span 2;
+}
+
 .filter label {
   display: block;
   margin-bottom: 8px;
@@ -23,6 +64,7 @@
   font-size: 11px;
   font-weight: 600;
 }
+
 .filter input, .filter select {
   width: 100%;
   min-width: 0;
@@ -35,22 +77,29 @@
   font: inherit;
   font-size: 12px;
 }
+
 .filter input:focus, .filter select:focus {
   outline: 2px solid #b7d1b1;
   border-color: #739b68;
 }
+
 .filter-actions {
   display: flex;
   align-items: flex-end;
   gap: 10px;
   grid-column: span 2;
 }
+
 .validation {
   grid-column: 1 / -1;
   color: #a73e34;
   font-size: 12px;
 }
-.validation:empty { display: none; }
+
+.validation:empty {
+  display: none;
+}
+
 .appointment-cell {
   display: grid;
   gap: 5px;
@@ -58,23 +107,56 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.appointment-status-tag { margin-inline-end: 0; }
-.appointment-cell strong { color: #354e32; font-size: 14px; font-weight: 600; }
-.appointment-cell small { color: #7a8b73; font-size: 12px; }
+
+.appointment-status-tag {
+  margin-inline-end: 0;
+}
+
+.appointment-cell strong {
+  color: #354e32;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.appointment-cell small {
+  color: #7a8b73;
+  font-size: 12px;
+}
 
 @media (max-width: 1100px) {
-  .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .filter-actions { grid-column: span 3; }
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .filter-actions {
+    grid-column: span 3;
+  }
 }
+
 @media (max-width: 760px) {
-  .filters { padding: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
-  .filter-actions { grid-column: span 2; flex-wrap: wrap; }
+  .filters {
+    padding: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+  }
+
+  .filter-actions {
+    grid-column: span 2;
+    flex-wrap: wrap;
+  }
 }
+
 @media (max-width: 380px) {
-  .filters { grid-template-columns: minmax(0, 1fr); }
-  .filter.keyword, .filter-actions { grid-column: span 1; }
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter.keyword, .filter-actions {
+    grid-column: span 1;
+  }
 }
-::ng-deep .ant-form-item{
+
+::ng-deep .ant-form-item {
   margin-bottom: 8px !important;
 }
 
@@ -110,11 +192,12 @@
 ::ng-deep .view-mode .ant-select-disabled .ant-select-arrow {
   color: #bfbfbf !important;
 }
+
 ::ng-deep .view-mode .ant-input-disabled::-webkit-input-placeholder,
 ::ng-deep .view-mode .ant-picker-disabled .ant-picker-input > input::-webkit-input-placeholder {
   color: #bfbfbf !important;
 }
 
-::ng-deep .ant-input-number-out-of-range input{
+::ng-deep .ant-input-number-out-of-range input {
   color: #000000 !important;
 }
