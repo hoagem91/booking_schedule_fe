@@ -34,6 +34,8 @@ import { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppointmentActionDialog, AppointmentActionDialogData } from '../../appointment-workflow/appointment-action-dialog';
 import { AppointmentActionResult, appointmentActions } from '../../appointment-workflow/appointment-actions.policy';
+import { TimeUtils } from '../../../utils/time.utils';
+import { AppointmentConstants } from '../../../constants/appointment/appointment.constants';
 
 @Component({
   standalone: true,
@@ -85,8 +87,8 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Bệnh nhân',
       key: 'patientName',
       align: 'left',
-      width: 180,
-      minWidth: 160,
+      width: 220,
+      minWidth: 200,
       visible: true,
       render: 'custom',
       ellipsis: false
@@ -105,8 +107,8 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Số điện thoại',
       key: 'patientPhone',
       align: 'left',
-      width: 160,
-      minWidth: 140,
+      width: 140,
+      minWidth: 120,
       visible: true,
       render: 'text',
       allowCopy: true
@@ -115,8 +117,8 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Bác sĩ / Dịch vụ',
       key: 'doctorName',
       align: 'left',
-      width: 180,
-      minWidth: 160,
+      width: 140,
+      minWidth: 120,
       visible: true,
       render: 'custom',
       ellipsis: false
@@ -143,12 +145,19 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
     {
       title: 'Ngày, giờ khám',
       key: 'appointmentDate',
+      filterKey: 'appointmentDate',
       align: 'center',
-      width: 160,
-      minWidth: 140,
+      width: 140,
+      minWidth: 120,
       visible: true,
       render: 'custom',
-      ellipsis: false
+      ellipsis: false,
+      filterOption: {
+        allowFilter: true,
+        filterType: 'dateRange',
+        dateOnly: true,
+        filterData:[]
+      }
     },
     {
       title: 'Giờ bắt đầu',
@@ -172,8 +181,8 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       title: 'Giá dịch vụ',
       key: 'servicePrice',
       align: 'right',
-      width: 140,
-      minWidth: 120,
+      width: 120,
+      minWidth: 110,
       visible: true,
       render: 'text',
       pipeName: 'displayCurrency'
@@ -243,7 +252,12 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       minWidth: 130,
       visible: true,
       render: 'custom',
-      ellipsis: false
+      ellipsis: false,
+      filterOption: {
+        allowFilter: true,
+        filterMultiple: false,
+        filterData: AppointmentConstants.ListAppointmentStatus
+      }
     },
     {
       title: 'Đủ điều kiện đánh giá',
@@ -303,11 +317,27 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
       render: 'actions'
     }
   ];
-
+  protected onDateRangeChange(event: { key: string; start: string | null; end: string | null }): void {
+    if (event.key !== 'appointmentDate') return;
+    this.searchForm.patchValue({
+      fromDate: event.start,
+      toDate: event.end
+    }, { emitEvent: false });
+    this.currentPage = 1;
+    this.doLoadData();
+  }
+  override get searchFormValue(){
+    const formValue = this.searchForm.value;
+    return {
+      keyword: formValue.keyword?.trim() || null,
+      status: formValue.status  ?? null,
+      fromDate: formValue.fromDate ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.fromDate)) : null,
+      toDate: formValue.toDate ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.toDate)) : null,
+    }
+  }
   protected override loadData(): void {
     const body : any ={
-      ...this.searchForm.value,
-      keyword: this.searchForm.controls['keyword'].value?.trim() || null,
+      ...this.searchFormValue
     }
     this.request?.unsubscribe();
     this.isLoadingDataSource.set(true);

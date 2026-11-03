@@ -29,22 +29,30 @@ import {
 import { userErrorMessage } from '../../../../utils/user/user-error.utils';
 import { assignableUserRoles, userActionAllowed, userIsAdmin, userRolesError } from '../user-policy';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
-import { userEmailValidator, userPhoneValidator, userUsernameValidator } from '../../../../utils/user/user-form.validators';
+import {
+  userEmailValidator,
+  userPhoneValidator,
+  userUsernameValidator
+} from '../../../../utils/user/user-form.validators';
+import { UserDetail } from '../user-detail/user-detail';
 
 @Component({
   selector: 'app-user-editor',
-  imports: [ReactiveFormsModule, RouterLink, NzButtonModule, NzIconModule, NzInputModule, NzFormModule, NzCardModule, NzSelectModule, ShowLoadingDirective, NzTooltipDirective],
+  imports: [ReactiveFormsModule, RouterLink, NzButtonModule, NzIconModule, NzInputModule, NzFormModule, NzCardModule, NzSelectModule, ShowLoadingDirective, NzTooltipDirective, UserDetail],
   templateUrl: './user-editor.html', styleUrl: './user-editor.css'
 })
 export class UserEditor extends BaseFormComponent {
-  private readonly data = inject<{ mode: UserEditorMode; id?: number; context?: 'patient' }>(NZ_DRAWER_DATA);
+  protected readonly data = inject<{ mode: UserEditorMode; id?: number; context?: 'patient' | 'doctor' }>(NZ_DRAWER_DATA);
   private readonly drawer = inject(NzDrawerRef);
   private readonly api = inject(ManagementUsersService);
   private readonly auth = inject(AuthService);
   private readonly message = inject(NzMessageService);
-  protected readonly mode = this.data.mode;
-  protected readonly title = USER_EDITOR_TITLES[this.mode];
+  protected mode = this.data.mode;
+  protected get title(): string {
+    return USER_EDITOR_TITLES[this.mode];
+  }
   protected readonly patientContext = this.data.context === 'patient';
+  protected readonly doctorContext = this.data.context === 'doctor';
   protected readonly labels = USER_ROLE_LABELS;
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
@@ -54,7 +62,7 @@ export class UserEditor extends BaseFormComponent {
   private catalog: AdminRole[] = [];
 
   protected get profileMode(): boolean {
-    return ['create', 'edit', 'view'].includes(this.mode);
+    return ['create', 'edit'].includes(this.mode);
   }
 
   protected get passwordMode(): boolean {
@@ -155,6 +163,27 @@ export class UserEditor extends BaseFormComponent {
       },
       error: error => this.formError.set(userErrorMessage(error, 'Không thể tải dữ liệu tài khoản. Vui lòng thử lại.'))
     });
+  }
+
+  protected onDetailAction(event: { action: UserEditorMode; user: AdminUser }): void {
+    if (!userActionAllowed(this.currentUser(), event.user, event.action)) {
+      this.message.warning('Bạn không có quyền thực hiện thao tác này.');
+      return;
+    }
+    this.mode = event.action;
+    this.target.set(event.user);
+    this.saveForm.patchValue({
+      username: event.user.username,
+      fullName: event.user.fullName,
+      email: event.user.email,
+      phone: event.user.phone ?? '',
+      roles: event.user.roles.map(role => role.name),
+      status: event.user.status
+    }, { emitEvent: false });
+    this.applyMode();
+    if (this.mode === 'roles' && !this.catalog.length) {
+      this.load();
+    }
   }
 
   protected override handleCancel(): void {

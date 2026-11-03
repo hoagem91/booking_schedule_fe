@@ -1,0 +1,127 @@
+<form class="doctors-toolbar" [formGroup]="searchForm" (ngSubmit)="onBtnSearch()">
+  <div class="doctors-filters">
+    <nz-input-group [nzSuffix]="searchIcon">
+      <input nz-input formControlName="keyword" aria-label="Tìm bác sĩ"
+             placeholder="Mã bác sĩ, họ tên, tài khoản, email, điện thoại" />
+    </nz-input-group>
+    <ng-template #searchIcon>
+      <button type="submit" nz-button nzType="text" aria-label="Tìm kiếm bác sĩ">
+        <nz-icon nzType="search" />
+      </button>
+    </ng-template>
+    <nz-select formControlName="specialtyId" nzAllowClear nzShowSearch nzPlaceHolder="Tất cả chuyên khoa"
+               [nzLoading]="specialtyLoading()" aria-label="Lọc chuyên khoa">
+      @for (item of specialties(); track item.id) {
+        <nz-option [nzValue]="item.id"
+                   [nzLabel]="item.name + (item.status === 'INACTIVE' ? ' (Ngừng hoạt động)' : '')" />
+      }
+    </nz-select>
+    <nz-select formControlName="status" nzAllowClear nzPlaceHolder="Tất cả hồ sơ"
+               aria-label="Lọc trạng thái hồ sơ bác sĩ">
+      <nz-option nzValue="ACTIVE" nzLabel="Hồ sơ đang hoạt động" />
+      <nz-option nzValue="INACTIVE" nzLabel="Hồ sơ ngừng hoạt động" />
+    </nz-select>
+    <nz-select formControlName="userStatus" nzAllowClear nzPlaceHolder="Tất cả tài khoản"
+               aria-label="Lọc trạng thái tài khoản">
+      <nz-option nzValue="ACTIVE" nzLabel="Tài khoản đang hoạt động" />
+      <nz-option nzValue="INACTIVE" nzLabel="Tài khoản đã khóa" />
+    </nz-select>
+  </div>
+  <div class="doctors-actions">
+    @if (isAdmin) {
+      <button nz-button nzType="primary" type="button" [disabled]="drawerOpen()" (click)="openForm()">
+        <nz-icon nzType="plus" />
+        Tạo hồ sơ bác sĩ
+      </button>
+    }
+    <button nz-button type="button" aria-label="Tải lại bác sĩ" (click)="loadData()">
+      <nz-icon nzType="reload" />
+    </button>
+    <app-setting-table tableKey="management-doctors" [tableColumnData]="tableColumns"
+                       (tableColumnDataOutput)="setDataTableColumns($event)" />
+  </div>
+</form>
+@if (specialtyError()) {
+  <div class="doctors-error" role="alert">{{ specialtyError() }}
+    <button nz-button (click)="loadSpecialties()">Tải lại chuyên khoa</button>
+  </div>
+}
+@if (listError()) {
+  <div class="doctors-error" role="alert">{{ listError() }}
+    <button nz-button (click)="loadData()">Thử lại</button>
+  </div>
+}
+<app-share-table [actionsTemplate]="actionsCell" [expandConfig]="{ expandRow: false, expandMultiple: false }"
+                 [columns]="_visibleColumns"
+                 [dataSource]="dataSource" [loading]="isLoadingDataSource()" [total]="total" [currentPage]="currentPage"
+                 [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50]"
+                 [showTotal]="true" paginationItemLabel="bác sĩ" [scrollY]="tableScrollY" [scrollX]="tableScrollX"
+                 (queryParamsChange)="onQueryParamsChange($event)">
+  <ng-template #customCell let-data let-column="column">
+    @if (column.key === 'status') {
+      <nz-tag
+        [nzColor]="data.status === 'ACTIVE' ? 'green' : 'orange'">{{ data.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+      </nz-tag>
+    }
+    @if (column.key === 'userStatus') {
+      <nz-tag
+        [nzColor]="data.userStatus === 'ACTIVE' ? 'green' : 'red'">{{ data.userStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
+      </nz-tag>
+    }
+  </ng-template>
+  <ng-template #actionsCell let-data>
+    <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="view"
+            aria-label="Xem hồ sơ bác sĩ" nz-tooltip nzTooltipTitle="Xem hồ sơ" [disabled]="drawerOpen()"
+            (click)="openForm(data, true)">
+      <nz-icon nzType="eye" />
+    </button>
+    @if (canEdit(data)) {
+      <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="edit"
+              aria-label="Sửa hồ sơ bác sĩ" nz-tooltip nzTooltipTitle="Sửa hồ sơ" [disabled]="drawerOpen()"
+              (click)="openForm(data)">
+        <nz-icon nzType="edit" />
+      </button>
+    }
+    @if (canAct(data, 'status')) {
+      <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="status"
+              aria-label="Đổi trạng thái hồ sơ bác sĩ" nz-tooltip nzTooltipTitle="Đổi trạng thái hồ sơ"
+              [disabled]="drawerOpen()" (click)="openAction(data, 'status')">
+        <nz-icon nzType="sync" />
+      </button>
+    }
+    <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="schedules"
+            aria-label="Ca làm việc của bác sĩ" nz-tooltip nzTooltipTitle="Ca làm việc" [disabled]="drawerOpen()"
+            (click)="openActivity(data, 'schedules')">
+      <nz-icon nzType="schedule" />
+    </button>
+    <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="appointments"
+            aria-label="Lịch hẹn của bác sĩ" nz-tooltip nzTooltipTitle="Lịch hẹn" [disabled]="drawerOpen()"
+            (click)="openActivity(data, 'appointments')">
+      <nz-icon nzType="calendar" />
+    </button>
+    <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="audit"
+            aria-label="Nhật ký hồ sơ bác sĩ" nz-tooltip nzTooltipTitle="Nhật ký hồ sơ" [disabled]="drawerOpen()"
+            (click)="openActivity(data, 'audit')">
+      <nz-icon nzType="clock-circle" />
+    </button>
+    <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="account"
+            aria-label="Xem tài khoản bác sĩ" nz-tooltip nzTooltipTitle="Tài khoản liên kết" [disabled]="drawerOpen()"
+            (click)="openAccount(data, 'view')">
+      <nz-icon nzType="user" />
+    </button>
+    @if (canChangeAccount(data)) {
+      <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="account-status"
+              aria-label="Khóa / mở tài khoản bác sĩ" nz-tooltip nzTooltipTitle="Khóa / mở tài khoản đăng nhập"
+              [disabled]="drawerOpen()" (click)="openAccount(data, 'status')">
+        <nz-icon nzType="poweroff" />
+      </button>
+    }
+    @if (canAct(data, 'deactivate')) {
+      <button nz-button nzType="text" nzSize="small" class="doctor-action" data-action="deactivate"
+              aria-label="Vô hiệu hóa hồ sơ bác sĩ" nz-tooltip nzTooltipTitle="Vô hiệu hóa hồ sơ (giữ lịch sử)"
+              [disabled]="drawerOpen()" (click)="openAction(data, 'deactivate')">
+        <nz-icon nzType="stop" />
+      </button>
+    }
+  </ng-template>
+</app-share-table>

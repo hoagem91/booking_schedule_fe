@@ -1,5 +1,5 @@
 ﻿export type InternalRole = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR';
-export type ManagementPermission = 'workspace:view' | 'appointments:read' | 'appointments:update-status' | 'services:read' | 'rooms:read' | 'users:read' | 'patients:read';
+export type ManagementPermission = 'workspace:view' | 'appointments:read' | 'appointments:update-status' | 'services:read' | 'rooms:read' | 'users:read' | 'patients:read' | 'doctors:read';
 
 // Matches UserResponse / RoleResponse from GET /users/me.
 export interface ManagementUser {
@@ -72,6 +72,7 @@ export const managementNavigation: {
     permission: 'rooms:read'
   },
   { label: 'Hồ sơ bệnh nhân', path: '/management/patients', symbol: 'user', permission: 'patients:read' },
+  { label: 'Hồ sơ bác sĩ', path: '/management/doctors', symbol: 'medicine-box', permission: 'doctors:read' },
   {
     label: 'Quản lý tài khoản',
     path: '/management/users',
@@ -88,7 +89,7 @@ export function hasManagementPermission(user: ManagementUser | null, permission:
   if (user?.status !== 'ACTIVE') return false;
   const roles = internalRoles(user);
   if (permission === 'workspace:view') return roles.length > 0;
-  if (permission === 'users:read' || permission === 'patients:read') return roles.some(role => ['SUPER_ADMIN', 'ADMIN'].includes(role));
+  if (permission === 'users:read' || permission === 'patients:read' || permission === 'doctors:read') return roles.some(role => ['SUPER_ADMIN', 'ADMIN'].includes(role));
   return ['appointments:read', 'appointments:update-status', 'services:read', 'rooms:read'].includes(permission)
     && roles.some(role => ['SUPER_ADMIN', 'ADMIN', 'STAFF'].includes(role));
 }
@@ -101,6 +102,6 @@ export function managementHome(user: ManagementUser | null): string {
 
 export function safeManagementReturnUrl(url: string | null | undefined): string | null {
   // Reject external URLs, login loops, recovery pages and unimplemented routes.
-  if (!url || !/^\/management\/(dashboard|account|services|rooms|users|patients|appointments(?:\/review|\/[1-9]\d*)?)(?:\?[^#]*)?$/.test(url)) return null;
+  if (!url || !/^\/management\/(dashboard|account|services|rooms|users|patients|doctors|appointments(?:\/review|\/[1-9]\d*)?)(?:\?[^#]*)?$/.test(url)) return null;
   return url;
 }

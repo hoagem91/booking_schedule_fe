@@ -43,6 +43,7 @@
     [scrollY]="tableScrollY"
     [scrollX]="tableScrollX"
     (queryParamsChange)="onQueryParamsChange($event)"
+    (dateRangeChange)="onDateRangeChange($event)"
   >
     <ng-template #customCell let-appointment let-column="column">
       @switch (column.key) {
@@ -79,7 +80,7 @@
     <ng-template #actionsCell let-data>
       <button (click)="onOpenDetail(data.id, true)" nz-button nzType="text" nzSize="small"
               class="!text-blue-500 disabled:opacity-50" nz-tooltip nzTooltipTitle="Xem chi tiết">
-        <nz-icon nzType="eye" class="!text-lg" nzTheme="outline" />
+        <nz-icon nzType="eye" nzTheme="outline" />
       </button>
       @if (hasPermission('appointments:update-status')) {
         <button
@@ -92,7 +93,7 @@
           nzTooltipTitle="Xử lý lịch hẹn"
           (click)="openWorkflow(data)"
         >
-          <nz-icon nzType="tool" class="!text-lg" nzTheme="outline" />
+          <nz-icon nzType="tool" nzTheme="outline" />
         </button>
       }
       @if (canCancel(data)) {
@@ -108,7 +109,7 @@
         [disabled]="cancelDialogOpen()"
         (click)="onCancel(data)"
       >
-        <nz-icon nzType="close-circle" class="!text-lg" nzTheme="outline" />
+        <nz-icon nzType="close-circle" nzTheme="outline" />
       </button>
       }
     </ng-template>

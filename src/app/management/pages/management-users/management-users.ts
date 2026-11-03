@@ -19,6 +19,7 @@ import { userErrorMessage } from '../../../utils/user/user-error.utils';
 import { userActionAllowed, userIsAdmin } from './user-policy';
 import { UserEditor } from './user-editor/user-editor';
 import { UserAudit } from './user-audit/user-audit';
+import { UserDetail } from './user-detail/user-detail';
 
 @Component({
   selector: 'app-management-users',
@@ -47,17 +48,7 @@ export class ManagementUsers extends BaseListComponent<AdminUser> {
     { mode: 'deactivate', label: 'Vô hiệu hóa tài khoản', icon: 'minus-circle' }
   ];
   protected override tableColumns: TableColumn[] = [
-    {
-      title: 'Tên đăng nhập',
-      key: 'username',
-      width: 180,
-      minWidth: 150,
-      align: 'left',
-      visible: true,
-      fixed: 'left',
-      render: 'custom'
-    },
-    { title: 'Họ và tên', key: 'fullName', width: 200, minWidth: 160, align: 'left', visible: true, render: 'text' },
+    { title: 'Họ và tên', key: 'fullName', width: 200, minWidth: 160, align: 'left', visible: true, render: 'custom' },
     { title: 'Email', key: 'email', width: 230, minWidth: 180, align: 'left', visible: true, render: 'text' },
     { title: 'Điện thoại', key: 'phone', width: 150, minWidth: 120, align: 'left', visible: true, render: 'text' },
     { title: 'Vai trò', key: 'roles', width: 220, minWidth: 180, align: 'left', visible: true, render: 'custom' },
@@ -129,8 +120,34 @@ export class ManagementUsers extends BaseListComponent<AdminUser> {
     });
   }
 
+  protected view(user: AdminUser): void {
+    if (this.drawerOpen() || !this.canCreate) return;
+    this.drawerOpen.set(true);
+    this.drawer.create({
+      nzTitle: `Chi tiết tài khoản – ${user.fullName || user.username}`,
+      nzContent: UserDetail,
+      nzData: { id: user.id },
+      nzWidth: 'min(1100px, 100vw)',
+      nzMaskClosable: true,
+      nzClosable: true,
+      nzKeyboard: true,
+      nzBodyStyle: { padding: '24px', background: '#f8fafc', overflow: 'auto' }
+    }).afterClose.pipe(takeUntil(this.unsubscribe)).subscribe(result => {
+      this.drawerOpen.set(false);
+      if (result?.triggerAction && result?.user) {
+        this.open(result.triggerAction, result.user);
+      } else if (result?.reload) {
+        this.loadData();
+      }
+    });
+  }
+
   protected open(mode: UserEditorMode, user?: AdminUser): void {
     if (this.drawerOpen() || !this.canCreate || (user && !this.allowed(user, mode))) return;
+    if (mode === 'view' && user) {
+      this.view(user);
+      return;
+    }
     this.drawerOpen.set(true);
     this.drawer.create({
       nzTitle: USER_EDITOR_TITLES[mode], nzContent: UserEditor, nzData: { id: user?.id, mode },

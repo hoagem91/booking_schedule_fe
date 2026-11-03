@@ -1,0 +1,566 @@
+<div class="detail-shell">
+  <!-- ========== TOOLBAR ========== -->
+  <div class="detail-toolbar">
+    <div class="toolbar-title">
+      <button nz-button type="button" aria-label="Quay lại" (click)="handleClose()">
+        <nz-icon nzType="arrow-left" />
+        Quay lại
+      </button>
+      <span class="title-marker"></span>
+      <h2>Chi tiết tài khoản{{ userData() ? ' – ' + userData()!.fullName : '' }}</h2>
+    </div>
+<!--    <div class="toolbar-actions">-->
+<!--      @if (loadError() && !isLoading()) {-->
+<!--        <button nz-button type="button" (click)="loadAll()">-->
+<!--          <nz-icon nzType="reload" />-->
+<!--          Tải lại-->
+<!--        </button>-->
+<!--      }-->
+<!--      @if (userData(); as user) {-->
+<!--        @if (canAct('edit')) {-->
+<!--          <button nz-button nzType="default" type="button" (click)="triggerAction('edit')">-->
+<!--            <nz-icon nzType="edit" />-->
+<!--            Sửa thông tin-->
+<!--          </button>-->
+<!--        }-->
+<!--        @if (canAct('status')) {-->
+<!--          <button nz-button nzType="default" type="button" (click)="triggerAction('status')">-->
+<!--            <nz-icon nzType="poweroff" />-->
+<!--            {{ user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở tài khoản' }}-->
+<!--          </button>-->
+<!--        }-->
+<!--        @if (canAct('roles')) {-->
+<!--          <button nz-button nzType="default" type="button" (click)="triggerAction('roles')">-->
+<!--            <nz-icon nzType="control" />-->
+<!--            Đổi vai trò-->
+<!--          </button>-->
+<!--        }-->
+<!--        @if (canAct('password')) {-->
+<!--          <button nz-button nzType="default" type="button" (click)="triggerAction('password')">-->
+<!--            <nz-icon nzType="tool" />-->
+<!--            Đặt lại MK-->
+<!--          </button>-->
+<!--        }-->
+<!--        @if (canAct('deactivate')) {-->
+<!--          <button nz-button nzDanger nzType="default" type="button" (click)="triggerAction('deactivate')">-->
+<!--            <nz-icon nzType="minus-circle" />-->
+<!--            Vô hiệu hóa-->
+<!--          </button>-->
+<!--        }-->
+<!--      }-->
+<!--      <button nz-button type="button" (click)="handleClose()">Đóng</button>-->
+<!--    </div>-->
+  </div>
+
+  <!-- ========== BODY ========== -->
+  <ng-template [appShowLoading]="isLoading()">
+
+    <!-- Lỗi tải dữ liệu -->
+    @if (loadError()) {
+      <div class="detail-error" role="alert">
+        <nz-icon nzType="close-circle" class="mr-2 text-red-500" />
+        <span class="flex-1">{{ loadError() }}</span>
+        <button nz-button nzSize="small" type="button" (click)="loadAll()">Thử lại</button>
+      </div>
+    }
+
+    @if (userData(); as user) {
+      <div class="detail-body">
+
+        <!-- ===== HERO PROFILE BANNER ===== -->
+        <div class="profile-hero">
+          <div class="profile-hero__avatar-wrap">
+            <div class="profile-hero__avatar" [class.is-inactive]="user.status !== 'ACTIVE'">
+              {{ getInitials(user.fullName) }}
+            </div>
+            <span
+              class="profile-hero__dot"
+              [class.is-active]="user.status === 'ACTIVE'"
+              [nzTooltipTitle]="user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tài khoản đã khóa'"
+              nz-tooltip
+            ></span>
+          </div>
+
+          <div class="profile-hero__main">
+            <div class="profile-hero__heading">
+              <h3 class="profile-hero__name">{{ user.fullName || user.username }}</h3>
+              <span class="profile-hero__id">#{{ user.id }}</span>
+            </div>
+
+            <div class="profile-hero__tags">
+              <nz-tag [nzColor]="user.status === 'ACTIVE' ? 'success' : 'error'" class="profile-hero__tag">
+                <nz-icon [nzType]="user.status === 'ACTIVE' ? 'check-circle' : 'close-circle'" class="mr-1" />
+                {{ user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
+              </nz-tag>
+
+              @if (user.capabilities?.self) {
+                <nz-tag nzColor="blue" class="profile-hero__tag">
+                  <nz-icon nzType="user" class="mr-1" />
+                  Tài khoản của bạn
+                </nz-tag>
+              }
+
+              @if (user.capabilities?.lastActiveSuperAdmin) {
+                <nz-tag nzColor="gold" class="profile-hero__tag">
+                  <nz-icon nzType="crown" class="mr-1" />
+                  SUPER_ADMIN duy nhất
+                </nz-tag>
+              }
+
+              @for (role of user.roles; track role.id) {
+                @let info = getRoleInfo(role.name);
+                <nz-tag
+                  class="profile-hero__tag profile-hero__tag--role"
+                  [style.color]="info.color"
+                  [style.background]="info.bg"
+                  [style.borderColor]="info.border"
+                >
+                  <nz-icon [nzType]="info.icon" class="mr-1" />
+                  {{ info.label }}
+                </nz-tag>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== STAT CARDS ROW (4 CARDS) ===== -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="stat-card">
+            <div class="stat-card__icon" [class.is-active]="user.status === 'ACTIVE'">
+              <nz-icon [nzType]="user.status === 'ACTIVE' ? 'check-circle' : 'stop'" />
+            </div>
+            <div class="stat-card__content">
+              <span class="stat-card__label">Trạng thái</span>
+              <strong class="stat-card__value" [class.text-green-600]="user.status === 'ACTIVE'" [class.text-red-500]="user.status !== 'ACTIVE'">
+                {{ user.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa' }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card__icon text-purple-600 bg-purple-50">
+              <nz-icon nzType="safety-certificate" />
+            </div>
+            <div class="stat-card__content">
+              <span class="stat-card__label">Vai trò đảm nhiệm</span>
+              <strong class="stat-card__value">
+                {{ user.roles.length }} vai trò
+              </strong>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card__icon text-cyan-600 bg-cyan-50">
+              <nz-icon nzType="appstore" />
+            </div>
+            <div class="stat-card__content">
+              <span class="stat-card__label">Hồ sơ nghiệp vụ</span>
+              <strong class="stat-card__value text-slate-800">
+                @if (user.doctorId && user.patientId) {
+                  Bác sĩ & Bệnh nhân
+                } @else if (user.doctorId) {
+                  Bác sĩ (#{{ user.doctorId }})
+                } @else if (user.patientId) {
+                  Bệnh nhân (#{{ user.patientId }})
+                } @else {
+                  Nội bộ / Quản trị
+                }
+              </strong>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card__icon text-blue-600 bg-blue-50">
+              <nz-icon nzType="calendar" />
+            </div>
+            <div class="stat-card__content">
+              <span class="stat-card__label">Ngày tạo tài khoản</span>
+              <strong class="stat-card__value text-slate-800">
+                {{ user.createdAt ? (user.createdAt | date:'dd/MM/yyyy') : '—' }}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TABSET ===== -->
+        <nz-tabset nzType="card" class="detail-tabs">
+
+          <!-- TAB 1: TỔNG QUAN & HỒ SƠ LIÊN KẾT -->
+          <nz-tab nzTitle="Thông tin tổng quan">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+              <!-- CỘT TRÁI (2/3) -->
+              <div class="lg:col-span-2 flex flex-col gap-4">
+
+                <!-- Card: Thông tin tài khoản -->
+                <nz-card [nzBodyStyle]="{ padding: '16px' }">
+                  <h4 class="card-heading">
+                    <nz-icon nzType="user" class="text-blue-500" />
+                    Thông tin tài khoản &amp; Liên hệ
+                  </h4>
+                  <nz-descriptions [nzColumn]="columnConfig" nzBordered nzSize="small">
+                    <nz-descriptions-item nzTitle="Tên đăng nhập">
+                      <div class="flex items-center gap-2">
+                        <span class="font-semibold">{{ user.username }}</span>
+                      </div>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Mã tài khoản">
+                      <span class="font-semibold">#{{ user.id }}</span>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Họ và tên">
+                      <span class="font-semibold">{{ user.fullName || '—' }}</span>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Trạng thái">
+                      <nz-tag
+                        [nzColor]="user.status === 'ACTIVE' ? 'success' : 'error'"
+                      >
+                        {{ user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
+                      </nz-tag>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Email" [nzSpan]="1">
+                      @if (user.email) {
+                        <div class="flex items-center gap-2">
+                          <a [href]="'mailto:' + user.email" class="text-blue-600 hover:underline">{{ user.email }}</a>
+                          <button
+                            type="button"
+                            class="btn-copy-small"
+                            nz-tooltip
+                            nzTooltipTitle="Sao chép email"
+                            (click)="copyText(user.email, 'email')"
+                          >
+                            <nz-icon nzType="copy" />
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="text-gray-400">Chưa cập nhật</span>
+                      }
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Số điện thoại" [nzSpan]="1">
+                      @if (user.phone) {
+                        <div class="flex items-center gap-2">
+                          <a [href]="'tel:' + user.phone" class="text-blue-600 hover:underline font-mono">{{ user.phone }}</a>
+                          <button
+                            type="button"
+                            class="btn-copy-small"
+                            nz-tooltip
+                            nzTooltipTitle="Sao chép số điện thoại"
+                            (click)="copyText(user.phone, 'số điện thoại')"
+                          >
+                            <nz-icon nzType="copy" />
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="text-gray-400">Chưa cập nhật</span>
+                      }
+                    </nz-descriptions-item>
+                  </nz-descriptions>
+                </nz-card>
+
+                <!-- Card: Hồ sơ Bác sĩ (nếu có) -->
+                @if (user.doctorId) {
+                  <nz-card [nzBodyStyle]="{ padding: '16px' }">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="card-heading !mb-0">
+                        <nz-icon nzType="medicine-box" class="text-cyan-600" />
+                        Hồ sơ Bác sĩ liên kết
+                      </h4>
+                      <nz-tag nzColor="cyan">Mã hồ sơ #{{ user.doctorId }}</nz-tag>
+                    </div>
+
+                    @if (isDoctorLoading()) {
+                      <div class="py-4 text-center text-gray-500">
+                        <nz-icon nzType="loading" class="mr-2" />
+                        Đang tải chi tiết hồ sơ bác sĩ…
+                      </div>
+                    } @else if (doctorData(); as doc) {
+                      <nz-descriptions [nzColumn]="columnConfig" nzBordered nzSize="small">
+                        <nz-descriptions-item nzTitle="Mã bác sĩ">
+                          <span class="font-semibold text-cyan-800">{{ doc.doctorCode }}</span>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Chuyên khoa">
+                          <nz-tag nzColor="blue">{{ doc.specialtyName || '—' }}</nz-tag>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Chức danh">
+                          <strong>{{ doc.position || '—' }}</strong>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Kinh nghiệm">
+                          <span>{{ doc.experienceYears }} năm công tác</span>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Trạng thái hồ sơ">
+                          <nz-tag [nzColor]="doc.status === 'ACTIVE' ? 'success' : 'default'">
+                            {{ doc.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+                          </nz-tag>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Trạng thái khoa">
+                          <nz-tag [nzColor]="doc.specialtyStatus === 'ACTIVE' ? 'success' : 'warning'">
+                            {{ doc.specialtyStatus === 'ACTIVE' ? 'Khoa hoạt động' : 'Khoa tạm đóng' }}
+                          </nz-tag>
+                        </nz-descriptions-item>
+
+                        @if (doc.description) {
+                          <nz-descriptions-item nzTitle="Mô tả chuyên môn" [nzSpan]="2">
+                            <p class="whitespace-pre-line text-gray-700 text-xs mb-0">{{ doc.description }}</p>
+                          </nz-descriptions-item>
+                        }
+                      </nz-descriptions>
+                    } @else {
+                      <div class="p-3 bg-cyan-50 text-cyan-800 rounded text-xs flex items-center justify-between">
+                        <span>Đã liên kết hồ sơ Bác sĩ #{{ user.doctorId }}. Không thể tải chi tiết hoặc bạn không đủ quyền.</span>
+                      </div>
+                    }
+                  </nz-card>
+                }
+
+                <!-- Card: Hồ sơ Bệnh nhân (nếu có) -->
+                @if (user.patientId) {
+                  <nz-card [nzBodyStyle]="{ padding: '16px' }">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="card-heading !mb-0">
+                        <nz-icon nzType="user" class="text-green-600" />
+                        Hồ sơ Bệnh nhân liên kết
+                      </h4>
+                      <nz-tag nzColor="green">Mã hồ sơ #{{ user.patientId }}</nz-tag>
+                    </div>
+
+                    @if (isPatientLoading()) {
+                      <div class="py-4 text-center text-gray-500">
+                        <nz-icon nzType="loading" class="mr-2" />
+                        Đang tải chi tiết hồ sơ bệnh nhân…
+                      </div>
+                    } @else if (patientData(); as pat) {
+                      <nz-descriptions [nzColumn]="columnConfig" nzBordered nzSize="small">
+                        <nz-descriptions-item nzTitle="Mã bệnh nhân">
+                          <code class="detail-code font-semibold text-green-800">{{ pat.patientCode }}</code>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Mã BHYT">
+                          <span class="font-mono">{{ pat.healthInsuranceCode || 'Chưa cập nhật' }}</span>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Ngày sinh">
+                          <span>{{ pat.dateOfBirth ? (pat.dateOfBirth | date:'dd/MM/yyyy') : '—' }}</span>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Giới tính">
+                          <span>{{ pat.gender === 'MALE' ? 'Nam' : pat.gender === 'FEMALE' ? 'Nữ' : 'Khác' }}</span>
+                        </nz-descriptions-item>
+
+                        <nz-descriptions-item nzTitle="Địa chỉ" [nzSpan]="2">
+                          <span>{{ pat.address || 'Chưa cập nhật' }}</span>
+                        </nz-descriptions-item>
+                      </nz-descriptions>
+                    } @else {
+                      <div class="p-3 bg-green-50 text-green-800 rounded text-xs">
+                        Đã liên kết hồ sơ Bệnh nhân #{{ user.patientId }}.
+                      </div>
+                    }
+                  </nz-card>
+                }
+
+                <!-- Nếu không gắn hồ sơ lâm sàng -->
+                @if (!user.doctorId && !user.patientId) {
+                  <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm flex items-start gap-3">
+                    <nz-icon nzType="info-circle" class="text-slate-400 text-lg mt-0.5" />
+                    <div>
+                      <strong class="text-slate-800 block mb-0.5">Tài khoản nội bộ / Quản trị</strong>
+                      Tài khoản này thuộc nhóm nhân viên hoặc ban quản trị hệ thống, hiện không liên kết hồ sơ bệnh nhân hoặc hồ sơ bác sĩ lâm sàng.
+                    </div>
+                  </div>
+                }
+
+              </div>
+
+              <!-- CỘT PHẢI (1/3) -->
+              <div class="lg:col-span-1 flex flex-col gap-4">
+
+                <!-- Card: Thời gian & Lịch sử -->
+                <nz-card [nzBodyStyle]="{ padding: '16px' }">
+                  <h4 class="card-heading">
+                    <nz-icon nzType="clock-circle" class="text-blue-500" />
+                    Thời gian &amp; Lịch sử
+                  </h4>
+                  <nz-descriptions [nzColumn]="1" nzBordered nzSize="small">
+                    <nz-descriptions-item nzTitle="Ngày tạo">
+                      <span class="text-slate-800">
+                        {{ user.createdAt ? (user.createdAt | date:'dd/MM/yyyy HH:mm:ss') : '—' }}
+                      </span>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Lần cập nhật cuối">
+                      <span class="text-slate-800">
+                        {{ user.updatedAt ? (user.updatedAt | date:'dd/MM/yyyy HH:mm:ss') : '—' }}
+                      </span>
+                    </nz-descriptions-item>
+
+                    <nz-descriptions-item nzTitle="Số nhật ký ghi nhận">
+                      <span class="font-semibold text-blue-600">{{ auditTotal() }} bản ghi</span>
+                    </nz-descriptions-item>
+                  </nz-descriptions>
+                </nz-card>
+              </div>
+            </div>
+          </nz-tab>
+
+          <!-- TAB 2: VAI TRÒ & PHÂN QUYỀN -->
+          <nz-tab [nzTitle]="'Vai trò & Phân quyền (' + user.roles.length + ')'">
+            <div class="pt-3 flex flex-col gap-3">
+              <p class="text-sm text-gray-600 mb-1">
+                Người dùng được cấp các vai trò bên dưới. Mỗi vai trò quy định phạm vi truy cập chức năng và quyền hạn xử lý dữ liệu trong hệ thống.
+              </p>
+
+              @for (role of user.roles; track role.id) {
+                @let info = getRoleInfo(role.name);
+                <div
+                  class="role-card"
+                  [style.borderColor]="info.border"
+                  [style.background]="info.bg"
+                >
+                  <div class="role-card__header">
+                    <div
+                      class="role-card__icon"
+                      [style.color]="info.color"
+                      [style.background]="'#fff'"
+                    >
+                      <nz-icon [nzType]="info.icon" />
+                    </div>
+                    <div class="role-card__title">
+                      <h4 [style.color]="info.color">{{ info.label }}</h4>
+                      <code>{{ role.name }}</code>
+                    </div>
+                    @if (isRolePinned(role.name)) {
+                      <nz-tag nzColor="warning" class="ml-auto">
+                        <nz-icon nzType="lock" class="mr-1" />
+                        Vai trò gắn cố định
+                      </nz-tag>
+                    }
+                  </div>
+
+                  <p class="role-card__desc">{{ info.description }}</p>
+
+                  @if (isRolePinned(role.name)) {
+                    <div class="role-card__notice">
+                      @if (role.name === 'DOCTOR' && user.doctorId) {
+                        Vai trò gắn liền với hồ sơ Bác sĩ #{{ user.doctorId }}. Không thể tùy ý gỡ bỏ khi chưa hủy liên kết hồ sơ.
+                      } @else if (role.name === 'PATIENT' && user.patientId) {
+                        Vai trò gắn liền với hồ sơ Bệnh nhân #{{ user.patientId }}. Không thể tùy ý gỡ bỏ khi chưa hủy liên kết hồ sơ.
+                      } @else if (role.name === 'SUPER_ADMIN' && user.capabilities?.lastActiveSuperAdmin) {
+                        SUPER_ADMIN hoạt động cuối cùng của hệ thống. Bắt buộc duy trì vai trò này.
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </nz-tab>
+
+          <!-- TAB 3: NHẬT KÝ HOẠT ĐỘNG -->
+          <nz-tab [nzTitle]="'Nhật ký tài khoản (' + auditTotal() + ')'">
+            <div class="pt-2 flex flex-col gap-3">
+              <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+                <span class="text-sm text-gray-600">
+                  Nhật ký ghi lại các thay đổi thông tin, trạng thái, vai trò và mật khẩu của tài khoản.
+                </span>
+                <button nz-button nzSize="small" type="button" [disabled]="isAuditLoading()" (click)="loadAuditLogs()">
+                  <nz-icon nzType="reload" />
+                  Tải lại nhật ký
+                </button>
+              </div>
+
+              @if (auditError()) {
+                <div class="p-3 bg-red-50 text-red-600 rounded text-xs" role="alert">
+                  {{ auditError() }}
+                </div>
+              }
+
+              @if (isAuditLoading()) {
+                <div class="py-8 text-center text-gray-500">
+                  <nz-icon nzType="loading" class="mr-2" />
+                  Đang tải nhật ký tài khoản…
+                </div>
+              } @else {
+                @for (entry of auditEntries(); track entry.id) {
+                  <article class="audit-item">
+                    <div class="audit-item__header">
+                      <div class="flex items-center gap-2">
+                        <nz-tag nzColor="blue" class="!m-0 font-medium">
+                          {{ auditLabels[entry.action] || entry.action }}
+                        </nz-tag>
+                        <span class="text-xs text-gray-400 font-mono">#{{ entry.id }}</span>
+                      </div>
+                      <span class="text-xs text-gray-500">
+                        {{ entry.createdAt | date:'dd/MM/yyyy HH:mm:ss' }} · Người thực hiện #{{ entry.actorUserId }}
+                      </span>
+                    </div>
+
+                    @if (entry.passwordChanged) {
+                      <div class="mt-2 text-xs text-amber-700 bg-amber-50 p-2 rounded flex items-center gap-1.5">
+                        <nz-icon nzType="key" />
+                        <span>Mật khẩu của tài khoản này đã được thay đổi trong phiên thao tác này.</span>
+                      </div>
+                    }
+
+                    @if (auditDiff(entry.beforeState, entry.afterState); as changes) {
+                      @if (changes.length) {
+                        <div class="audit-table-wrap">
+                          <table class="audit-table">
+                            <thead>
+                              <tr>
+                                <th>Thông tin</th>
+                                <th>Trước khi đổi</th>
+                                <th>Sau khi đổi</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              @for (field of changes; track field.label) {
+                                <tr>
+                                  <td class="font-medium text-slate-700">{{ field.label }}</td>
+                                  <td class="text-slate-500">{{ field.before }}</td>
+                                  <td class="text-emerald-700 font-medium">{{ field.after }}</td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      } @else if (!entry.passwordChanged) {
+                        <p class="text-xs text-gray-400 mt-2 mb-0">Không có thay đổi thông tin công khai.</p>
+                      }
+                    }
+                  </article>
+                } @empty {
+                  <div class="py-8 text-center text-gray-400">
+                    <nz-icon nzType="clock-circle" class="text-2xl mb-2 text-gray-300" />
+                    <p class="text-sm">Chưa có nhật ký hoạt động cho tài khoản này.</p>
+                  </div>
+                }
+
+                @if (auditTotal() > 10) {
+                  <div class="pt-3 flex justify-end">
+                    <nz-pagination
+                      [nzPageIndex]="auditPage()"
+                      [nzPageSize]="10"
+                      [nzTotal]="auditTotal()"
+                      (nzPageIndexChange)="onAuditPageChange($event)"
+                    />
+                  </div>
+                }
+              }
+            </div>
+          </nz-tab>
+
+        </nz-tabset>
+
+      </div>
+    }
+
+  </ng-template>
+</div>

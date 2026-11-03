@@ -26,6 +26,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { DoctorScheduleForm } from './doctor-schedule-form/doctor-schedule-form';
 import { DoctorScheduleDetail } from './doctor-schedule-detail/doctor-schedule-detail';
+import { TimeUtils } from '../../../utils/time.utils';
 
 @Component({
   selector: 'app-doctor-schedule',
@@ -109,7 +110,14 @@ export class DoctorSchedule extends BaseListComponent{
       width: 170,
       minWidth: 150,
       visible: true,
-      render: 'text'
+      render: 'text',
+      pipeName: 'dateDisplay',
+      filterOption: {
+        allowFilter: true,
+        filterType: 'dateRange',
+        dateOnly: true,
+        filterData: []
+      }
     },
     {
       title: 'Giờ bắt đầu',
@@ -181,11 +189,31 @@ export class DoctorSchedule extends BaseListComponent{
   constructor() {
     super();
     this.searchForm = this.fb.group({
-      keyword: [null]
+      keyword: [null],
+      workDate: [null],
+      from: [null],
+      to: [null],
     })
   }
   override ngOnInit() {
     super.ngOnInit();
+  }
+  protected onDateRangeChange(event: { key: string; start: string | null; end: string | null }): void {
+    if (event.key !== 'workDate') return;
+    this.searchForm.patchValue({
+      from: event.start,
+      to: event.end
+    }, { emitEvent: false });
+    this.currentPage = 1;
+    this.doLoadData();
+  }
+  override get searchFormValue(){
+    const formValue = this.searchForm.value;
+    return {
+      keyword: formValue.keyword ?? null,
+      from: formValue.from ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.from)) : null,
+      to: formValue.to ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.to)) : null,
+    }
   }
   override loadData(){
     this.isLoadingDataSource.set(true);
