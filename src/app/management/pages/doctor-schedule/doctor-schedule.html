@@ -46,6 +46,7 @@
     [scrollY]="tableScrollY"
     [scrollX]="tableScrollX"
     (queryParamsChange)="onQueryParamsChange($event)"
+    (dateRangeChange)="onDateRangeChange($event)"
   >
     <ng-template #customCell let-data let-column="column">
       @if (column.key === 'status') {

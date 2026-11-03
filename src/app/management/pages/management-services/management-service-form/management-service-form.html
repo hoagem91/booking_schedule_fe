@@ -1,4 +1,4 @@
-<div class="form-shell">
+<div class="form-shell" [class.view-mode]="isViewMode">
   <div class="form-toolbar">
     <div class="toolbar-title">
       <button nz-button type="button" [disabled]="isSaving()" (click)="handleCancel()"><nz-icon nzType="arrow-left" /> Quay lại</button>
@@ -60,7 +60,9 @@
               <nz-form-label nzFor="service-duration">Thời lượng (phút)</nz-form-label>
               <nz-form-control nzErrorTip="Thời lượng phải là số nguyên từ 1 đến 2147483647 phút">
                 <input nz-input type="number" id="service-duration" formControlName="durationMinutes" min="1" step="1" placeholder="Mặc định 30 phút" />
-                <p class="field-hint">{{ isEditMode ? 'Để trống để giữ thời lượng hiện tại.' : 'Để trống để dùng thời lượng mặc định 30 phút.' }}</p>
+                @if(!isViewMode){
+                  <p class="field-hint">{{ isEditMode ? 'Để trống để giữ thời lượng hiện tại.' : 'Để trống để dùng thời lượng mặc định 30 phút.' }}</p>
+                }
               </nz-form-control>
             </nz-form-item>
           </div>

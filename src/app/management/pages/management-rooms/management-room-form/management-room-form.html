@@ -1,4 +1,4 @@
-<div class="form-shell">
+<div class="form-shell" [class.view-mode]="isViewMode">
   <div class="form-toolbar">
     <div class="toolbar-title">
       <button nz-button type="button" [disabled]="isSaving()" (click)="handleCancel()"><nz-icon nzType="arrow-left" /> Quay lại</button>

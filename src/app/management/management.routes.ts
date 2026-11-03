@@ -24,6 +24,7 @@ export const managementRoutes: Routes = [
       { path: 'rooms', title: 'Quản lý phòng khám | Booking Schedule', data: { heading: 'Quản lý phòng khám', permission: 'rooms:read' }, loadComponent: () => import('./pages/management-rooms/management-rooms').then(m => m.ManagementRooms) },
       { path: 'users', title: 'Quản lý tài khoản | Booking Schedule', data: { heading: 'Quản lý tài khoản', permission: 'users:read' }, loadComponent: () => import('./pages/management-users/management-users').then(m => m.ManagementUsers) },
       { path: 'patients', title: 'Hồ sơ bệnh nhân | Booking Schedule', data: { heading: 'Hồ sơ bệnh nhân', permission: 'patients:read' }, loadComponent: () => import('./pages/management-patients/management-patients').then(m => m.ManagementPatients) },
+      { path: 'doctors', title: 'Hồ sơ bác sĩ | Booking Schedule', data: { heading: 'Hồ sơ bác sĩ', permission: 'doctors:read' }, loadComponent: () => import('./pages/management-doctors/management-doctors').then(m => m.ManagementDoctors) },
       { path: '**', redirectTo: '/404' },
     ],
   },

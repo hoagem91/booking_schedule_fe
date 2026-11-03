@@ -4,8 +4,10 @@ import {
   DollarOutline, DownOutline, EditOutline, EyeOutline, FileTextOutline, FilterFill,
   GiftOutline, HolderOutline, InfoCircleOutline, LoadingOutline, MailOutline, MinusCircleOutline,
   PhoneOutline, PlayCircleOutline, PlusOutline, ReloadOutline, SaveOutline, SearchOutline, SettingOutline,
-  ToolOutline, UndoOutline, UserOutline, PoweroffOutline,
+  ToolOutline, UndoOutline, UserOutline, PoweroffOutline, SyncOutline, StopOutline,
   DashboardOutline, AuditOutline, ScheduleOutline, MedicineBoxOutline, AppstoreOutline, HomeOutline, TeamOutline,
+  CopyOutline, SafetyCertificateOutline, CrownOutline, IdcardOutline, CheckCircleOutline, CloseCircleOutline,
+  HistoryOutline, LockOutline, UnlockOutline, KeyOutline, SafetyOutline, LinkOutline, EnvironmentOutline
 } from '@ant-design/icons-angular/icons';
 
 // Register application icons locally so rendering does not require SVG asset requests.
@@ -14,6 +16,8 @@ export const APP_ICONS: IconDefinition[] = [
   DollarOutline, DownOutline, EditOutline, EyeOutline, FileTextOutline, FilterFill,
   GiftOutline, HolderOutline, InfoCircleOutline, LoadingOutline, MailOutline, MinusCircleOutline,
   PhoneOutline, PlayCircleOutline, PlusOutline, ReloadOutline, SaveOutline, SearchOutline, SettingOutline,
-  ToolOutline, UndoOutline, UserOutline, PoweroffOutline,
+  ToolOutline, UndoOutline, UserOutline, PoweroffOutline, SyncOutline, StopOutline,
   DashboardOutline, AuditOutline, ScheduleOutline, MedicineBoxOutline, AppstoreOutline, HomeOutline, TeamOutline,
+  CopyOutline, SafetyCertificateOutline, CrownOutline, IdcardOutline, CheckCircleOutline, CloseCircleOutline,
+  HistoryOutline, LockOutline, UnlockOutline, KeyOutline, SafetyOutline, LinkOutline, EnvironmentOutline
 ];
