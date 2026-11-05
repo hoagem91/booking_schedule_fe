@@ -1,0 +1,100 @@
+<div class="account-shell">
+  <!-- ========== TOOLBAR ========== -->
+  <div class="account-toolbar">
+    <div class="toolbar-title">
+      <span class="title-marker"></span>
+      <div>
+        <h2>Tài khoản của tôi</h2>
+        <p class="subtitle">Thông tin tài khoản nội bộ và quyền hạn đang sử dụng trên hệ thống.</p>
+      </div>
+    </div>
+    <div class="toolbar-actions">
+      <button nz-button nzType="primary" type="button" (click)="changePassword()">
+        <nz-icon nzType="key" />
+        Đổi mật khẩu cá nhân
+      </button>
+    </div>
+  </div>
+
+  @if (access.user(); as user) {
+    <!-- ========== SINGLE CARD PROFILE & DETAILS ========== -->
+    <nz-card [nzBodyStyle]="{ padding: '20px' }">
+
+      <!-- Compact Profile Header -->
+      <div class="account-detail-header">
+        <div class="account-detail-identity">
+          <div class="account-avatar">
+            {{ getInitials(user.fullName || user.username) }}
+          </div>
+          <div class="account-name-group">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="account-detail-name">{{ user.fullName || user.username }}</span>
+              <span class="detail-code">#{{ user.id }}</span>
+            </div>
+            <p class="account-username">{{ user.username }}</p>
+          </div>
+          <div class="account-role-tags">
+            @for (role of user.roles; track role.id) {
+              <nz-tag nzColor="blue" class="account-role-tag">
+                <nz-icon nzType="safety-certificate" />
+                {{ getRoleLabel(role.name) }}
+              </nz-tag>
+            }
+          </div>
+        </div>
+
+        <nz-tag [nzColor]="user.status === 'ACTIVE' ? 'success' : 'error'" class="account-detail-status">
+          <nz-icon [nzType]="user.status === 'ACTIVE' ? 'check-circle' : 'close-circle'" />
+          {{ user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
+        </nz-tag>
+      </div>
+
+      <!-- Compact Details Table -->
+      <nz-descriptions nzBordered nzSize="small" [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 2, sm: 1, xs: 1 }">
+        <nz-descriptions-item nzTitle="Họ và tên">
+          <strong>{{ user.fullName || 'Chưa cập nhật' }}</strong>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Tên đăng nhập">
+          <code>{{ user.username }}</code>
+        </nz-descriptions-item>
+
+        <nz-descriptions-item nzTitle="Email">
+          @if (user.email) {
+            <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+          } @else {
+            <span class="detail-muted">Chưa cập nhật</span>
+          }
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Số điện thoại">
+          @if (user.phone) {
+            <a [href]="'tel:' + user.phone">{{ user.phone }}</a>
+          } @else {
+            <span class="detail-muted">Chưa cập nhật</span>
+          }
+        </nz-descriptions-item>
+
+        <nz-descriptions-item nzTitle="Mã tài khoản">
+          <span class="detail-code">#{{ user.id }}</span>
+        </nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Trạng thái">
+          <nz-tag [nzColor]="user.status === 'ACTIVE' ? 'success' : 'error'">
+            {{ user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
+          </nz-tag>
+        </nz-descriptions-item>
+
+        <nz-descriptions-item nzTitle="Vai trò đảm nhiệm" [nzSpan]="2">
+          {{ access.roleText() || 'Chưa phân vai trò' }}
+        </nz-descriptions-item>
+      </nz-descriptions>
+
+      <!-- Bottom Notice -->
+      <div class="account-notice">
+        <nz-icon nzType="info-circle" class="text-blue-500 text-base flex-shrink-0" />
+        <span>
+          Để điều chỉnh thông tin cá nhân, cập nhật email/số điện thoại hoặc thay đổi phân quyền truy cập, vui lòng liên hệ Quản trị viên hệ thống.
+        </span>
+      </div>
+
+    </nz-card>
+  }
+</div>

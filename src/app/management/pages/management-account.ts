@@ -1,69 +1,58 @@
 import { Component, inject } from '@angular/core';
 import { ManagementAccessService } from '../services/management-access.service';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { UserEditor } from './management-users/user-editor/user-editor';
+import { InternalRole, roleLabels } from '../models/management.models';
 
 @Component({
-  standalone: true, imports: [NzButtonModule], styleUrl: './management-ui.css',
-  template: `
-    <div class="page-header">
-      <div><p class="eyebrow">TÀI KHOẢN NỘI BỘ</p>
-        <h1>Tài khoản của tôi</h1>
-        <p class="subtitle">Thông tin tài khoản và vai trò đang được sử dụng.</p></div>
-    </div>
-    @if (access.user(); as user) {
-      <section class="panel" aria-labelledby="account-title">
-        <div class="panel-heading"><h2 id="account-title">Thông tin cá nhân</h2><span class="status confirmed">Đang hoạt động</span>
-        </div>
-        <div class="panel-body detail-grid">
-          <dl>
-            <div>
-              <dt>Họ và tên</dt>
-              <dd>{{ user.fullName || 'Chưa cập nhật' }}</dd>
-            </div>
-            <div>
-              <dt>Tên đăng nhập</dt>
-              <dd>{{ user.username }}</dd>
-            </div>
-            <div>
-              <dt>Vai trò</dt>
-              <dd>{{ access.roleText() }}</dd>
-            </div>
-          </dl>
-          <dl>
-            <div>
-              <dt>Email</dt>
-              <dd>{{ user.email || 'Chưa cập nhật' }}</dd>
-            </div>
-            <div>
-              <dt>Số điện thoại</dt>
-              <dd>{{ user.phone || 'Chưa cập nhật' }}</dd>
-            </div>
-            <div>
-              <dt>Mã tài khoản</dt>
-              <dd>#{{ user.id }}</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-    }
-    <button nz-button nzType="primary" type="button" (click)="changePassword()">Đổi mật khẩu cá nhân</button>
-    <aside class="notice">Liên hệ quản trị viên khi cần điều chỉnh thông tin tài khoản, thay đổi quyền hoặc hỗ trợ khôi
-      phục mật khẩu.
-    </aside>
-  `
+  standalone: true,
+  imports: [
+    NzButtonModule,
+    NzIconModule,
+    NzCardModule,
+    NzTagModule,
+    NzDescriptionsModule
+  ],
+  templateUrl: './management-account.html',
+  styleUrl: './management-account.css'
 })
 export class ManagementAccount {
   readonly access = inject(ManagementAccessService);
   private readonly drawer = inject(NzDrawerService);
   private passwordOpen = false;
+
+  /** Lấy tên hiển thị tiếng Việt của vai trò */
+  protected getRoleLabel(roleName: string): string {
+    return roleLabels[roleName as InternalRole] || roleName;
+  }
+
+  /** Lấy 2 ký tự viết tắt họ tên để làm avatar */
+  protected getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   changePassword(): void {
     if (this.passwordOpen) return;
     this.passwordOpen = true;
-    this.drawer.create({ nzTitle: 'Đổi mật khẩu cá nhân', nzContent: UserEditor, nzData: { mode: 'self-password' },
-      nzWidth: 'min(1000px, 100vw)', nzMaskClosable: false, nzClosable: false, nzKeyboard: false,
+    this.drawer.create({
+      nzTitle: 'Đổi mật khẩu cá nhân',
+      nzContent: UserEditor,
+      nzData: { mode: 'self-password' },
+      nzWidth: 'min(1000px, 100vw)',
+      nzMaskClosable: false,
+      nzClosable: false,
+      nzKeyboard: false,
       nzBodyStyle: { padding: '24px', background: '#f8fafc' },
-    }).afterClose.subscribe(() => { this.passwordOpen = false; });
+    }).afterClose.subscribe(() => {
+      this.passwordOpen = false;
+    });
   }
 }

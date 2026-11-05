@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule, Validators } from '@angular/forms';
 import { NZ_DRAWER_DATA, NzDrawerRef } from 'ng-zorro-antd/drawer';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -7,6 +8,8 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { finalize, forkJoin, of, takeUntil } from 'rxjs';
 import { BaseFormComponent } from '../../../../components/base-form.component';
@@ -18,7 +21,19 @@ import { roomErrorMessage } from '../../../../utils/room/room-error.utils';
 
 @Component({
   selector: 'app-management-room-form',
-  imports: [ReactiveFormsModule, NzButtonModule, NzIconModule, NzInputModule, NzFormModule, NzCardModule, NzSelectModule, ShowLoadingDirective],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    NzButtonModule,
+    NzIconModule,
+    NzInputModule,
+    NzFormModule,
+    NzCardModule,
+    NzSelectModule,
+    NzTagModule,
+    NzDescriptionsModule,
+    ShowLoadingDirective,
+  ],
   templateUrl: './management-room-form.html',
   styleUrl: './management-room-form.css',
 })
@@ -48,42 +63,61 @@ export class ManagementRoomForm extends BaseFormComponent {
     });
     this.applyMode();
   }
+
   override ngOnInit(): void { super.ngOnInit(); this.loadDataForForm(); }
+
   protected loadDataForForm(): void {
     if (this.isLoading() || this.isSaving()) return;
     this.isLoading.set(true); this.loaded.set(false); this.formError.set('');
     forkJoin({ detail: this.data.id ? this.api.detail(this.data.id) : of(null), specialties: this.api.specialties(true) })
       .pipe(takeUntil(this.unsubscribe), finalize(() => this.isLoading.set(false)))
-      .subscribe({ next: ({ detail, specialties }) => {
-        if (this.data.id && (!apiResponseSucceeded(detail) || detail?.result?.id !== this.data.id)) {
-          this.formError.set(roomErrorMessage(detail, 'Không thể tải thông tin phòng khám. Vui lòng thử lại.')); return;
-        }
-        if (!apiResponseSucceeded(specialties) || !Array.isArray(specialties.result)) {
-          this.formError.set(roomErrorMessage(specialties, 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.')); return;
-        }
-        const options = specialties.result.filter(item => item.status === 'ACTIVE');
-        this.room = detail?.result ?? null;
-        if (this.room) {
-          const item = this.room;
-          if (item.specialtyId && !options.some(option => option.id === item.specialtyId))
-            options.push({ id: item.specialtyId, name: item.specialtyName || 'Chuyên khoa hiện tại', status: 'INACTIVE' });
-          this.saveForm.patchValue({ code: item.code, name: item.name, specialtyId: item.specialtyId ?? 0,
-            location: item.location ?? '', status: item.status }, { emitEvent: false });
-        }
-        this.specialties.set(options); this.applyMode();
-        this.saveForm.markAsPristine(); this.saveForm.markAsUntouched(); this.loaded.set(true);
-      }, error: error => this.formError.set(roomErrorMessage(error, 'Không thể tải dữ liệu phòng khám. Vui lòng thử lại.')) });
+      .subscribe({
+        next: ({ detail, specialties }) => {
+          if (this.data.id && (!apiResponseSucceeded(detail) || detail?.result?.id !== this.data.id)) {
+            this.formError.set(roomErrorMessage(detail, 'Không thể tải thông tin phòng khám. Vui lòng thử lại.')); return;
+          }
+          if (!apiResponseSucceeded(specialties) || !Array.isArray(specialties.result)) {
+            this.formError.set(roomErrorMessage(specialties, 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.')); return;
+          }
+          const options = specialties.result.filter(item => item.status === 'ACTIVE');
+          this.room = detail?.result ?? null;
+          if (this.room) {
+            const item = this.room;
+            if (item.specialtyId && !options.some(option => option.id === item.specialtyId))
+              options.push({ id: item.specialtyId, name: item.specialtyName || 'Chuyên khoa hiện tại', status: 'INACTIVE' });
+            this.saveForm.patchValue({
+              code: item.code, name: item.name, specialtyId: item.specialtyId ?? 0,
+              location: item.location ?? '', status: item.status,
+            }, { emitEvent: false });
+          }
+          this.specialties.set(options); this.applyMode();
+          this.saveForm.markAsPristine(); this.saveForm.markAsUntouched(); this.loaded.set(true);
+        },
+        error: error => this.formError.set(roomErrorMessage(error, 'Không thể tải dữ liệu phòng khám. Vui lòng thử lại.')),
+      });
   }
+
+  /** Returns the display metadata (label + color) for a given room status. */
+  protected statusInfo(status: string | undefined): { label: string; color: string } | undefined {
+    return ROOM_STATUSES.find(s => s.value === status);
+  }
+
   private applyMode(): void {
     this.saveForm.enable({ emitEvent: false });
     if (this.isViewMode) this.saveForm.disable({ emitEvent: false });
   }
-  protected override handleCancel(): void { if (!this.isSaving()) this.drawer.close({ success: false }); }
+
+  protected override handleCancel(): void {
+    if (!this.isSaving()) this.drawer.close({ success: false });
+  }
+
   protected override handleOk(): void {
     if (this.isViewMode || !this.loaded() || this.isSaving() || this.isLoading()) return;
     this.saveForm.markAllAsTouched(); super.handleOk();
     if (this.saveForm.invalid) return;
-    if (!this.hasRole('ADMIN') && !this.hasRole('SUPER_ADMIN')) { this.formError.set('Bạn không có quyền lưu phòng khám.'); return; }
+    if (!this.hasRole('ADMIN') && !this.hasRole('SUPER_ADMIN')) {
+      this.formError.set('Bạn không có quyền lưu phòng khám.'); return;
+    }
     const value = this.saveForm.getRawValue();
     const specialtyId = value.specialtyId === 0 ? null : value.specialtyId;
     const specialty = this.specialties().find(item => item.id === specialtyId);
@@ -107,17 +141,22 @@ export class ManagementRoomForm extends BaseFormComponent {
       if (!Object.keys(update).length) { this.formError.set('Chưa có thay đổi để cập nhật.'); return; }
       body = update;
     } else {
-      body = { code: value.code.trim(), name: value.name.trim(), location: value.location.trim() || null,
-        specialtyId, status: value.status };
+      body = {
+        code: value.code.trim(), name: value.name.trim(),
+        location: value.location.trim() || null, specialtyId, status: value.status,
+      };
     }
     this.formError.set(''); this.isSaving.set(true); this.saveForm.disable({ emitEvent: false });
     const request = this.data.id ? this.api.update(this.data.id, body as RoomUpdateRequest) : this.api.create(body as RoomRequest);
     request.pipe(takeUntil(this.unsubscribe), finalize(() => { this.isSaving.set(false); this.applyMode(); }))
-      .subscribe({ next: res => {
-        if (apiResponseSucceeded(res) && res.result?.id && (!this.data.id || res.result.id === this.data.id)) {
-          this.message.success(this.isEditMode ? 'Cập nhật phòng khám thành công' : 'Tạo phòng khám thành công');
-          this.drawer.close({ success: true, data: res.result });
-        } else this.formError.set(roomErrorMessage(res, 'Chưa xác định được kết quả lưu. Vui lòng kiểm tra danh sách trước khi thử lại.'));
-      }, error: error => this.formError.set(roomErrorMessage(error, 'Chưa xác định được kết quả lưu. Vui lòng kiểm tra danh sách trước khi thử lại.')) });
+      .subscribe({
+        next: res => {
+          if (apiResponseSucceeded(res) && res.result?.id && (!this.data.id || res.result.id === this.data.id)) {
+            this.message.success(this.isEditMode ? 'Cập nhật phòng khám thành công' : 'Tạo phòng khám thành công');
+            this.drawer.close({ success: true, data: res.result });
+          } else this.formError.set(roomErrorMessage(res, 'Chưa xác định được kết quả lưu. Vui lòng kiểm tra danh sách trước khi thử lại.'));
+        },
+        error: error => this.formError.set(roomErrorMessage(error, 'Chưa xác định được kết quả lưu. Vui lòng kiểm tra danh sách trước khi thử lại.')),
+      });
   }
 }

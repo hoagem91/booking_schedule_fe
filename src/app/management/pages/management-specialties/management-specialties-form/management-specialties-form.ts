@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ReactiveFormsModule, Validators } from '@angular/forms';
 import { NZ_DRAWER_DATA, NzDrawerRef } from 'ng-zorro-antd/drawer';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -7,6 +8,8 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { finalize, takeUntil } from 'rxjs';
 import { BaseFormComponent } from '../../../../components/base-form.component';
@@ -18,7 +21,19 @@ import { specialtyErrorMessage } from '../../../../utils/specialty/specialty-err
 
 @Component({
   selector: 'app-management-specialties-form',
-  imports: [ReactiveFormsModule, NzButtonModule, NzIconModule, NzInputModule, NzFormModule, NzCardModule, NzSelectModule, ShowLoadingDirective],
+  imports: [
+    DatePipe,
+    ReactiveFormsModule,
+    NzButtonModule,
+    NzIconModule,
+    NzInputModule,
+    NzFormModule,
+    NzCardModule,
+    NzSelectModule,
+    NzTagModule,
+    NzDescriptionsModule,
+    ShowLoadingDirective,
+  ],
   templateUrl: './management-specialties-form.html',
   styleUrl: './management-specialties-form.css'
 })

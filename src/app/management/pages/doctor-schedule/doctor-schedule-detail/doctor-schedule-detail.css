@@ -42,27 +42,79 @@
   gap: 16px;
 }
 
+/* ===== Compact schedule header ===== */
+.schedule-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.schedule-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.schedule-detail-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.detail-code {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.schedule-detail-status {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.detail-muted {
+  color: #94a3b8;
+}
+
 /* ===== Card heading ===== */
 .card-heading {
-  margin: 0 0 12px;
-  font-size: 13px;
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
   color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* ===== Mã code inline ===== */
-.detail-code {
-  background: #f0f4f8;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 12px;
-  color: #1d4ed8;
+/* ===== Slot header & Stats ===== */
+.slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.slot-quick-stats {
+  font-size: 13px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ===== Trạng thái lỗi ===== */
@@ -97,23 +149,19 @@
   background-color: #dbeafe !important;
 }
 
-/* ===== Tổng kết cuối bảng ===== */
-.slot-summary {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #374151;
-}
-
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
   .toolbar-title { align-items: flex-start; }
   .toolbar-title h2 { font-size: 16px; }
   .toolbar-actions { width: 100%; justify-content: flex-end; }
+  
+  .schedule-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .slot-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
