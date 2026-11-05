@@ -14,48 +14,95 @@
       }
     </div>
   </div>
-  @if (formError()) { <div class="form-error" role="alert">{{ formError() }}
-    @if (!loaded() && !isLoadingDataForForm()) { <button nz-button type="button" (click)="loadDataForForm()">Tải lại dữ liệu</button> }
-  </div> }
+
+  @if (formError()) {
+    <div class="form-error" role="alert">{{ formError() }}
+      @if (!loaded() && !isLoadingDataForForm()) {
+        <button nz-button type="button" (click)="loadDataForForm()">Tải lại dữ liệu</button>
+      }
+    </div>
+  }
+
   <ng-template [appShowLoading]="isLoadingDataForForm()">
-    <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="handleOk()" [attr.aria-busy]="isSavingForm()">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <nz-card class="lg:col-span-2" [nzBodyStyle]="{ padding: '16px' }">
-          <h4 class="card-heading"><nz-icon nzType="file-text" /> Thông tin chuyên khoa</h4>
-          <nz-form-item>
-            <nz-form-label nzFor="specialty-code" [nzRequired]="isEditMode">Mã chuyên khoa</nz-form-label>
-            <nz-form-control nzErrorTip="Mã tối đa 50 ký tự; khi cập nhật không được để trắng">
-              <input nz-input id="specialty-code" formControlName="code" maxlength="50" placeholder="Để trống để hệ thống tự sinh" />
-              <p class="field-hint">{{ isEditMode ? 'Mã hiện tại được giữ nguyên nếu bạn không sửa trường này.' : 'Không bắt buộc. Hệ thống tự sinh mã từ tên nếu để trống; mã nhập tay được chuẩn hóa viết hoa khi lưu.' }}</p>
-            </nz-form-control>
-          </nz-form-item>
-          <nz-form-item>
-            <nz-form-label nzFor="specialty-name" nzRequired>Tên chuyên khoa</nz-form-label>
-            <nz-form-control nzErrorTip="Vui lòng nhập tên không trắng, tối đa 255 ký tự">
-              <input nz-input id="specialty-name" formControlName="name" maxlength="255" placeholder="Ví dụ: Nội khoa" />
-            </nz-form-control>
-          </nz-form-item>
-          <nz-form-item class="mb-0">
-            <nz-form-label nzFor="specialty-description">Mô tả</nz-form-label>
-            <nz-form-control>
-              <textarea nz-input id="specialty-description" formControlName="description" [nzAutosize]="{ minRows: 4, maxRows: 10 }" placeholder="Mô tả phạm vi khám và điều trị"></textarea>
-            </nz-form-control>
-          </nz-form-item>
+    @if (isViewMode) {
+      @if (specialty; as item) {
+        <nz-card [nzBodyStyle]="{ padding: '20px' }">
+          <!-- Compact specialty header -->
+          <div class="specialty-detail-header">
+            <div class="specialty-detail-identity">
+              <span class="specialty-detail-name">{{ item.name }}</span>
+              <span class="detail-code">{{ item.code }}</span>
+            </div>
+            <nz-tag [nzColor]="item.status === 'ACTIVE' ? 'success' : 'error'" class="specialty-detail-status">
+              {{ item.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+            </nz-tag>
+          </div>
+
+          <nz-descriptions nzBordered nzSize="small" [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 2, sm: 1, xs: 1 }">
+            <nz-descriptions-item nzTitle="Mã chuyên khoa">
+              <span class="detail-code">{{ item.code }}</span>
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Trạng thái">
+              <nz-tag [nzColor]="item.status === 'ACTIVE' ? 'success' : 'error'">
+                {{ item.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+              </nz-tag>
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Tên chuyên khoa" [nzSpan]="2">{{ item.name }}</nz-descriptions-item>
+            @if (item.description) {
+              <nz-descriptions-item nzTitle="Mô tả" [nzSpan]="2">
+                <span class="specialty-description">{{ item.description }}</span>
+              </nz-descriptions-item>
+            }
+            <nz-descriptions-item nzTitle="Ngày tạo">
+              {{ item.createdAt ? (item.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Cập nhật lần cuối">
+              {{ item.updatedAt ? (item.updatedAt | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </nz-descriptions-item>
+          </nz-descriptions>
         </nz-card>
-        <nz-card [nzBodyStyle]="{ padding: '16px' }">
-          <h4 class="card-heading"><nz-icon nzType="info-circle" /> Trạng thái</h4>
-          <nz-form-item class="mb-0">
-            <nz-form-label nzFor="specialty-status" nzRequired>Trạng thái hoạt động</nz-form-label>
-            <nz-form-control nzErrorTip="Vui lòng chọn trạng thái hợp lệ">
-              <nz-select nzId="specialty-status" formControlName="status">
-                <nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" />
-                <nz-option nzValue="INACTIVE" nzLabel="Ngừng hoạt động" />
-              </nz-select>
-              <p class="field-hint">{{ isEditMode ? 'Chỉ ngừng hoạt động khi chuyên khoa không còn ca khám đang mở hoặc đã đủ chỗ từ hôm nay trở đi.' : 'Chuyên khoa mới mặc định đang hoạt động.' }}</p>
-            </nz-form-control>
-          </nz-form-item>
-        </nz-card>
-      </div>
-    </form>
+      }
+    } @else {
+      <form nz-form nzLayout="vertical" [formGroup]="saveForm" (ngSubmit)="handleOk()" [attr.aria-busy]="isSavingForm()">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <nz-card class="lg:col-span-2" [nzBodyStyle]="{ padding: '16px' }">
+            <h4 class="card-heading"><nz-icon nzType="file-text" /> Thông tin chuyên khoa</h4>
+            <nz-form-item>
+              <nz-form-label nzFor="specialty-code" [nzRequired]="isEditMode">Mã chuyên khoa</nz-form-label>
+              <nz-form-control nzErrorTip="Mã tối đa 50 ký tự; khi cập nhật không được để trắng">
+                <input nz-input id="specialty-code" formControlName="code" maxlength="50" placeholder="Để trống để hệ thống tự sinh" />
+                <p class="field-hint">{{ isEditMode ? 'Mã hiện tại được giữ nguyên nếu bạn không sửa trường này.' : 'Không bắt buộc. Hệ thống tự sinh mã từ tên nếu để trống; mã nhập tay được chuẩn hóa viết hoa khi lưu.' }}</p>
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+              <nz-form-label nzFor="specialty-name" nzRequired>Tên chuyên khoa</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng nhập tên không trắng, tối đa 255 ký tự">
+                <input nz-input id="specialty-name" formControlName="name" maxlength="255" placeholder="Ví dụ: Nội khoa" />
+              </nz-form-control>
+            </nz-form-item>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzFor="specialty-description">Mô tả</nz-form-label>
+              <nz-form-control>
+                <textarea nz-input id="specialty-description" formControlName="description"
+                          [nzAutosize]="{ minRows: 4, maxRows: 10 }" placeholder="Mô tả phạm vi khám và điều trị"></textarea>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-card>
+          <nz-card [nzBodyStyle]="{ padding: '16px' }">
+            <h4 class="card-heading"><nz-icon nzType="info-circle" /> Trạng thái</h4>
+            <nz-form-item class="mb-0">
+              <nz-form-label nzFor="specialty-status" nzRequired>Trạng thái hoạt động</nz-form-label>
+              <nz-form-control nzErrorTip="Vui lòng chọn trạng thái hợp lệ">
+                <nz-select nzId="specialty-status" formControlName="status">
+                  <nz-option nzValue="ACTIVE" nzLabel="Đang hoạt động" />
+                  <nz-option nzValue="INACTIVE" nzLabel="Ngừng hoạt động" />
+                </nz-select>
+                <p class="field-hint">{{ isEditMode ? 'Chỉ ngừng hoạt động khi chuyên khoa không còn ca khám đang mở hoặc đã đủ chỗ từ hôm nay trở đi.' : 'Chuyên khoa mới mặc định đang hoạt động.' }}</p>
+              </nz-form-control>
+            </nz-form-item>
+          </nz-card>
+        </div>
+      </form>
+    }
   </ng-template>
 </div>
