@@ -1,0 +1,150 @@
+<app-site-header />
+
+<main>
+  <header class="page-intro">
+    <div class="intro-copy"><span class="eyebrow">BOOKING SCHEDULE</span>
+      <h1>Cổng thông tin phòng khám</h1>
+      <p>Tìm hiểu chuyên khoa, tham khảo dịch vụ và chủ động sắp xếp lịch khám của bạn.</p>
+    </div>
+    <a class="btn-book" routerLink="/home">Đặt lịch khám <span aria-hidden="true">→</span></a>
+  </header>
+  <nav class="section-nav" aria-label="Nội dung cổng thông tin">
+    <a [routerLink]="[]" fragment="specialties">Chuyên khoa</a><a [routerLink]="[]" fragment="services">Dịch vụ khám</a>
+    <a [routerLink]="[]" fragment="booking-guide">Hướng dẫn đặt lịch</a><a [routerLink]="[]" fragment="faq">Câu hỏi thường gặp</a>
+  </nav>
+
+  <section id="specialties" class="portal-section" aria-labelledby="specialties-title">
+    <div class="section-heading"><span class="eyebrow">KHÁM PHÁ CHUYÊN KHOA</span>
+      <h2 id="specialties-title">Tìm hiểu trước khi đặt lịch</h2>
+      <p>Chọn chuyên khoa để xem các dịch vụ đang được phòng khám cung cấp.</p></div>
+    @if (loadingSpecialties()) {
+      <p class="state" role="status">Đang tải chuyên khoa…</p>
+    } @else if (specialtyError()) {
+      <div class="state state--error" role="alert"><p>{{ specialtyError() }}</p>
+        <button type="button" (click)="loadSpecialties()">Thử lại chuyên khoa</button></div>
+    } @else if (!specialties().length) {
+      <p class="state">Hiện chưa có chuyên khoa đang hoạt động. Vui lòng quay lại sau hoặc liên hệ tổng đài.</p>
+    } @else {
+      <div class="specialty-grid">
+        @for (item of specialties(); track item.id) {
+          <article class="specialty-card" [class.selected]="selectedSpecialty() === item.id">
+            <span class="specialty-symbol" aria-hidden="true">+</span>
+            <h3>{{ decode(item.name) }}</h3>
+            <p>{{ decode(item.description || 'Xem danh sách dịch vụ và chi phí thuộc chuyên khoa này.') }}</p>
+            <a [routerLink]="[]" fragment="services" (click)="filterSpecialty(item.id)">Xem dịch vụ <span aria-hidden="true">→</span></a>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <section id="services" class="portal-section services-section" aria-labelledby="services-title">
+    <div class="section-heading"><span class="eyebrow">DỊCH VỤ & CHI PHÍ</span>
+      <h2 id="services-title">Chọn dịch vụ phù hợp</h2>
+      <p>Tham khảo mô tả, chi phí và thời lượng từ danh mục hiện hành.</p></div>
+    <div class="toolbar" role="search">
+      <label class="search-label" for="q">Tìm dịch vụ hoặc chuyên khoa</label>
+      <input id="q" type="search" [ngModel]="query()"
+        (ngModelChange)="query.set($event); expanded.set(false)" placeholder="Nhập tên dịch vụ hoặc chuyên khoa…" />
+      @if (specialties().length) {
+        <div class="chip-row" role="group" aria-label="Lọc theo chuyên khoa">
+          <button type="button" class="chip" [class.active]="selectedSpecialty() === null"
+            [attr.aria-pressed]="selectedSpecialty() === null" (click)="filterSpecialty(null)">Tất cả</button>
+          @for (item of specialties(); track item.id) {
+            <button type="button" class="chip" [class.active]="selectedSpecialty() === item.id"
+              [attr.aria-pressed]="selectedSpecialty() === item.id"
+              (click)="filterSpecialty(selectedSpecialty() === item.id ? null : item.id)">{{ decode(item.name) }}</button>
+          }
+        </div>
+      }
+    </div>
+    @if (loadingServices()) {
+      <p class="state" role="status">Đang tải dịch vụ…</p>
+    } @else if (serviceError()) {
+      <div class="state state--error" role="alert"><p>{{ serviceError() }}</p>
+        <button type="button" (click)="loadServices()">Thử lại dịch vụ</button></div>
+    } @else if (!filteredServices().length) {
+      <div class="state"><p>Không tìm thấy dịch vụ phù hợp.</p>
+        @if (query() || selectedSpecialty() !== null) {
+          <button type="button" (click)="query.set(''); filterSpecialty(null)">Xóa bộ lọc</button>
+        }
+      </div>
+    } @else {
+      <p class="result-count" role="status">Hiển thị {{ visibleServices().length }} / {{ filteredServices().length }} dịch vụ</p>
+      <div class="service-list">
+        @for (item of visibleServices(); track item.id) {
+          <article class="service-row">
+            <div class="service-info">
+              <span class="specialty-tag">{{ specialtyName(item) }}</span>
+              <h3 class="service-name">{{ decode(item.name) }}</h3>
+              <span class="service-duration">{{ item.durationMinutes ? item.durationMinutes + ' phút' : 'Liên hệ để biết thời lượng' }}</span>
+              <p class="service-description">{{ decode(item.description || 'Liên hệ phòng khám để được hướng dẫn thêm về dịch vụ.') }}</p>
+            </div>
+            <div class="service-price"><small>Chi phí dịch vụ</small>
+              {{ canBook(item) ? (item.price | currency:'VND':'symbol':'1.0-0':'vi') : 'Chưa cập nhật giá' }}
+            </div>
+            <div class="service-action">
+              @if (canBook(item)) {
+                <a class="btn-row-book" routerLink="/home" [queryParams]="bookingParams(item)" [attr.aria-label]="'Đặt lịch ' + decode(item.name)">Đặt lịch</a>
+              } @else { <span class="unavailable">Chưa hỗ trợ đặt trực tuyến</span> }
+            </div>
+          </article>
+        }
+      </div>
+      @if (filteredServices().length > 6) {
+        <div class="more"><button type="button" (click)="expanded.set(!expanded())">
+          {{ expanded() ? 'Thu gọn' : 'Xem thêm ' + (filteredServices().length - 6) + ' dịch vụ' }}</button></div>
+      }
+    }
+    <p class="catalog-note">Bạn có thể xem danh mục mà không cần đăng nhập. Đăng nhập để tiếp tục đặt lịch.</p>
+  </section>
+
+  <section id="booking-guide" class="portal-section" aria-labelledby="guide-title">
+    <div class="section-heading"><span class="eyebrow">HƯỚNG DẪN ĐẶT LỊCH</span>
+      <h2 id="guide-title">Chủ động lịch khám trong 4 bước</h2>
+      <p>Chọn dịch vụ tại đây để được điền sẵn khi chuyển sang trang đặt lịch.</p></div>
+    <ol class="guide-grid">
+      <li><span class="step-number">01</span><h3>Chọn dịch vụ</h3><p>Tham khảo chuyên khoa, mô tả và chi phí. Đăng nhập để tiếp tục.</p></li>
+      <li><span class="step-number">02</span><h3>Chọn bác sĩ & ngày</h3><p>Xem bác sĩ và ca khám đang nhận lịch trong ngày bạn chọn.</p></li>
+      <li><span class="step-number">03</span><h3>Chọn khung giờ</h3><p>Chọn một khung giờ còn chỗ phù hợp với thời gian của bạn.</p></li>
+      <li><span class="step-number">04</span><h3>Kiểm tra & gửi lịch</h3><p>Kiểm tra thông tin, gửi yêu cầu và theo dõi trạng thái trong tài khoản.</p></li>
+    </ol>
+    <aside class="preparation"><h3>Chuẩn bị trước khi đến khám</h3>
+      <p>Mang theo giấy tờ tùy thân, thẻ BHYT nếu có và mã lịch hẹn. Với yêu cầu chuẩn bị riêng của từng dịch vụ, hãy liên hệ phòng khám để được hướng dẫn.</p>
+      <a routerLink="/profile/appointments">Xem lịch hẹn của tôi <span aria-hidden="true">→</span></a></aside>
+  </section>
+
+  <section id="faq" class="portal-section" aria-labelledby="faq-title">
+    <div class="section-heading"><span class="eyebrow">GIẢI ĐÁP NHANH</span><h2 id="faq-title">Câu hỏi thường gặp</h2></div>
+    <div class="faq-list">
+      <details><summary>Tôi có cần đăng nhập để xem dịch vụ không?</summary><p>Bạn có thể xem chuyên khoa, dịch vụ và chi phí ngay trên trang này. Khi đặt lịch, hệ thống yêu cầu đăng nhập và giữ lựa chọn dịch vụ để bạn tiếp tục.</p></details>
+      <details><summary>Gửi đặt lịch xong có được xác nhận ngay không?</summary><p>Sau khi gửi thành công, lịch hẹn được tiếp nhận ở trạng thái chờ xác nhận. Bạn có thể xem mã lịch và theo dõi cập nhật trong <a routerLink="/profile/appointments">Lịch hẹn của tôi</a>.</p></details>
+      <details><summary>Tôi có thể hủy lịch hẹn đã đặt không?</summary><p>Bạn có thể gửi yêu cầu hủy trong chi tiết lịch hẹn khi lịch còn ở trạng thái chờ xác nhận hoặc đã xác nhận và còn trong thời hạn cho phép. Nếu không thể hủy trực tuyến, hãy liên hệ tổng đài để được hỗ trợ.</p></details>
+      <details><summary>Tôi cần chuẩn bị gì trước khi đến khám?</summary><p>Chuẩn bị mã lịch hẹn, giấy tờ tùy thân và thẻ BHYT nếu có. Liên hệ phòng khám để xác nhận các yêu cầu chuẩn bị cụ thể cho dịch vụ bạn đã chọn.</p></details>
+      <details><summary>Tôi thanh toán chi phí khám như thế nào?</summary><p>Chi phí dịch vụ được hiển thị để bạn tham khảo và kiểm tra cùng thông tin lịch hẹn. Vui lòng liên hệ phòng khám để xác nhận hình thức và thời điểm thanh toán cho lịch của bạn.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" aria-label="Thông tin phòng khám">
+  <div class="footer-inner">
+    <div class="footer-brand"><span class="footer-logo-mark" aria-hidden="true">+</span>
+      <div><strong class="footer-clinic-name">{{ site.name }}</strong><span class="footer-tagline">Chủ động chăm sóc sức khỏe</span></div></div>
+    <div class="footer-columns">
+      <div class="footer-col"><h3>Liên hệ</h3><ul>
+        <li><span>{{ site.address }}</span></li>
+        <li><a [href]="site.phoneHref">Tổng đài: {{ site.phone }}</a></li>
+      </ul></div>
+      <div class="footer-col"><h3>Lịch tiếp nhận</h3>
+        <p class="footer-description">Lịch khám hiển thị theo bác sĩ và ngày bạn chọn. Liên hệ tổng đài để xác nhận giờ tiếp nhận.</p>
+        <a routerLink="/home">Tra cứu lịch khám →</a></div>
+      <div class="footer-col"><h3>Truy cập nhanh</h3><ul>
+        <li><a routerLink="/portal">Cổng thông tin</a></li>
+        <li><a routerLink="/home">Đặt lịch khám</a></li>
+        <li><a routerLink="/profile/appointments">Lịch hẹn của tôi</a></li>
+        <li><a routerLink="/profile">Tài khoản của tôi</a></li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="footer-bottom"><span>© {{ currentYear }} {{ site.name }}. Bảo lưu mọi quyền.</span><span class="footer-note">Hệ thống đặt lịch trực tuyến</span></div>
+</footer>

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { PatientService } from '../../services/patient/patient.service';
+import { SITE_INFO } from '../../constants/site-info';
 
 @Component({
   selector: 'app-site-header',
@@ -18,8 +19,8 @@ export class SiteHeader {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   readonly displayName = input('');
-  readonly phone = input('1900.888.866');
-  readonly address = input('Số 78, đường Giải Phóng, phường Kim Liên, Thành phố Hà Nội');
+  readonly phone = input<string>(SITE_INFO.phone);
+  readonly address = input<string>(SITE_INFO.address);
   readonly authenticated = signal(false);
   readonly accountName = signal('Bạn');
   readonly resolvedName = computed(() => this.patients.currentProfile()?.fullName || this.displayName() || this.accountName());

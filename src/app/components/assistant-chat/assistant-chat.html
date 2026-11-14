@@ -1,0 +1,80 @@
+@if (open()) {
+  <section class="chat-panel" id="booking-assistant" aria-label="Trợ lý đặt lịch" (keydown.escape)="toggle()">
+    <header class="chat-header">
+      <span class="avatar" aria-hidden="true">
+        <ng-container [ngTemplateOutlet]="assistantIcon" />
+      </span>
+      <div class="heading"><h2>Trợ lý đặt lịch</h2><p>Thông tin phòng khám, ngay tại đây</p></div>
+      <button type="button" class="icon-button" (click)="reset()" aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-button" (click)="toggle()" aria-label="Đóng trợ lý">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </header>
+    <div class="messages" #messages role="log" aria-live="polite" aria-relevant="additions text" [attr.aria-busy]="busy()">
+      <div class="welcome">
+        <span class="welcome-icon" aria-hidden="true">
+          <ng-container [ngTemplateOutlet]="assistantIcon" />
+        </span>
+        <h3>Chào bạn, tôi có thể giúp gì?</h3>
+        <p>Tìm hiểu chuyên khoa, chi phí dịch vụ và cách đặt lịch khám.</p>
+      </div>
+      @for (turn of turns(); track $index) {
+        <div class="turn" [class.user]="turn.role === 'user'">
+          <span class="sender">{{ turn.role === 'user' ? 'Bạn' : 'Trợ lý' }}</span>
+          <p class="bubble">{{ turn.content }}</p>
+        </div>
+      }
+      @if (busy()) { <p class="pending" role="status"><span class="pulse"></span> Đang tìm thông tin…</p> }
+      @if (error()) {
+        <div class="chat-error" role="alert"><p>{{ error() }}</p>
+          <button type="button" (click)="retry()">Thử lại</button>
+          <button type="button" (click)="reset()">Trò chuyện mới</button>
+        </div>
+      }
+    </div>
+    <div class="quick-actions" aria-label="Tra cứu nhanh">
+      @for (item of actions; track item.action) {
+        <button type="button" (click)="send(item.action)" [disabled]="busy() || !!error()">{{ item.label }}</button>
+      }
+    </div>
+    <form class="composer" (ngSubmit)="send()">
+      <label class="sr-only" for="assistant-message">Câu hỏi cho trợ lý</label>
+      <textarea #composer id="assistant-message" name="message" [(ngModel)]="draft" maxlength="2000" rows="2"
+        placeholder="Nhập câu hỏi của bạn…" [readOnly]="busy() || !!error()" aria-describedby="assistant-limit"></textarea>
+      <div class="composer-footer"><small id="assistant-limit">{{ draft.length }}/2000</small>
+        <button type="submit" [disabled]="busy() || !!error() || !draft.trim() || draft.length > 2000" aria-label="Gửi câu hỏi">Gửi <span aria-hidden="true">↑</span></button></div>
+    </form>
+    <p class="disclaimer">Hỗ trợ tra cứu thông tin. Bạn xác nhận lịch tại biểu mẫu đặt lịch.</p>
+  </section>
+}
+<button #launcher type="button" class="chat-launcher" [class.collapsed]="!open()" (click)="toggle()" [attr.aria-expanded]="open()"
+  aria-controls="booking-assistant" [attr.aria-label]="open() ? 'Đóng trợ lý đặt lịch' : 'Mở trợ lý đặt lịch'">
+  <span class="launcher-symbol" aria-hidden="true">
+    @if (open()) {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    } @else {
+      <ng-container [ngTemplateOutlet]="assistantIcon" />
+    }
+  </span>
+  @if (open()) { <span>Trợ lý đặt lịch</span> }
+</button>
+
+<ng-template #assistantIcon>
+  <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+    <circle cx="12" cy="10" r="3" />
+    <path d="M5 11V9a7 7 0 0 1 14 0v2M6.5 21a5.5 5.5 0 0 1 11 0" />
+    <rect x="3" y="10" width="3" height="5" rx="1.5" />
+    <rect x="18" y="10" width="3" height="5" rx="1.5" />
+    <path d="M19.5 15v1a2 2 0 0 1-2 2H15" />
+  </svg>
+</ng-template>

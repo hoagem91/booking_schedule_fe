@@ -10,6 +10,7 @@ import vi from '@angular/common/locales/vi';
 
 import {
   provideRouter,
+  withNavigationErrorHandler,
   withInMemoryScrolling
 } from '@angular/router';
 
@@ -56,6 +57,7 @@ import { NzResizableService } from 'ng-zorro-antd/resizable';
 import { routes } from './app.routes';
 
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { recoverPaymentChunk } from './utils/payment-chunk-recovery';
 
 registerLocaleData(vi);
 
@@ -71,6 +73,12 @@ export const appConfig: ApplicationConfig = {
     // Router
     provideRouter(
       routes,
+      withNavigationErrorHandler(event => {
+        if (typeof window === 'undefined' || !window.navigator.onLine) return;
+        try {
+          recoverPaymentChunk(event.error, event.url, window.sessionStorage, url => window.location.replace(url));
+        } catch { /* Preserve the router error if browser storage or navigation is unavailable. */ }
+      }),
       withInMemoryScrolling({
         anchorScrolling: 'enabled'
       })

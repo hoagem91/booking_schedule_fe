@@ -1,101 +1,102 @@
-import { Component } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { SiteHeader } from '../../components/site-header/site-header';
+import { SITE_INFO } from '../../constants/site-info';
+import { AppointmentService } from '../../services/appointment/appointment.service';
+import { BookingService, BookingSpecialty } from '../../models/booking.model';
+import { appointmentResponseSucceeded, decodeAppointmentText } from '../../utils/appointment/appointment-ui.utils';
 
 @Component({
-  selector: 'app-portal', standalone: true, imports: [SiteHeader, RouterLink],
-  template: `
-    <app-site-header />
-    <main>
-      <div class="breadcrumb">Trang chủ <span>/</span> Cổng thông tin</div>
-      <section class="welcome" aria-labelledby="portal-heading">
-        <span class="eyebrow">BOOKING SCHEDULE</span>
-        <h1 id="portal-heading">Chăm sóc sức khỏe,<br>khởi đầu từ sự chủ động.</h1>
-        <p>Chào mừng bạn đến với hệ thống đặt lịch khám.<br>Đăng nhập để tiếp tục hành trình chăm sóc sức khỏe của bạn.
-        </p>
-        <a routerLink="/home">Truy cập tài khoản <span aria-hidden="true">→</span></a>
-      </section>
-    </main>`,
-  styles: [`:host {
-    display: block;
-    min-height: 100dvh;
-    background: #f7faf8;
-  }
-
-  main {
-    width: min(1200px, calc(100% - 64px));
-    margin-inline: auto;
-    padding: 28px 0 80px;
-  }
-
-  .breadcrumb {
-    color: #839189;
-    font-size: 12px;
-  }
-
-  .breadcrumb span {
-    margin: 0 10px;
-    color: #bbc6be;
-  }
-
-  .welcome {
-    padding: 70px 0;
-  }
-
-  .eyebrow {
-    color: #168341;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-  }
-
-  h1 {
-    margin: 20px 0;
-    color: #254333;
-    font-size: clamp(30px, 3.5vw, 46px);
-    line-height: 1.25;
-    font-weight: 600;
-    letter-spacing: -1.3px;
-  }
-
-  p {
-    color: #74877a;
-    font-size: 15px;
-    line-height: 1.9;
-    margin: 0 0 28px;
-  }
-
-  .welcome a {
-    display: inline-flex;
-    gap: 24px;
-    padding: 13px 20px;
-    border-radius: 6px;
-    background: #168341;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .welcome a:hover {
-    background: #107235;
-  }
-
-  a:focus-visible {
-    outline: 2px solid #c88b19;
-    outline-offset: 4px;
-  }
-
-  @media (max-width: 700px) {
-    main {
-      width: calc(100% - 32px);
-      padding-top: 24px;
-    }
-
-    .welcome {
-      padding-top: 44px;
-    }
-  }`]
+  selector: 'app-portal', standalone: true,
+  imports: [SiteHeader, RouterLink, FormsModule, CurrencyPipe],
+  templateUrl: './portal.html',
+  styleUrl: './portal.css'
 })
 export class Portal {
+  private readonly api = inject(AppointmentService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly specialties = signal<BookingSpecialty[]>([]);
+  readonly services = signal<BookingService[]>([]);
+  readonly loadingSpecialties = signal(false);
+  readonly loadingServices = signal(false);
+  readonly specialtyError = signal('');
+  readonly serviceError = signal('');
+  readonly selectedSpecialty = signal<number | null>(null);
+  readonly query = signal('');
+  readonly expanded = signal(false);
+  readonly decode = decodeAppointmentText;
+  readonly currentYear = new Date().getFullYear();
+  readonly site = SITE_INFO;
+  readonly filteredServices = computed(() => {
+    const query = this.normalize(this.query());
+    const specialtyId = this.selectedSpecialty();
+    return this.services().filter(item =>
+      (specialtyId === null || item.specialtyId === specialtyId || item.specialtyId === null)
+      && (!query || this.normalize(`${item.name} ${this.specialtyName(item)} ${item.description ?? ''}`).includes(query)));
+  });
+  // The public API has no featured/popularity flag. Preview follows catalog order.
+  readonly visibleServices = computed(() => this.expanded()
+    ? this.filteredServices() : this.filteredServices().slice(0, 6));
+
+  constructor() {
+    afterNextRender(() => { this.loadSpecialties(); this.loadServices(); });
+  }
+
+  loadSpecialties(): void {
+    if (this.loadingSpecialties()) return;
+    this.loadingSpecialties.set(true);
+    this.specialtyError.set('');
+    this.api.getSpecialties().pipe(takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.loadingSpecialties.set(false))).subscribe({
+      next: response => {
+        if (appointmentResponseSucceeded(response) && Array.isArray(response.result)) {
+          this.specialties.set(response.result);
+        } else this.specialtyError.set('Chưa thể tải chuyên khoa. Vui lòng thử lại.');
+      },
+      error: () => this.specialtyError.set('Chưa thể tải chuyên khoa. Vui lòng thử lại.')
+    });
+  }
+
+  loadServices(): void {
+    if (this.loadingServices()) return;
+    this.loadingServices.set(true);
+    this.serviceError.set('');
+    this.api.getServices().pipe(takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.loadingServices.set(false))).subscribe({
+      next: response => {
+        if (appointmentResponseSucceeded(response) && Array.isArray(response.result)) {
+          this.services.set(response.result);
+        } else this.serviceError.set('Chưa thể tải dịch vụ. Vui lòng thử lại.');
+      },
+      error: () => this.serviceError.set('Chưa thể tải dịch vụ. Vui lòng thử lại.')
+    });
+  }
+
+  filterSpecialty(id: number | null): void {
+    this.selectedSpecialty.set(id);
+    this.expanded.set(false);
+  }
+
+  specialtyName(service: BookingService): string {
+    return this.decode(service.specialtyName
+      || this.specialties().find(item => item.id === service.specialtyId)?.name
+      || (service.specialtyId === null ? 'Dịch vụ chung' : 'Dịch vụ khám'));
+  }
+
+  bookingParams(service: BookingService) {
+    return { serviceId: service.id, specialtyId: service.specialtyId ?? this.selectedSpecialty() };
+  }
+
+  canBook(service: BookingService): boolean {
+    return service.price !== null && Number.isFinite(service.price) && service.price >= 0;
+  }
+
+  private normalize(value: string): string {
+    return this.decode(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+  }
 }

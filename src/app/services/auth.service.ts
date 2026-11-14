@@ -139,9 +139,11 @@ export class AuthService {
     this.loginArea = 'patient';
   }
   forceLogout(): void {
+    const paymentReturnUrl = /^\/payment\/(?:result|appointments\/[1-9]\d*)(?:[?#]|$)/.test(this.router.url) ? this.router.url : null;
     const loginUrl = this.router.url.startsWith('/management') || this.loginArea === 'management' ? '/management/login' : '/login';
     this.clearAll();
-    void this.router.navigateByUrl(loginUrl);
+    if (paymentReturnUrl) void this.router.navigate([loginUrl], { queryParams: { returnUrl: paymentReturnUrl } });
+    else void this.router.navigateByUrl(loginUrl);
   }
   logout(): Observable<void> {
     const token = this.getToken();

@@ -1,1 +1,10 @@
-{ "/booking-schedule/**": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true } }
+{
+  "/booking-schedule/**": {
+    "target": "https://prompter-trousers-revered.ngrok-free.dev",
+    "secure": true,
+    "changeOrigin": true,
+    "headers": {
+      "ngrok-skip-browser-warning": "true"
+    }
+  }
+}

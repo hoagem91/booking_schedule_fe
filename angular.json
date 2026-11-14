@@ -46,6 +46,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -93,6 +99,10 @@
               "ChromeHeadless"
             ],
             "include": [
+              "src/app/pages/payment/**/*.spec.ts",
+              "src/app/services/payment.service.spec.ts",
+              "src/app/utils/payment.utils.spec.ts",
+              "src/app/components/assistant-chat/**/*.spec.ts",
               "src/app/components/setting-table/**/*.spec.ts",
               "src/app/components/base.component.spec.ts",
               "src/app/management/**/*.spec.ts",

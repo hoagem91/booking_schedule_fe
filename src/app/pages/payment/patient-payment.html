@@ -1,0 +1,232 @@
+<app-site-header />
+<main class="payment-shell">
+  <div class="breadcrumb">
+    <a routerLink="/profile/appointments" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Lịch hẹn của tôi
+    </a>
+  </div>
+
+  <header class="payment-heading">
+    <h1>Thanh toán lịch khám</h1>
+    <p>Thanh toán an toàn qua cổng payOS. Quét mã QR bằng ứng dụng ngân hàng hoặc ví điện tử để hoàn tất.</p>
+  </header>
+
+  @if (error()) {
+    <div role="alert" class="alert error">
+      <span class="alert-icon" aria-hidden="true">!</span>
+      <div>{{ error() }}</div>
+    </div>
+  }
+  @if (notice()) {
+    <div role="status" class="alert success">
+      <span class="alert-icon" aria-hidden="true">✓</span>
+      <div>{{ notice() }}</div>
+    </div>
+  }
+
+  <div class="payment-grid">
+    <!-- Left Card: Thông tin thanh toán -->
+    <section class="payment-card info-card">
+      <div class="card-top">
+        <h2>Thông tin thanh toán</h2>
+        <span class="provider-pill">payOS</span>
+      </div>
+
+      @if (appointment(); as item) {
+        <dl class="detail-list">
+          <div>
+            <dt>Mã lịch hẹn</dt>
+            <dd class="code-text">{{ item.appointmentCode }}</dd>
+          </div>
+          <div>
+            <dt>Dịch vụ</dt>
+            <dd>{{ item.serviceName }}</dd>
+          </div>
+          <div>
+            <dt>Người khám</dt>
+            <dd>{{ item.patientName }}</dd>
+          </div>
+          <div>
+            <dt>Ngày & giờ khám</dt>
+            <dd>{{ item.appointmentDate | date:'dd/MM/yyyy' }} · {{ item.startTime.slice(0,5) }}</dd>
+          </div>
+        </dl>
+      }
+
+      <div class="amount-box">
+        <span class="amount-label">Số tiền cần thanh toán</span>
+        <strong class="amount-val">
+          @if (payment(); as p) {
+            {{ p.amount | currency:'VND':'symbol':'1.0-0':'vi' }}
+          } @else if (appointment(); as a) {
+            {{ a.finalAmount == null ? 'Chưa xác định' : (a.finalAmount | currency:'VND':'symbol':'1.0-0':'vi') }}
+          } @else {
+            —
+          }
+        </strong>
+      </div>
+
+      @if (payment(); as p) {
+        <div class="payment-meta-row">
+          <span>Trạng thái khoản thu:</span>
+          <span [class]="'badge ' + p.paymentStatus">{{ labels[p.paymentStatus] }}</span>
+        </div>
+      }
+
+      <div class="info-actions">
+        @if (appointmentId()) {
+          <button type="button" class="btn-action-outline" [disabled]="busy() || loading()" (click)="loadOverview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            Tải lại khoản thu
+          </button>
+          <a class="btn-action-outline" [routerLink]="['/profile/appointments', appointmentId()]">
+            Xem chi tiết lịch hẹn
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- Right Card: Giao diện QR payOS -->
+    <section class="payment-card qr-card" aria-live="polite">
+      @if (transaction()?.status === 'SUCCESS' || payment()?.paymentStatus === 'SUCCESS') {
+        <!-- SUCCESS STATE -->
+        <div class="status-view success-view">
+          <span class="status-mark-circle success" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </span>
+          <h2>Thanh toán thành công!</h2>
+          <p class="status-sub">Hệ thống đã nhận được tiền và xác nhận lịch khám của bạn.</p>
+
+          @if (transaction(); as tx) {
+            <div class="tx-summary-box">
+              <div class="tx-row"><span>Mã giao dịch:</span><strong>{{ tx.txnRef }}</strong></div>
+              <div class="tx-row"><span>Số tiền:</span><strong class="green-text">{{ tx.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</strong></div>
+              @if (tx.paidAt) {
+                <div class="tx-row"><span>Thời gian:</span><span>{{ clinicDate(tx.paidAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</span></div>
+              }
+            </div>
+          }
+
+          <div class="qr-buttons">
+            <a class="btn-primary-action" [routerLink]="['/profile/appointments', appointmentId()]">
+              Xem lịch hẹn của tôi →
+            </a>
+          </div>
+        </div>
+      } @else if (checkout(); as link) {
+        <!-- QR CODE ACTIVE STATE -->
+        <div class="qr-active-view">
+          <div class="qr-header">
+            <h3>Quét mã QR để thanh toán</h3>
+            <p>Mở ứng dụng <strong>Ngân hàng (VietQR)</strong> hoặc <strong>Ví điện tử</strong></p>
+            <div class="payment-countdown" [class.is-urgent]="remainingSeconds() !== null && remainingSeconds()! <= 60" [class.is-expired]="expired()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              <span>{{ expired() ? 'Đã hết hạn thanh toán' : 'Thời gian thanh toán còn lại' }}</span>
+              <strong role="timer" aria-live="off" aria-label="Thời gian thanh toán còn lại">{{ countdown() }}</strong>
+            </div>
+          </div>
+
+          @if (!expired()) {
+          <div class="qr-container">
+            <nz-qrcode [nzValue]="link.qrCode" [nzSize]="220" [nzPadding]="14" />
+          </div>
+
+          <div class="qr-buttons">
+            @if (safeCheckoutUrl(link.checkoutUrl); as url) {
+              <a class="btn-primary-action" [href]="url" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+                </svg>
+                Mở trang thanh toán payOS
+              </a>
+            }
+<!--            @if (txnRef()) {-->
+<!--              <button type="button" class="btn-check-action" [disabled]="busy() || loading()" (click)="refresh()">-->
+<!--                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">-->
+<!--                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>-->
+<!--                </svg>-->
+<!--                Kiểm tra lại giao dịch-->
+<!--              </button>-->
+<!--            }-->
+          </div>
+
+          }
+          <div class="qr-info-footer">
+            <p class="expire-hint">Hết hạn lúc {{ clinicDate(link.expiresAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</p>
+            @if (expired()) {
+              <p class="alert-expire">Mã thanh toán đã hết hạn. Hãy kiểm tra trạng thái hoặc tải lại khoản thu.</p>
+            }
+          </div>
+        </div>
+      } @else if (busy() || loading()) {
+        <!-- LOADING QR STATE -->
+        <div class="status-view loading-view">
+          <div class="qr-spinner" aria-hidden="true"></div>
+          <h3>Đang khởi tạo mã QR thanh toán…</h3>
+          <p class="status-sub">Hệ thống đang kết nối với cổng thanh toán payOS. Mã QR sẽ hiển thị ngay.</p>
+        </div>
+      } @else {
+        <!-- FALLBACK / CREATE MANUAL TRIGGER IF NEEDED -->
+        <div class="status-view fallback-view">
+          <span class="status-mark-circle initial" aria-hidden="true">₫</span>
+          <h3>Thanh toán qua payOS</h3>
+          <p class="status-sub">Bấm nút bên dưới để tạo mã QR thanh toán theo đúng lịch hẹn của bạn.</p>
+          <div class="qr-buttons">
+            <button type="button" class="btn-primary-action" [disabled]="busy() || loading()" (click)="create()">
+              Tạo mã QR thanh toán
+            </button>
+          </div>
+        </div>
+      }
+      <p class="fine-print">Thanh toán an toàn qua payOS. Sau khi chuyển tiền, hệ thống sẽ tự động cập nhật trạng thái.</p>
+    </section>
+  </div>
+
+  @if (history().length) {
+    <section class="payment-card history-card">
+      <div class="history-header">
+        <h2>Lịch sử các lần giao dịch</h2>
+        <p>Mỗi lần tạo mã là một giao dịch riêng biệt. Trạng thái chính thức được cập nhật tự động.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã giao dịch</th>
+              <th>Kênh</th>
+              <th>Số tiền</th>
+              <th>Trạng thái</th>
+              <th>Thời gian</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of history(); track item.id) {
+              <tr>
+                <td class="reference-code">{{ item.txnRef }}</td>
+                <td><span class="channel-tag">{{ item.provider }}</span></td>
+                <td class="amount-col">{{ item.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</td>
+                <td><span [class]="'badge ' + item.status">{{ labels[item.status] }}</span></td>
+                <td>{{ clinicDate(item.createdAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</td>
+                <td>
+                  @if (item.provider === 'PAYOS') {
+                    <button type="button" class="btn-table-check" [disabled]="busy() || loading()" (click)="checkTransaction(item.txnRef)">
+                      Kiểm tra
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</main>
