@@ -12,6 +12,7 @@ export const managementRoutes: Routes = [
     path: '', data: { managementShell: true }, canActivate: [managementGuard], canActivateChild: [managementChildGuard],
     loadComponent: () => import('./layout/management-layout').then(m => m.ManagementLayout),
     children: [
+      { path: 'payments', title: 'Thanh toán payOS | Booking Schedule', data: { heading: 'Quản lý thanh toán', permission: 'payments:read' }, loadComponent: () => import('./pages/management-payments/management-payments').then(m => m.ManagementPayments) },
       { path: '', pathMatch: 'full', canActivate: [() => inject(Router).parseUrl(managementHome(inject(ManagementAccessService).user()))], loadComponent: () => import('./pages/management-workspace').then(m => m.ManagementWorkspace) },
       { path: 'dashboard', title: 'Không gian làm việc | Booking Schedule', data: { heading: 'Không gian làm việc' }, loadComponent: () => import('./pages/management-workspace').then(m => m.ManagementWorkspace) },
       { path: 'appointments/review', title: 'Xử lý lịch hẹn | Booking Schedule', data: { heading: 'Xử lý lịch hẹn', permission: 'appointments:update-status' }, loadComponent: () => import('./pages/appointment-review/appointment-review').then(m => m.AppointmentReview) },

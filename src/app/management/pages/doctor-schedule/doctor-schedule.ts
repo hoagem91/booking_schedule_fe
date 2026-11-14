@@ -27,6 +27,7 @@ import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { DoctorScheduleForm } from './doctor-schedule-form/doctor-schedule-form';
 import { DoctorScheduleDetail } from './doctor-schedule-detail/doctor-schedule-detail';
 import { TimeUtils } from '../../../utils/time.utils';
+import { DoctorScheduleConstants } from '../../../constants/doctor-schedule/doctor-schedule.constants';
 
 @Component({
   selector: 'app-doctor-schedule',
@@ -153,7 +154,12 @@ export class DoctorSchedule extends BaseListComponent{
       width: 160,
       minWidth: 130,
       visible: true,
-      render: 'custom'
+      render: 'custom',
+      filterOption:{
+        allowFilter: true,
+        filterMultiple: true,
+        filterData: DoctorScheduleConstants.ListDoctorScheduleStatus
+      }
     },
     {
       title: 'Ngày tạo',
@@ -191,8 +197,9 @@ export class DoctorSchedule extends BaseListComponent{
     this.searchForm = this.fb.group({
       keyword: [null],
       workDate: [null],
-      from: [null],
-      to: [null],
+      fromDate: [null],
+      toDate: [null],
+      status: [null],
     })
   }
   override ngOnInit() {
@@ -201,8 +208,8 @@ export class DoctorSchedule extends BaseListComponent{
   protected onDateRangeChange(event: { key: string; start: string | null; end: string | null }): void {
     if (event.key !== 'workDate') return;
     this.searchForm.patchValue({
-      from: event.start,
-      to: event.end
+      fromDate: event.start,
+      toDate: event.end
     }, { emitEvent: false });
     this.currentPage = 1;
     this.doLoadData();
@@ -211,8 +218,9 @@ export class DoctorSchedule extends BaseListComponent{
     const formValue = this.searchForm.value;
     return {
       keyword: formValue.keyword ?? null,
-      from: formValue.from ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.from)) : null,
-      to: formValue.to ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.to)) : null,
+      fromDate: formValue.fromDate ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.fromDate)) : null,
+      toDate: formValue.toDate ? TimeUtils.convertTimeObjectToTimeStringYYYYMMDD(new Date(formValue.toDate)) : null,
+      statuses: formValue.status ?? null,
     }
   }
   override loadData(){

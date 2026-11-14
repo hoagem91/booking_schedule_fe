@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 export const routes: Routes = [
+  { path: 'payment/result', title: 'Kết quả thanh toán | Booking Schedule', canActivate: [authGuard], data: { paymentResult: true }, loadComponent: () => import('./pages/payment/patient-payment').then(m => m.PatientPayment) },
+  { path: 'payment/appointments/:id', title: 'Thanh toán lịch khám | Booking Schedule', canActivate: [authGuard], loadComponent: () => import('./pages/payment/patient-payment').then(m => m.PatientPayment) },
   { path: 'management', loadChildren: () => import('./management/management.routes').then(m => m.managementRoutes) },
   { path: '403', title: 'Không có quyền truy cập | Booking Schedule', data: { kind: 'forbidden' }, loadComponent: () => import('./management/pages/management-status').then(m => m.ManagementStatus) },
   { path: '404', title: 'Không tìm thấy trang | Booking Schedule', loadComponent: () => import('./management/pages/management-status').then(m => m.ManagementStatus) },

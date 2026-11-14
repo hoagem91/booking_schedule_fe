@@ -1,0 +1,52 @@
+<header class="intro"><div><span class="eyebrow">QUẢN LÝ THU PHÍ</span><h1>Thanh toán payOS</h1><p>Theo dõi khoản thu và đối chiếu từng lần thanh toán.</p></div><button type="button" [disabled]="refreshing()" (click)="needsReview()">Giao dịch cần đối soát</button></header>
+<nav class="tabs" aria-label="Loại dữ liệu thanh toán"><button type="button" [class.active]="mode() === 'payments'" [disabled]="refreshing()" (click)="changeMode('payments')">Khoản thu</button><button type="button" [class.active]="mode() === 'transactions'" [disabled]="refreshing()" (click)="changeMode('transactions')">Lần thanh toán</button></nav>
+<section class="panel">
+  <form class="filters" (ngSubmit)="search()">
+    @if (mode() === 'payments') {
+      <label class="keyword">Tìm khoản thu<input name="keyword" [(ngModel)]="keyword" maxlength="100" placeholder="Mã khoản thu, lịch hẹn, mã hoặc tên bệnh nhân" /></label>
+      <label>Trạng thái khoản thu<select name="paymentStatus" [(ngModel)]="paymentStatus"><option value="">Tất cả trạng thái</option>@for (status of paymentStatuses; track status) { <option [value]="status">{{ labels[status] }}</option> }</select></label>
+      <label>ID lịch hẹn<input type="number" min="1" step="1" name="appointmentId" [(ngModel)]="appointmentId" /></label>
+      <label>Từ ngày tạo<input type="date" name="fromDate" [(ngModel)]="fromDate" /></label><label>Đến ngày tạo<input type="date" name="toDate" [(ngModel)]="toDate" /></label>
+    } @else {
+      <label>Trạng thái lần thử<select name="transactionStatus" [(ngModel)]="transactionStatus"><option value="">Tất cả trạng thái</option>@for (status of transactionStatuses; track status) { <option [value]="status">{{ labels[status] }}</option> }</select></label>
+      <label>Mã giao dịch chính xác<input name="txnRef" [(ngModel)]="txnRef" inputmode="numeric" placeholder="txnRef" /></label>
+      <label>ID khoản thu<input type="number" min="1" step="1" name="paymentId" [(ngModel)]="paymentId" /></label>
+    }
+    <button class="primary" type="submit" [disabled]="loading()">Lọc dữ liệu</button><button type="button" [disabled]="loading()" (click)="clearFilters()">Đặt lại</button>
+  </form>
+  @if (error()) { <p class="alert error" role="alert">{{ error() }}</p> }
+  @if (loading()) { <p role="status">Đang tải dữ liệu…</p> }
+  <div class="table-scroll" [attr.aria-busy]="loading()"><table>
+    @if (mode() === 'payments') {
+      <thead><tr><th>Khoản thu / lịch hẹn</th><th>Bệnh nhân</th><th>Số tiền</th><th>Trạng thái khoản thu</th><th>Ngày tạo (UTC+7)</th><th></th></tr></thead><tbody>
+      @for (item of payments()?.content ?? []; track item.id) { <tr><td><strong>{{ item.paymentCode }}</strong><small>{{ item.appointmentCode }} · ID {{ item.appointmentId }}</small></td><td>{{ item.patientName }}<small>{{ item.patientCode }} · {{ item.patientPhone || 'Chưa có SĐT' }}</small></td><td>{{ item.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</td><td><span [class]="'badge ' + item.paymentStatus">{{ labels[item.paymentStatus] }}</span></td><td>{{ clinicDate(item.createdAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</td><td><button type="button" [disabled]="loading() || refreshing()" (click)="openPayment(item.id)">Chi tiết</button></td></tr> }
+      @empty { @if (!loading()) { <tr><td colspan="6" class="empty">Không có khoản thu phù hợp.</td></tr> } }
+      </tbody>
+    } @else {
+      <thead><tr><th>Mã giao dịch</th><th>ID khoản / lịch</th><th>Số tiền</th><th>Trạng thái lần thử</th><th>Trạng thái payOS</th><th></th></tr></thead><tbody>
+      @for (item of transactions()?.content ?? []; track item.id) { <tr><td>{{ item.txnRef }}<small>{{ clinicDate(item.createdAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</small></td><td>{{ item.paymentId }} / {{ item.appointmentId }}</td><td>{{ item.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</td><td><span [class]="'badge ' + item.status">{{ labels[item.status] }}</span></td><td>{{ item.providerStatus || 'Chưa có' }}</td><td><button type="button" [disabled]="loading() || refreshing()" (click)="openTransaction(item.txnRef)">Xem giao dịch</button></td></tr> }
+      @empty { @if (!loading()) { <tr><td colspan="6" class="empty">Không có giao dịch phù hợp.</td></tr> } }
+      </tbody>
+    }
+  </table></div>
+  @if (currentPage(); as page) { <footer class="pagination"><span>{{ page.totalElements }} kết quả · Trang {{ page.totalPages ? page.number + 1 : 0 }}/{{ page.totalPages }}</span><div><button type="button" [disabled]="page.first || loading()" (click)="search(page.number - 1)">Trước</button><button type="button" [disabled]="page.last || loading()" (click)="search(page.number + 1)">Sau</button></div></footer> }
+</section>
+@if (detailLoading() || selected() || selectedTransaction() || detailError()) {
+  <section class="panel detail" aria-labelledby="payment-detail-title"><div class="detail-heading"><h2 id="payment-detail-title">Chi tiết khoản thu</h2><button type="button" [disabled]="refreshing()" (click)="closeDetail()">Đóng chi tiết</button></div>
+    @if (detailLoading()) { <p role="status">Đang tải chi tiết khoản thu và lịch sử…</p> }
+    @if (detailError()) { <p class="alert error" role="alert">{{ detailError() }}</p> }
+    @if (feedback()) { <p class="alert" role="status">{{ feedback() }}</p> }
+    @if (selected(); as item) {
+      <div class="detail-grid"><div><small>Mã khoản thu</small><strong>{{ item.paymentCode }}</strong><p>Lịch hẹn: {{ item.appointmentCode }} (ID {{ item.appointmentId }})</p></div><div><small>Bệnh nhân</small><strong>{{ item.patientName }}</strong><p>{{ item.patientCode }} · {{ item.patientPhone || 'Chưa có SĐT' }}</p></div><div><small>Số tiền khoản thu</small><strong class="price">{{ item.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</strong><p>{{ item.paymentMethod }} · {{ labels[item.paymentStatus] }}</p></div></div>
+      <p>Tham chiếu ngân hàng: {{ item.transactionCode || 'Chưa ghi nhận' }} · Đã thu lúc: {{ item.paidAt ? (clinicDate(item.paidAt) | date:'HH:mm dd/MM/yyyy':'+0700') : 'Chưa ghi nhận' }}</p>
+    }
+    @if (selectedTransaction(); as txn) { <div class="alert"><strong>Giao dịch {{ txn.txnRef }} · {{ labels[txn.status] }}</strong><p>payOS: {{ txn.providerStatus || 'Chưa có' }} · Tham chiếu: {{ txn.providerTransactionNo || 'Chưa có' }}</p><p>Hết hạn: {{ clinicDate(txn.expiresAt) | date:'HH:mm dd/MM/yyyy':'+0700' }} · Thanh toán lúc: {{ txn.paidAt ? (clinicDate(txn.paidAt) | date:'HH:mm dd/MM/yyyy':'+0700') : 'Chưa ghi nhận' }}</p><button type="button" [disabled]="refreshing() || detailLoading() || txn.provider !== 'PAYOS'" (click)="refresh(txn.txnRef)">Đồng bộ giao dịch này</button></div> }
+    <h3>Các lần thanh toán payOS của khoản thu</h3><div class="table-scroll"><table><thead><tr><th>Mã giao dịch</th><th>Số tiền</th><th>Trạng thái</th><th>payOS</th><th>Đối chiếu</th></tr></thead><tbody>
+      @for (txn of history()?.content ?? []; track txn.id) { <tr><td>{{ txn.txnRef }}<small>{{ clinicDate(txn.createdAt) | date:'HH:mm dd/MM/yyyy':'+0700' }}</small></td><td>{{ txn.amount | currency:'VND':'symbol':'1.0-0':'vi' }}</td><td><span [class]="'badge ' + txn.status">{{ labels[txn.status] }}</span></td><td>{{ txn.providerStatus || 'Chưa có' }}</td><td><button type="button" [disabled]="refreshing() || detailLoading() || txn.provider !== 'PAYOS'" (click)="refresh(txn.txnRef)">{{ refreshing() ? 'Đang kiểm tra…' : 'Đồng bộ payOS' }}</button></td></tr> }
+      @empty { @if (!detailLoading()) { <tr><td colspan="5" class="empty">Chưa có lần thanh toán payOS.</td></tr> } }
+    </tbody></table></div>
+    @if (history(); as page) { <footer class="pagination"><span>{{ page.totalElements }} lần thử · Trang {{ page.totalPages ? page.number + 1 : 0 }}/{{ page.totalPages }}</span><div><button type="button" [disabled]="page.first || detailLoading() || refreshing()" (click)="historyPage(page.number - 1)">Trước</button><button type="button" [disabled]="page.last || detailLoading() || refreshing()" (click)="historyPage(page.number + 1)">Sau</button></div></footer> }
+    <p class="fine-print">Giao dịch cần đối soát phải được phòng khám xử lý riêng. Đồng bộ chỉ tra cứu payOS; không chuyển tiền hoặc ép thành công.</p>
+  </section>
+}
+<p class="fine-print">Danh sách khoản thu lọc theo phương thức hiện tại PAYOS. Mục Lần thanh toán hiển thị lịch sử payOS, kể cả khi khoản thu đã đổi phương thức. Số tiền các lần thử không phải doanh thu.</p>

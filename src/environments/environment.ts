@@ -4,9 +4,9 @@ export const environment = {
   api: {
     // Effective API base. Relative URL uses the Angular dev proxy.
     baseUrl: '/booking-schedule',
-    hostSso: 'http://localhost:8080',
-    hostRcm: 'http://localhost:8080',
+    hostSso: 'https://prompter-trousers-revered.ngrok-free.dev',
+    hostRcm: 'https://prompter-trousers-revered.ngrok-free.dev',
   },
-  hostAllow: ['http://localhost:8080'],
+  hostAllow: ['https://prompter-trousers-revered.ngrok-free.dev'],
   version: 'v 1.0.0',
 };

@@ -98,6 +98,7 @@
         <p>Bạn có thể đặt một lịch khám mới khi cần được thăm khám.</p></div>
     }
     <div class="card-actions">
+      <a class="primary" [routerLink]="['/payment/appointments', item.id]">Thanh toán / xem khoản thu</a>
       @if (canCancel(item)) {
         <button type="button" class="danger-outline" (click)="openAction('cancel')">Hủy lịch hẹn</button>
       }
@@ -121,12 +122,13 @@
     <p
       class="dialog-description">{{ action() === 'cancel' ? 'Sau khi hủy, khung giờ này sẽ được dành cho người khác. Yêu cầu hủy được xử lý theo thời hạn của phòng khám.' : 'Chọn mức độ hài lòng và chia sẻ cảm nhận của bạn về ca khám.' }}</p>
     @if (action() === 'cancel') {
-      <label for="cancel-note">Lý do hủy <span>(không bắt buộc)</span></label><textarea id="cancel-note"
-                                                                                        name="cancelNote"
-                                                                                        [(ngModel)]="cancelNote"
-                                                                                        rows="3" maxlength="2000"
-                                                                                        placeholder="Chia sẻ lý do bạn không thể đến khám…"
-                                                                                        [disabled]="saving()"></textarea>
+      <label for="cancel-note">Lý do hủy <span>(không bắt buộc)</span></label>
+      <textarea id="cancel-note"
+                name="cancelNote"
+                [(ngModel)]="cancelNote"
+                rows="3" maxlength="2000"
+                placeholder="Chia sẻ lý do bạn không thể đến khám…"
+                [disabled]="saving()"></textarea>
     } @else {
       <fieldset class="rating">
         <legend>Mức độ hài lòng <span aria-hidden="true">*</span></legend>
@@ -139,12 +141,13 @@
           }
         </div>
         <p>{{ rating ? rating + ' / 5 sao' : 'Chọn từ 1 đến 5 sao' }}</p></fieldset>
-      <label for="review-comment">Nhận xét <span>(không bắt buộc)</span></label><textarea id="review-comment"
-                                                                                          name="comment"
-                                                                                          [(ngModel)]="comment" rows="4"
-                                                                                          maxlength="2000"
-                                                                                          placeholder="Điều gì khiến bạn hài lòng hoặc cần cải thiện?"
-                                                                                          [disabled]="saving()"></textarea>
+      <label for="review-comment">Nhận xét <span>(không bắt buộc)</span></label>
+      <textarea id="review-comment"
+                name="comment"
+                [(ngModel)]="comment" rows="4"
+                maxlength="2000"
+                placeholder="Điều gì khiến bạn hài lòng hoặc cần cải thiện?"
+                [disabled]="saving()"></textarea>
     }
     @if (actionError()) {
       <p class="action-error" role="alert">{{ actionError() }}</p>

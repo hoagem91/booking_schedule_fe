@@ -8,6 +8,7 @@ export interface BookingService {
   id: number;
   name: string;
   specialtyId: number | null;
+  specialtyName?: string | null;
   price: number | null;
   durationMinutes: number | null;
   description: string | null;

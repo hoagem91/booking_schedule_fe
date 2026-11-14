@@ -14,8 +14,9 @@ export class AppointmentService extends BaseService {
     return this.get<BookingSpecialty[]>(ApiConstants.API_PUBLIC_SPECIALTIES);
   }
 
-  getServices(specialtyId: number): Observable<ApiResponse<BookingService[]>> {
-    return this.get<BookingService[]>(ApiConstants.API_PUBLIC_SERVICES, { specialtyId });
+  getServices(specialtyId?: number): Observable<ApiResponse<BookingService[]>> {
+    return this.get<BookingService[]>(ApiConstants.API_PUBLIC_SERVICES,
+      specialtyId === undefined ? undefined : { specialtyId });
   }
 
   getSchedules(specialtyId: number, date: string): Observable<ApiResponse<BookingSchedule[]>> {

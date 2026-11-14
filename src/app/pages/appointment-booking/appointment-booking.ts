@@ -1,13 +1,14 @@
 import { afterNextRender, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Subscription } from 'rxjs';
 import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
 import { NzSelectItemInterface, NzSelectModule } from 'ng-zorro-antd/select';
 import { SiteHeader } from '../../components/site-header/site-header';
 import { BookingSummary } from './booking-summary';
+import { AssistantChat } from '../../components/assistant-chat/assistant-chat';
 import { AppointmentService } from '../../services/appointment/appointment.service';
 import { PatientService } from '../../services/patient/patient.service';
 import { AppointmentHistoryItem } from '../../models/appointment.model';
@@ -17,12 +18,15 @@ import { appointmentErrorMessage, appointmentResponseSucceeded, decodeAppointmen
 
 @Component({
   selector: 'app-appointment-booking', standalone: true,
-  imports: [SiteHeader, BookingSummary, RouterLink, FormsModule, CurrencyPipe, DatePipe, NzDatePickerComponent, NzSelectModule],
+  imports: [SiteHeader, BookingSummary, AssistantChat, RouterLink, FormsModule, CurrencyPipe, DatePipe, NzDatePickerComponent, NzSelectModule],
   templateUrl: './appointment-booking.html', styleUrl: './appointment-booking.css'
 })
 export class AppointmentBooking {
   private readonly appointmentService = inject(AppointmentService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private pendingServiceId = this.catalogId('serviceId');
+  private catalogSelectionApplied = false;
   private servicesRequest?: Subscription;
   private schedulesRequest?: Subscription;
   private slotsRequest?: Subscription;
@@ -84,10 +88,14 @@ export class AppointmentBooking {
   }
 
   loadSpecialties(): void {
+    let loaded = false;
     this.loading.set(true);
     this.error.set('');
     this.appointmentService.getSpecialties()
-      .pipe(finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => {
+        this.loading.set(false);
+        if (loaded && !this.destroyRef.destroyed) this.applyCatalogSelection();
+      }), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
           if (!appointmentResponseSucceeded(res) || !Array.isArray(res.result)) {
@@ -95,9 +103,30 @@ export class AppointmentBooking {
             return;
           }
           this.specialties.set(res.result);
+          loaded = true;
         },
         error: error => this.error.set(appointmentErrorMessage(error))
       });
+  }
+
+  private catalogId(name: string): number | null {
+    const value = this.route.snapshot.queryParamMap.get(name) ?? '';
+    const id = Number(value);
+    return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
+  }
+
+  private applyCatalogSelection(): void {
+    if (this.catalogSelectionApplied) return;
+    this.catalogSelectionApplied = true;
+    const specialtyId = this.catalogId('specialtyId');
+    if (specialtyId !== null && this.specialties().some(item => item.id === specialtyId)) {
+      this.selectSpecialty(specialtyId);
+    } else if (specialtyId !== null) {
+      this.pendingServiceId = null;
+      this.notice.set('Chuyên khoa đã chọn hiện không còn nhận lịch. Vui lòng chọn chuyên khoa khác.');
+    } else if (this.pendingServiceId !== null) {
+      this.notice.set('Vui lòng chọn chuyên khoa để tiếp tục đặt dịch vụ đã chọn từ cổng thông tin.');
+    }
   }
 
   selectSpecialty(id: number): void {
@@ -119,6 +148,16 @@ export class AppointmentBooking {
             return;
           }
           this.services.set(res.result);
+          if (this.pendingServiceId !== null) {
+            const requested = res.result.find(item => item.id === this.pendingServiceId);
+            this.pendingServiceId = null;
+            if (requested && requested.price !== null && Number.isFinite(requested.price) && requested.price >= 0) {
+              this.selectService(requested);
+              this.notice.set('Đã chọn dịch vụ từ cổng thông tin. Bạn có thể tiếp tục hoặc chọn dịch vụ khác.');
+            } else {
+              this.notice.set('Dịch vụ đã chọn hiện không khả dụng trong chuyên khoa này. Vui lòng chọn dịch vụ khác.');
+            }
+          }
         },
         error: error => this.error.set(appointmentErrorMessage(error))
       });

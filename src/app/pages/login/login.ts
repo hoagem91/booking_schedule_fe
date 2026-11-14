@@ -1,6 +1,6 @@
 import { afterNextRender, Component, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -17,6 +17,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly rememberKey = 'booking-schedule-remember-account';
   readonly loginForm = inject(FormBuilder).nonNullable.group({
@@ -31,7 +32,7 @@ export class LoginComponent {
   constructor() {
     afterNextRender(() => {
       if (this.auth.isAuthenticated()) {
-        void this.router.navigateByUrl('/home');
+        void this.router.navigateByUrl(this.destination());
         return;
       }
       try {
@@ -61,9 +62,14 @@ export class LoginComponent {
             if (remember) localStorage.setItem(this.rememberKey, JSON.stringify({ username: username.trim() }));
             else localStorage.removeItem(this.rememberKey);
           } catch { /* Remembering an account is optional. */ }
-          void this.router.navigateByUrl('/home');
+          void this.router.navigateByUrl(this.destination());
         },
         error: (error: Error) => this.errorMessage = error.message,
       });
+  }
+  private destination(): string {
+    const url = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
+    return /^\/(?:home|payment\/(?:result|appointments\/[1-9]\d*)|profile(?:\/appointments(?:\/\d+)?|\/insurance)?)(?:[?#]|$)/.test(url)
+      ? url : '/home';
   }
 }
