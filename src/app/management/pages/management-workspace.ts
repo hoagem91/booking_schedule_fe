@@ -1,10 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ManagementAccessService } from '../services/management-access.service';
+import { ManagementDashboard } from './dashboard/management-dashboard';
 
 @Component({
-  standalone: true, imports: [RouterLink], styleUrls: ['./management-ui.css', './management-workspace.css'],
+  standalone: true, imports: [RouterLink, ManagementDashboard], styleUrls: ['./management-ui.css', './management-workspace.css'],
   template: `
+    @if (access.can('dashboard:read')) {
+      <app-management-dashboard />
+    } @else {
     <div class="page-header">
       <div><p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p>
         <h1>Xin chào, {{ access.user()?.fullName || access.user()?.username }}</h1>
@@ -33,6 +37,7 @@ import { ManagementAccessService } from '../services/management-access.service';
       <aside class="notice">Để nhận lịch khám được phân công, vui lòng liên hệ bộ phận điều phối. Tra cứu lịch cá nhân
         trực tuyến hiện chưa khả dụng.
       </aside>
+    }
     }
   `
 })

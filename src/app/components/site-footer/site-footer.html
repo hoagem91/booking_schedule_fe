@@ -1,0 +1,23 @@
+<footer class="site-footer" aria-label="Thông tin phòng khám">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img src="assets/logo-health.svg" alt="" width="52" height="52" />
+      <div><strong class="footer-clinic-name">{{ site.name }}</strong><span class="footer-tagline">Chủ động chăm sóc sức khỏe</span></div></div>
+    <div class="footer-columns">
+      <div class="footer-col"><h3>Liên hệ</h3><ul>
+        <li><span>{{ site.address }}</span></li>
+        <li><a [href]="site.phoneHref">Tổng đài: {{ site.phone }}</a></li>
+      </ul></div>
+      <div class="footer-col"><h3>Lịch tiếp nhận</h3>
+        <p class="footer-description">Lịch khám hiển thị theo bác sĩ và ngày bạn chọn. Liên hệ tổng đài để xác nhận giờ tiếp nhận.</p>
+        <a routerLink="/home">Tra cứu lịch khám →</a></div>
+      <div class="footer-col"><h3>Truy cập nhanh</h3><ul>
+        <li><a routerLink="/portal">Cổng thông tin</a></li>
+        <li><a routerLink="/home">Đặt lịch khám</a></li>
+        <li><a routerLink="/profile/appointments">Lịch hẹn của tôi</a></li>
+        <li><a routerLink="/profile">Tài khoản của tôi</a></li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="footer-bottom"><span>© {{ currentYear }} {{ site.name }}. Bảo lưu mọi quyền.</span><span class="footer-note">Hệ thống đặt lịch trực tuyến</span></div>
+</footer>

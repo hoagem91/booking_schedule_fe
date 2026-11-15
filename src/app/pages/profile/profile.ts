@@ -3,13 +3,14 @@ import { DatePipe } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
+import { SiteFooter } from '../../components/site-footer/site-footer';
 import { SiteHeader } from '../../components/site-header/site-header';
 import { PatientService } from '../../services/patient/patient.service';
 import { Gender } from '../../models/auth.model';
 
 @Component({
   selector: 'app-profile', standalone: true,
-  imports: [SiteHeader, RouterLink, RouterLinkActive, RouterOutlet, DatePipe],
+  imports: [SiteHeader, SiteFooter, RouterLink, RouterLinkActive, RouterOutlet, DatePipe],
   templateUrl: './profile.html', styleUrl: './profile.css',
 })
 export class Profile {

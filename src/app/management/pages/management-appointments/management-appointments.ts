@@ -29,7 +29,7 @@ import { AppointmentUtils } from '../../../utils/appointment/appointment.utils';
 import { ShareButton } from '../../../components/share-button/share-button';
 import { SettingTableComponent } from '../../../components/setting-table/setting-table.component';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppointmentActionDialog, AppointmentActionDialogData } from '../../appointment-workflow/appointment-action-dialog';
@@ -47,6 +47,7 @@ import { AppointmentConstants } from '../../../constants/appointment/appointment
 export class ManagementAppointments extends BaseListComponent<AppointmentHistoryItem> {
   private readonly api = inject(ManagementAppointmentsService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected drawerService = inject(NzDrawerService);
   protected nzModalService = inject(NzModalService);
   private request?: Subscription;
@@ -61,7 +62,7 @@ export class ManagementAppointments extends BaseListComponent<AppointmentHistory
     this.destroyRef.onDestroy(() => this.cancelModal?.destroy());
     this.searchForm = this.fb.group({
       keyword: [null],
-      status: [null],
+      status: [this.route.snapshot.queryParamMap.get('status') === 'PENDING' ? 'PENDING' : null],
       doctorId: null,
       fromDate: [null],
       toDate: [null],

@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, Subscription } from 'rxjs';
 import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
 import { NzSelectItemInterface, NzSelectModule } from 'ng-zorro-antd/select';
+import { SiteFooter } from '../../components/site-footer/site-footer';
 import { SiteHeader } from '../../components/site-header/site-header';
 import { BookingSummary } from './booking-summary';
 import { AssistantChat } from '../../components/assistant-chat/assistant-chat';
@@ -15,10 +16,11 @@ import { AppointmentHistoryItem } from '../../models/appointment.model';
 import { BookingSchedule, BookingService, BookingSpecialty, BookingTimeSlot } from '../../models/booking.model';
 import { appointmentErrorMessage, appointmentResponseSucceeded, decodeAppointmentText,
   isUnavailableSlotResponse } from '../../utils/appointment/appointment-ui.utils';
+import { NzIconDirective } from 'ng-zorro-antd/icon';
 
 @Component({
   selector: 'app-appointment-booking', standalone: true,
-  imports: [SiteHeader, BookingSummary, AssistantChat, RouterLink, FormsModule, CurrencyPipe, DatePipe, NzDatePickerComponent, NzSelectModule],
+  imports: [SiteHeader, SiteFooter, BookingSummary, AssistantChat, RouterLink, FormsModule, CurrencyPipe, DatePipe, NzDatePickerComponent, NzSelectModule, NzIconDirective],
   templateUrl: './appointment-booking.html', styleUrl: './appointment-booking.css'
 })
 export class AppointmentBooking {

@@ -1,6 +1,7 @@
 import { afterNextRender, Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 import { PaymentService } from '../../../services/payment.service';
 import { AuthService } from '../../../services/auth.service';
@@ -13,6 +14,7 @@ import { clinicDate, paymentError, paymentLabels, validTxnRef } from '../../../u
 })
 export class ManagementPayments {
   private readonly api = inject(PaymentService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly generation = this.auth.sessionGeneration();
@@ -44,7 +46,10 @@ export class ManagementPayments {
     effect(() => {
       if (!this.active()) { cancel(); this.payments.set(null); this.transactions.set(null); this.selected.set(null); this.selectedTransaction.set(null); this.history.set(null); }
     });
-    afterNextRender(() => this.search());
+    afterNextRender(() => {
+      if (this.route?.snapshot.queryParamMap.get('reviewRequired') === 'true') this.needsReview();
+      else this.search();
+    });
   }
   private active(): boolean { return !this.destroyRef.destroyed && this.auth.sessionGeneration() === this.generation; }
   changeMode(mode: 'payments' | 'transactions'): void {

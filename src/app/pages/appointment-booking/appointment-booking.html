@@ -9,7 +9,7 @@
       <div>
         <h1>Đặt lịch khám</h1>
         <p>Chọn dịch vụ và thời gian phù hợp với bạn.</p></div>
-      <a class="history-link" routerLink="/profile/appointments">Lịch hẹn của tôi <span aria-hidden="true">↗</span></a>
+      <a class="history-link" routerLink="/profile/appointments">Lịch hẹn của tôi <span class="text-lg font-bold" aria-hidden="true">↗</span></a>
     </header>
     <nav class="stepper" aria-label="Các bước đặt lịch">
       @for (label of steps; track $index) {
@@ -193,13 +193,14 @@
         }
         <div class="panel-spacer"></div>
         <footer class="panel-footer">
-          <button type="button" class="secondary" [disabled]="step() === 1 || saving()" (click)="backTo(step() - 1)">←
-            Quay lại
+          <button type="button" class="secondary" [disabled]="step() === 1 || saving()" (click)="backTo(step() - 1)">
+            <nz-icon nzType="arrow-left" nzTheme="outline"></nz-icon> Quay lại
           </button>
           @if (step() < 4) {
             <button type="button" class="primary" (click)="next()"
                     [disabled]="loading() || (step() === 1 && !service()) || (step() === 2 && !schedule()) || (step() === 3 && !slot())">
-              Tiếp tục <span aria-hidden="true">→</span></button>
+              Tiếp tục <nz-icon nzType="arrow-right" nzTheme="outline"></nz-icon>
+            </button>
           } @else {
             <button type="submit" form="booking-form" class="primary"
                     [disabled]="saving() || accepted()">{{ saving() ? 'Đang gửi yêu cầu…' : 'Xác nhận đặt lịch' }}
@@ -212,4 +213,5 @@
     </div>
   }
 </main>
+<app-site-footer />
 <app-assistant-chat />

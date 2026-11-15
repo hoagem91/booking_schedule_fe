@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/management/services/dashboard.service.spec.ts",
+    "src/app/management/pages/dashboard/management-dashboard.spec.ts",
+    "src/app/management/pages/management-payments/management-payments.spec.ts",
+    "src/**/*.d.ts"
+  ]
+}

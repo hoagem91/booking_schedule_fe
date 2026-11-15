@@ -1,37 +1,81 @@
 <main class="internal-login">
   <section class="welcome" aria-label="Hệ thống quản lý khám">
-    <a class="brand" routerLink="/portal"><span class="brand-mark" aria-hidden="true">+</span> Booking Schedule</a>
+    <a class="brand" routerLink="/portal">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 512 512" role="img" aria-label="Logo trái tim hình người màu xanh gradient">
+        <defs>
+          <linearGradient id="heartGradient" x1="0" y1="0.5" x2="1" y2="0.5" objectBoundingBox="true">
+            <stop offset="0%" stop-color="#5BC8F5"/>
+            <stop offset="48%" stop-color="#57D9A1"/>
+            <stop offset="72%" stop-color="#65E879"/>
+            <stop offset="100%" stop-color="#B3ED7B"/>
+          </linearGradient>
+          <clipPath id="heartClip">
+            <path d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z"/>
+          </clipPath>
+        </defs>
+        <path fill="url(#heartGradient)" d="M256 89 C190 41 119 54 80 98 C28 158 44 244 96 298 L178 384 C219 429 293 430 334 384 L416 298 C468 244 484 158 432 98 C393 54 322 41 256 89 Z"/>
+        <g clip-path="url(#heartClip)" fill="#007F80">
+          <path d="M256 89 C234 106 196 135 190 175 C183 224 216 258 256 258 C296 258 329 224 322 175 C316 135 278 106 256 89 Z"/>
+          <path d="M109 344 C143 293 192 285 214 284 C228 282 242 281 256 281 C270 281 284 282 298 284 C320 285 369 293 403 344 L358 399 C305 462 207 462 154 399 Z"/>
+        </g>
+      </svg>
+      Booking Schedule</a>
     <div class="welcome-copy"><span class="eyebrow">KHÔNG GIAN LÀM VIỆC NỘI BỘ</span>
       <h1>Kết nối lịch hẹn.<br>Phối hợp chăm sóc.</h1>
       <p>Cùng quản lý lịch khám và đồng hành với người bệnh trong từng lượt hẹn.</p>
-      <div class="workflow" aria-hidden="true"><span>01 <b>Đặt lịch</b></span><span>02 <b>Điều phối</b></span><span>03 <b>Thăm khám</b></span></div>
+      <div class="workflow" aria-hidden="true">
+        <span>01 <b>Đặt lịch</b></span><span>02 <b>Điều phối</b></span><span>03 <b>Thăm khám</b></span></div>
     </div>
     <p class="welcome-footer">Dành cho quản trị viên, nhân viên và bác sĩ.</p>
   </section>
   <section class="form-panel" aria-labelledby="internal-title">
-    <a class="back" routerLink="/portal">← Cổng thông tin</a>
+    <a class="back" routerLink="/portal"><nz-icon nzType="arrow-left" theme="outline"></nz-icon>Cổng thông tin</a>
     <div class="form-content">
       <span class="eyebrow">BOOKING SCHEDULE / QUẢN LÝ</span>
       <h2 id="internal-title">Đăng nhập nội bộ</h2>
       <p class="intro">Sử dụng tài khoản được cấp để vào không gian làm việc của bạn.</p>
       <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="busy()">
-        @if (error()) { <div role="alert" class="error">{{ error() }}</div> }
+        @if (error()) {
+          <div role="alert" class="error">{{ error() }}</div>
+        }
         <label for="internal-username">Tên đăng nhập</label>
-        <input id="internal-username" formControlName="username" autocomplete="username" autocapitalize="none" spellcheck="false"
-          placeholder="Nhập tên đăng nhập" [readOnly]="busy()" [attr.aria-invalid]="form.controls.username.touched && form.controls.username.invalid"
-          aria-describedby="username-error" />
-        @if (form.controls.username.touched && form.controls.username.invalid) { <small class="field-error" id="username-error">Vui lòng nhập tên đăng nhập.</small> }
+        <input id="internal-username" formControlName="username" autocomplete="username" autocapitalize="none"
+               spellcheck="false"
+               placeholder="Nhập tên đăng nhập" [readOnly]="busy()"
+               [attr.aria-invalid]="form.controls.username.touched && form.controls.username.invalid"
+               aria-describedby="username-error" />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <small class="field-error" id="username-error">Vui lòng nhập tên đăng nhập.</small>
+        }
         <label for="internal-password">Mật khẩu</label>
-        <div class="password-field"><input id="internal-password" formControlName="password" autocomplete="current-password"
-          [type]="passwordVisible() ? 'text' : 'password'" placeholder="Nhập mật khẩu" [readOnly]="busy()"
-          [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid" aria-describedby="password-error" />
-          <button type="button" (click)="passwordVisible.set(!passwordVisible())" [attr.aria-pressed]="passwordVisible()"
-            [attr.aria-label]="passwordVisible() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">{{ passwordVisible() ? 'Ẩn' : 'Hiện' }}</button></div>
-        @if (form.controls.password.touched && form.controls.password.invalid) { <small class="field-error" id="password-error">Vui lòng nhập mật khẩu.</small> }
-        <button class="help" type="button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Cần hỗ trợ đăng nhập?</button>
-        @if (help()) { <p class="support" role="status">Liên hệ quản trị viên để được cấp tài khoản hoặc hỗ trợ khôi phục mật khẩu.</p> }
-        <button class="submit" type="submit" [disabled]="busy()">{{ busy() ? 'Đang xác minh…' : 'Đăng nhập' }} <span aria-hidden="true">→</span></button>
-        @if (error() && !denied() && hasSession()) { <button type="button" class="help" (click)="verifyExistingSession()" [disabled]="busy()">Thử xác minh phiên hiện tại</button> }
+        <div class="password-field"><input id="internal-password" formControlName="password"
+                                           autocomplete="current-password"
+                                           [type]="passwordVisible() ? 'text' : 'password'" placeholder="Nhập mật khẩu"
+                                           [readOnly]="busy()"
+                                           [attr.aria-invalid]="form.controls.password.touched && form.controls.password.invalid"
+                                           aria-describedby="password-error" />
+          <button type="button" (click)="passwordVisible.set(!passwordVisible())"
+                  [attr.aria-pressed]="passwordVisible()"
+                  [attr.aria-label]="passwordVisible() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">{{ passwordVisible() ? 'Ẩn' : 'Hiện' }}
+          </button>
+        </div>
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <small class="field-error" id="password-error">Vui lòng nhập mật khẩu.</small>
+        }
+        <button class="help" type="button" (click)="help.set(!help())" [attr.aria-expanded]="help()">Cần hỗ trợ đăng
+          nhập?
+        </button>
+        @if (help()) {
+          <p class="support" role="status">Liên hệ quản trị viên để được cấp tài khoản hoặc hỗ trợ khôi phục mật
+            khẩu.</p>
+        }
+        <button class="submit" type="submit" [disabled]="busy()">{{ busy() ? 'Đang xác minh…' : 'Đăng nhập' }} <span
+          aria-hidden="true">→</span></button>
+        @if (error() && !denied() && hasSession()) {
+          <button type="button" class="help" (click)="verifyExistingSession()" [disabled]="busy()">Thử xác minh phiên
+            hiện tại
+          </button>
+        }
       </form>
       <p class="patient-link">Bạn muốn đặt lịch khám? <a routerLink="/login">Đăng nhập dành cho bệnh nhân</a></p>
     </div>

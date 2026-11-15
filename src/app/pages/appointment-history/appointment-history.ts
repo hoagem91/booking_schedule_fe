@@ -10,7 +10,17 @@ import { AppointmentHistoryPage, AppointmentStatus, HistorySort } from '../../mo
 import { decodeAppointmentText, appointmentResponseSucceeded } from '../../utils/appointment/appointment-ui.utils';
 import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
 import { FormsModule } from '@angular/forms';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
+import { NzTagComponent } from 'ng-zorro-antd/tag';
+import { AppointmentUtils } from '../../utils/appointment/appointment.utils';
+import { NzInputDirective } from 'ng-zorro-antd/input';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
+import { NzFormControlComponent, NzFormItemComponent, NzFormLabelComponent } from 'ng-zorro-antd/form';
+import { NzColDirective } from 'ng-zorro-antd/grid';
+import { BaseFormComponent } from '../../components/base-form.component';
+import { Payment } from '../../models/payment.model';
+import { PaymentService } from '../../services/payment.service';
+import { paymentLabels, paymentError } from '../../utils/payment.utils';
 
 const statusLabels: Record<AppointmentStatus, string> = {
   PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', IN_PROGRESS: 'Đang khám',
@@ -19,10 +29,14 @@ const statusLabels: Record<AppointmentStatus, string> = {
 
 @Component({
   selector: 'app-appointment-history', standalone: true,
-  imports: [RouterLink, DatePipe, CurrencyPipe, NzSelectComponent, NzOptionComponent, FormsModule, NzIconDirective],
+  imports: [RouterLink, DatePipe, CurrencyPipe, NzSelectComponent, NzOptionComponent, FormsModule, NzTagComponent, NzPopoverModule, NzInputDirective, NzIconDirective, NzFormItemComponent, NzFormLabelComponent, NzFormControlComponent],
   templateUrl: './appointment-history.html', styleUrl: './appointment-history.css'
 })
-export class AppointmentHistory {
+export class AppointmentHistory extends BaseFormComponent{
+  private readonly paymentService = inject(PaymentService);
+  readonly paymentLabels = paymentLabels;
+  readonly AppointmentUtils = AppointmentUtils;
+  readonly paymentStates = signal<Record<number, { loading: boolean; payment: Payment | null; error: string }>>({});
   private readonly appointmentService = inject(AppointmentService);
   private readonly destroyRef = inject(DestroyRef);
   private historyRequest?: Subscription;
@@ -32,15 +46,32 @@ export class AppointmentHistory {
   readonly page = signal(0);
   readonly pageSize = signal(20);
   readonly sort = signal<HistorySort>('id,desc');
+  readonly filterPanelOpen = signal(false);
+  readonly searchTerm = signal('');
   readonly statusFilter = signal<AppointmentStatus | ''>('');
+  readonly hasActiveFilters = computed(() => {
+    return this.searchTerm().trim() !== '' ||
+      this.statusFilter() !== '' ||
+      this.sort() !== 'id,desc' ||
+      this.pageSize() !== 20;
+  });
   readonly statuses = Object.entries(statusLabels) as [AppointmentStatus, string][];
   readonly visibleItems = computed(() => {
     const items = this.result()?.content ?? [];
-    return this.statusFilter() ? items.filter(item => item.status === this.statusFilter()) : items;
+    const status = this.statusFilter();
+    const keyword = this.normalizeSearch(this.searchTerm().trim());
+    return items.filter(item => {
+      if (status && item.status !== status) return false;
+      if (!keyword) return true;
+      return [item.appointmentCode, item.serviceName, item.doctorName, item.patientName,
+        item.patientCode, item.patientPhone, item.reason]
+        .some(value => this.normalizeSearch(value ?? '').includes(keyword));
+    });
   });
   private readonly decodeText = decodeAppointmentText;
 
   constructor() {
+    super();
     afterNextRender(() => this.load());
   }
 
@@ -94,11 +125,31 @@ export class AppointmentHistory {
             }))
           });
         },
-        error: (error: unknown) => this.error.set(this.errorMessage(error))
+        error: (error: unknown) => this.error.set(this.getHistoryErrorMessage(error))
       });
   }
 
-  private errorMessage(error: unknown): string {
+  loadPayment(id: number, event: Event): void {
+    if ((event.target as HTMLDetailsElement).open) this.fetchPayment(id);
+  }
+
+  fetchPayment(id: number): void {
+    if (this.paymentStates()[id]?.loading) return;
+    this.paymentStates.update(states => ({ ...states, [id]: { loading: true, payment: null, error: '' } }));
+    this.paymentService.forAppointment(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: payment => this.paymentStates.update(states => ({
+        ...states, [id]: { loading: false, payment, error: '' }
+      })),
+      error: error => this.paymentStates.update(states => ({
+        ...states, [id]: {
+          loading: false, payment: null,
+          error: error.status === 404 || error.error?.code === 9201 ? '' : paymentError(error)
+        }
+      }))
+    });
+  }
+
+  private getHistoryErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) return 'Không thể kết nối máy chủ. Vui lòng thử lại.';
       if (error.status >= 500) return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.';
@@ -128,6 +179,26 @@ export class AppointmentHistory {
     this.load();
   }
 
+  resetFilters(): void {
+    const needReload = this.sort() !== 'id,desc' || this.pageSize() !== 20;
+    this.searchTerm.set('');
+    this.statusFilter.set('');
+    this.sort.set('id,desc');
+    this.pageSize.set(20);
+    if (needReload) {
+      this.page.set(0);
+      this.load();
+    }
+  }
+
+  changeSearch(value: string): void {
+    this.searchTerm.set(value ?? '');
+  }
+
+  private normalizeSearch(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+  }
+
   changeSort(sort: string): void {
     if (sort !== 'id,desc' && sort !== 'id,asc') return;
 
@@ -150,5 +221,8 @@ export class AppointmentHistory {
 
   lastItem(value: AppointmentHistoryPage): number {
     return Math.min(value.number * value.size + value.content.length, value.totalElements);
+  }
+
+  protected handleCancel(): void {
   }
 }
