@@ -3,6 +3,7 @@ import { Component, inject } from "@angular/core";
 import { BaseComponent } from "./base.component";
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { NzUploadFile } from "ng-zorro-antd/upload";
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   template: ''
@@ -13,7 +14,7 @@ export abstract class BaseFormComponent extends BaseComponent{
 
   protected previewUrls: { [key: string]: string | string[] } = {};
   protected uploadedFiles: { [key: string]: NzUploadFile | NzUploadFile[] } = {};
-  
+
   public override ngOnInit() {
     super.ngOnInit();
   }

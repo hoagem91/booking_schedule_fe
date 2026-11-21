@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { SiteFooter } from '../../components/site-footer/site-footer';
 import { SiteHeader } from '../../components/site-header/site-header';
 import { SITE_INFO } from '../../constants/site-info';
 import { AppointmentService } from '../../services/appointment/appointment.service';
@@ -12,7 +13,7 @@ import { appointmentResponseSucceeded, decodeAppointmentText } from '../../utils
 
 @Component({
   selector: 'app-portal', standalone: true,
-  imports: [SiteHeader, RouterLink, FormsModule, CurrencyPipe],
+  imports: [SiteHeader, SiteFooter, RouterLink, FormsModule, CurrencyPipe],
   templateUrl: './portal.html',
   styleUrl: './portal.css'
 })

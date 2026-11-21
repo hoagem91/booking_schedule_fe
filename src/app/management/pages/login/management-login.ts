@@ -6,10 +6,11 @@ import { finalize, switchMap } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { ManagementAccessService, managementError } from '../../services/management-access.service';
 import { hasManagementPermission, managementHome, safeManagementReturnUrl } from '../../models/management.models';
+import { NzIconDirective } from 'ng-zorro-antd/icon';
 
 @Component({
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, NzIconDirective],
   templateUrl: './management-login.html', styleUrl: './management-login.css',
 })
 export class ManagementLogin {

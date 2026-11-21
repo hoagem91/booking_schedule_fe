@@ -1,5 +1,5 @@
 ﻿export type InternalRole = 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'DOCTOR';
-export type ManagementPermission = 'workspace:view' | 'appointments:read' | 'appointments:update-status' | 'services:read' | 'rooms:read' | 'users:read' | 'patients:read' | 'doctors:read' | 'payments:read';
+export type ManagementPermission = 'workspace:view' | 'dashboard:read' | 'appointments:read' | 'appointments:update-status' | 'services:read' | 'rooms:read' | 'users:read' | 'patients:read' | 'doctors:read' | 'payments:read';
 
 // Matches UserResponse / RoleResponse from GET /users/me.
 export interface ManagementUser {
@@ -89,7 +89,7 @@ export function internalRoles(user: ManagementUser | null): InternalRole[] {
 export function hasManagementPermission(user: ManagementUser | null, permission: ManagementPermission): boolean {
   if (user?.status !== 'ACTIVE') return false;
   const roles = internalRoles(user);
-  if (permission === 'payments:read') return roles.some(role => role === 'ADMIN' || role === 'SUPER_ADMIN');
+  if (permission === 'payments:read' || permission === 'dashboard:read') return roles.some(role => role === 'ADMIN' || role === 'SUPER_ADMIN');
   if (permission === 'workspace:view') return roles.length > 0;
   if (permission === 'users:read' || permission === 'patients:read' || permission === 'doctors:read') return roles.some(role => ['SUPER_ADMIN', 'ADMIN'].includes(role));
   return ['appointments:read', 'appointments:update-status', 'services:read', 'rooms:read'].includes(permission)

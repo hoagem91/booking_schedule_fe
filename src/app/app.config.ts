@@ -40,7 +40,7 @@ import { FormsModule } from '@angular/forms';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { APP_ICONS } from './app-icons';
+import { icons } from './app-icons';
 
 import {
   NzModalModule,
@@ -98,7 +98,7 @@ export const appConfig: ApplicationConfig = {
     ),
 
     // NG-ZORRO Icons
-    provideNzIcons(APP_ICONS),
+    provideNzIcons(icons),
 
     // Vietnamese locale
     provideNzI18n(vi_VN),

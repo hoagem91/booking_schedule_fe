@@ -1,0 +1,262 @@
+<header class="dashboard-header">
+  <div class="flex items-center gap-3 flex-wrap">
+    <nz-radio-group class="report-period" [ngModel]="reportType" (ngModelChange)="changeReportType($event)" nzButtonStyle="solid">
+      <label nz-radio-button nzValue="date">
+        Ngày
+      </label>
+      <label nz-radio-button nzValue="month">
+        Tháng
+      </label>
+      <label nz-radio-button nzValue="year">
+        Năm
+      </label>
+    </nz-radio-group>
+    <nz-range-picker [ngModel]="reportTime" (ngModelChange)="applyReportTime($event)" [nzAllowClear]="false"
+                     [nzMode]="reportType"
+                     [nzFormat]="reportType === 'date' ? 'dd/MM/yyyy' : reportType === 'month' ? 'MM/yyyy' : 'yyyy'" />
+  </div>
+  <button (click)="applyReportTime()" nz-button
+          nzType="default" nz-tooltip="Tải lại dữ liệu" class="filter-bar__reload">
+    <nz-icon nzType="reload" /> Tải lại
+  </button>
+</header>
+
+<section aria-label="Tổng quan hôm nay" [attr.aria-busy]="summary().loading">
+  <div class="section-heading"><h2>Hoạt động hôm nay</h2><span
+    class="muted">{{ (summary().data?.date || today) | date:'dd/MM/yyyy' }} · UTC+7</span></div>
+  @if (summary().loading) {
+    <div class="placeholder" role="status">Đang tải tổng quan hôm nay…</div>
+  } @else if (summary().error) {
+    <div class="error" role="alert">{{ summary().error }}
+      <button (click)="loadSummary()">Thử lại</button>
+    </div>
+  }
+    <div class="kpi-grid">
+
+      <!-- Revenue Card -->
+      <div class="kpi-card group">
+        <div class="kpi-card__header kpi-card__header--teal">
+          <div class="kpi-card__icon-wrap">
+            <nz-icon nzType="calendar" nzTheme="outline" aria-hidden="true" />
+          </div>
+          <div class="kpi-card__label">Lịch khám hôm nay</div>
+        </div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__value kpi-card__value--teal">
+            {{ summary().data ? (summary().data!.appointmentsToday | number) : '—' }}
+          </div>
+        </div>
+        <div class="kpi-card__accent kpi-card__accent--teal"></div>
+      </div>
+
+      <!-- Orders Card -->
+      <div class="kpi-card group">
+        <div class="kpi-card__header kpi-card__header--green">
+          <div class="kpi-card__icon-wrap">
+            <nz-icon nzType="clock-circle" nzTheme="outline" aria-hidden="true" />
+          </div>
+          <div class="kpi-card__label">Lịch chờ xác nhận</div>
+        </div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__value kpi-card__value--green">
+            {{ summary().data ? (summary().data!.pendingAppointments | number) : '—' }}
+          </div>
+        </div>
+        <div class="kpi-card__accent kpi-card__accent--green"></div>
+      </div>
+
+      <!-- Tax Card -->
+      <div class="kpi-card group">
+        <div class="kpi-card__header kpi-card__header--amber">
+          <div class="kpi-card__icon-wrap">
+            <nz-icon nzType="check-circle" nzTheme="outline" aria-hidden="true" />
+          </div>
+          <div class="kpi-card__label">Đã hoàn thành hôm nay</div>
+        </div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__value kpi-card__value--amber">
+            {{ summary().data ? (summary().data!.completedToday | number) : '—' }}
+          </div>
+        </div>
+        <div class="kpi-card__accent kpi-card__accent--amber"></div>
+      </div>
+
+      <!-- Discount Card -->
+      <div class="kpi-card group">
+        <div class="kpi-card__header kpi-card__header--rose">
+          <div class="kpi-card__icon-wrap">
+            <nz-icon nzType="dollar" nzTheme="outline" aria-hidden="true" />
+          </div>
+          <div class="kpi-card__label">Tiền đã thu hôm nay</div>
+        </div>
+        <div class="kpi-card__body">
+          <div class="kpi-card__value kpi-card__value--rose">
+            {{ summary().data ? (summary().data!.collectedToday | number:'1.0-2') : '—' }} <span class="kpi-card__unit">₫</span>
+          </div>
+        </div>
+        <div class="kpi-card__accent kpi-card__accent--rose"></div>
+      </div>
+    </div>
+<!--    @if (summary().data; as s) {-->
+<!--    <div class="system-grid">-->
+<!--      <div><strong>{{ s.totalPatients | number }}</strong><span>Hồ sơ bệnh nhân</span></div>-->
+<!--      <div><strong>{{ s.workingDoctorsToday | number }}</strong><span>Bác sĩ làm việc hôm nay</span></div>-->
+<!--      <div><strong>{{ s.activeSpecialties | number }}</strong><span>Chuyên khoa hoạt động</span></div>-->
+<!--      <div><strong>{{ s.activeServices | number }}</strong><span>Dịch vụ hoạt động</span></div>-->
+<!--    </div>-->
+<!--    @if (s.reviewRequiredTransactions > 0) {-->
+<!--      <aside class="notice"><strong>{{ s.reviewRequiredTransactions }} lần thanh toán cần đối soát.</strong> <a-->
+<!--        routerLink="/management/payments" [queryParams]="{ reviewRequired: true }">Kiểm tra giao dịch →</a></aside>-->
+<!--    }-->
+<!--    @if (s.successfulPaymentsMissingPaidAt > 0) {-->
+<!--      <aside class="notice">Có {{ s.successfulPaymentsMissingPaidAt }} khoản thu SUCCESS toàn hệ thống thiếu ngày thanh-->
+<!--        toán, chưa được tính vào tiền đã thu theo ngày.-->
+<!--      </aside>-->
+<!--    }-->
+<!--  }-->
+</section>
+
+<section class="report-section" aria-label="Thống kê theo kỳ">
+  @if (analytics().loading) {
+    <div class="placeholder" role="status">Đang tải thống kê lịch khám…</div>
+  } @else if (analytics().error) {
+    <div class="error" role="alert">Thống kê lịch khám: {{ analytics().error }}
+      <button (click)="applyRange()">Thử lại</button>
+    </div>
+  } @else if (analytics().data; as a) {
+    <div class="chart-grid">
+      <article class="panel"><h3>Lịch khám theo ngày</h3>
+        <p class="muted">Bao gồm tất cả trạng thái theo ngày khám.</p>
+        @if (a.totalAppointments > 0) {
+          <div echarts [options]="appointmentOptions" class="chart" aria-label="Biểu đồ số lịch khám theo ngày"></div>
+        } @else {
+          <div class="empty">Chưa có lịch khám trong khoảng đã chọn.</div>
+        }
+      </article>
+      <article class="panel"><h3>Cơ cấu trạng thái lịch khám</h3>
+        <p class="muted">Trạng thái hiện tại của các lịch trong kỳ.</p>
+        @if (a.totalAppointments > 0) {
+          <div echarts [options]="statusOptions" class="chart" aria-label="Biểu đồ cơ cấu trạng thái"></div>
+        } @else {
+          <div class="empty">Chưa có dữ liệu trạng thái.</div>
+        }
+      </article>
+      <article class="panel rank-panel">
+        <div class="section-heading"><h3>Top 5 lượt khám</h3><label class="sr-only" for="rankMode">Loại xếp hạng</label><select
+          id="rankMode" [(ngModel)]="rankMode" (ngModelChange)="updateRank()">
+          <option value="specialties">Chuyên khoa</option>
+          <option value="doctors">Bác sĩ</option>
+        </select></div>
+        <p class="muted">Không tính lịch đã hủy và không đến khám.</p>
+        @if ((rankMode === 'specialties' ? a.topSpecialties : a.topDoctors).length) {
+          <div echarts [options]="rankOptions" class="chart" aria-label="Biểu đồ xếp hạng lượt khám"></div>
+        } @else {
+          <div class="empty">Chưa có dữ liệu xếp hạng.</div>
+        }
+      </article>
+    </div>
+  }
+
+  @if (revenue().loading) {
+    <div class="placeholder" role="status">Đang tải thống kê tiền đã thu…</div>
+  } @else if (revenue().error) {
+    <div class="error" role="alert">Tiền đã thu: {{ revenue().error }}
+      <button (click)="applyRange()">Thử lại</button>
+    </div>
+  } @else if (revenue().data; as r) {
+    @if (r.successfulPaymentsMissingPaidAt > 0 && !summary().data?.successfulPaymentsMissingPaidAt) {
+      <aside class="notice">{{ r.successfulPaymentsMissingPaidAt }} khoản SUCCESS toàn hệ thống thiếu ngày thanh toán đã
+        bị loại khỏi thống kê.
+      </aside>
+    }
+    <div class="chart-grid mt-4">
+      <article class="panel"><h3>Tiền đã thu theo ngày</h3>
+        <p class="muted">Khoản thu SUCCESS theo paidAt · VND</p>
+        @if (r.successfulPayments > 0) {
+          <div echarts [options]="revenueOptions" class="chart" aria-label="Biểu đồ tiền đã thu theo ngày"></div>
+        } @else {
+          <div class="empty">Chưa có khoản thu thành công trong kỳ.</div>
+        }
+      </article>
+      <article class="panel"><h3>Cơ cấu phương thức thanh toán</h3>
+        <p class="muted">Tỷ trọng theo số tiền đã thu.</p>
+        @if (r.collectedAmount > 0) {
+          <div echarts [options]="methodOptions" class="chart" aria-label="Biểu đồ phương thức thanh toán"></div>
+        } @else {
+          <div class="empty">Chưa có số tiền để tính tỷ trọng.</div>
+        }
+        @if (r.byPaymentMethod.length) {
+          <div class="method-list">@for (method of r.byPaymentMethod; track method.method) {
+            <div><span>{{ paymentLabel(method.method) }} <small>({{ method.successfulPayments }}
+              khoản)</small></span><strong>{{ method.collectedAmount | number:'1.0-2' }} ₫</strong></div>
+          }</div>
+        }
+      </article>
+    </div>
+    <p class="footnote">Tiền đã thu từ các khoản hiện ở SUCCESS, chưa phản ánh lợi nhuận hay dòng tiền ròng sau hoàn
+      tiền. Khoản chuyển REFUNDED sẽ không còn được tính trong kỳ thanh toán cũ.</p>
+  }
+</section>
+
+<!--<section class="panel today-panel" aria-label="Lịch khám hôm nay">-->
+<!--  <div class="section-heading">-->
+<!--    <div><h2>Lịch khám hôm nay</h2>-->
+<!--      <p class="muted">{{ today | date:'dd/MM/yyyy' }} · Sắp xếp theo giờ bắt đầu</p></div>-->
+<!--    <label class="toggle"><input type="checkbox" [(ngModel)]="upcomingOnly" (ngModelChange)="loadAppointments()"> Đang-->
+<!--      khám / sắp tới</label></div>-->
+<!--  @if (upcomingOnly) {-->
+<!--    <p class="footnote">Lịch đang khám hoặc đã xác nhận có giờ bắt đầu chưa đến. Lịch đã quá giờ không hiển thị trong bộ-->
+<!--      lọc này.</p>-->
+<!--  }-->
+<!--  @if (appointments().loading) {-->
+<!--    <div class="placeholder" role="status">Đang tải lịch khám hôm nay…</div>-->
+<!--  } @else if (appointments().error) {-->
+<!--    <div class="error" role="alert">{{ appointments().error }}-->
+<!--      <button (click)="loadAppointments()">Thử lại</button>-->
+<!--    </div>-->
+<!--  } @else if (appointments().data; as page) {-->
+<!--    <div class="table-scroll">-->
+<!--      <table>-->
+<!--        <thead>-->
+<!--        <tr>-->
+<!--          <th>Giờ khám</th>-->
+<!--          <th>Mã lịch hẹn</th>-->
+<!--          <th>Bệnh nhân</th>-->
+<!--          <th>Bác sĩ / chuyên khoa</th>-->
+<!--          <th>Dịch vụ</th>-->
+<!--          <th>Trạng thái</th>-->
+<!--        </tr>-->
+<!--        </thead>-->
+<!--        <tbody>-->
+<!--          @for (item of page.content; track item.id) {-->
+<!--            <tr>-->
+<!--              <td class="time">{{ item.startTime.slice(0, 5) }} – {{ item.endTime.slice(0, 5) }}</td>-->
+<!--              <td>-->
+<!--                <button class="text-button" (click)="openAppointment(item.id)">{{ item.appointmentCode }}</button>-->
+<!--              </td>-->
+<!--              <td>{{ item.patientName }}</td>-->
+<!--              <td>{{ item.doctorName }}<small class="subtext">{{ item.specialtyName || 'Chưa có chuyên khoa' }}</small>-->
+<!--              </td>-->
+<!--              <td>{{ item.serviceName }}</td>-->
+<!--              <td><span class="status" [style.color]="colors[item.status]"-->
+<!--                        [style.background-color]="colors[item.status] + '18'">{{ labels[item.status] }}</span></td>-->
+<!--            </tr>-->
+<!--          } @empty {-->
+<!--            <tr>-->
+<!--              <td colspan="6"-->
+<!--                  class="empty">{{ upcomingOnly ? 'Không có lịch đang khám hoặc sắp tới.' : 'Chưa có lịch khám hôm nay.' }}-->
+<!--              </td>-->
+<!--            </tr>-->
+<!--          }-->
+<!--        </tbody>-->
+<!--      </table>-->
+<!--    </div>-->
+<!--    <div class="pagination"><span class="muted">{{ page.totalElements | number }} lịch · Trang {{ page.number + 1 }}-->
+<!--      / {{ page.totalPages || 1 }}</span>-->
+<!--      <div>-->
+<!--        <button [disabled]="page.number === 0" (click)="loadAppointments(page.number - 1)">Trước</button>-->
+<!--        <button [disabled]="page.number + 1 >= page.totalPages" (click)="loadAppointments(page.number + 1)">Sau</button>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  }-->
+<!--</section>-->
